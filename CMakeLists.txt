@@ -8,6 +8,7 @@ enable_testing()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lstm-parser)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lstm-parser/cnn)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lstm-parser/eos)
 set(WITH_EIGEN_BACKEND 1)
 
 # look for Boost
