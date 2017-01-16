@@ -12,7 +12,6 @@ public:
 
   virtual ~LSTMCausalityTagger() {}
 
-protected:
   lstm_parser::LSTMParser parser;
 };
 
