@@ -1,15 +1,15 @@
 #ifndef BECAUSEORACLETRANSITIONCORPUS_H_
 #define BECAUSEORACLETRANSITIONCORPUS_H_
 
+#include <string>
+
 #include "parser/corpus.h"
 
-using namespace lstm_parser;
-
-class BecauseOracleTransitionCorpus: public TrainingCorpus {
+class BecauseOracleTransitionCorpus: public lstm_parser::TrainingCorpus {
 public:
-  BecauseOracleTransitionCorpus(CorpusVocabulary* vocab,
-                                  const std::string& file, bool is_training) :
-      TrainingCorpus(vocab) {
+  BecauseOracleTransitionCorpus(lstm_parser::CorpusVocabulary* vocab,
+                                const std::string& file, bool is_training)
+      : TrainingCorpus(vocab) {
     BecauseTransitionsReader(is_training).ReadSentences(file, this);
   }
   virtual ~BecauseOracleTransitionCorpus() {}
