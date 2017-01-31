@@ -20,7 +20,7 @@ if(DEFINED ENV{BOOST_ROOT})
   set(Boost_NO_SYSTEM_PATHS ON)
 endif()
 set(Boost_REALPATH ON)
-find_package(Boost)
+find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 set(LIBS ${LIBS} ${Boost_LIBRARIES})
 
