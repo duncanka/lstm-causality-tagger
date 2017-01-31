@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
   InitCommandLine(argc, argv, &conf);
 
   LSTMCausalityTagger tagger(conf["parser-model"].as<string>());
-  CorpusVocabulary vocab(tagger.parser.vocab);
+  CorpusVocabulary vocab(tagger.GetParser().vocab);
   const string& training_path = conf["training-data"].as<string>();
   BecauseOracleTransitionCorpus corpus(&vocab, training_path, true);
 
