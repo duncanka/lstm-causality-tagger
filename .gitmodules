@@ -2,3 +2,6 @@
 	path = lstm-parser
 	url = https://github.com/duncanka/lstm-parser.git
 	ignore = untracked
+[submodule "lstm-causality/diff-cpp"]
+	path = lstm-causality/diff-cpp
+	url = https://github.com/duncanka/diff-cpp.git
