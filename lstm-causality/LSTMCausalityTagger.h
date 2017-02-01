@@ -35,6 +35,12 @@ public:
 
   const lstm_parser::LSTMParser& GetParser() const { return parser; }
 
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version) {
+    ar & model;
+  }
+
+
 protected:
   lstm_parser::LSTMParser parser;
   cnn::Model model;

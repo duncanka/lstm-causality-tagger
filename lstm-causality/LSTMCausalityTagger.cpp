@@ -146,3 +146,21 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
   }
 }
 
+void LSTMCausalityTagger::SaveModel(const string& model_fname,
+                                    bool softlink_created) {
+  ofstream out_file(model_fname);
+  eos::portable_oarchive archive(out_file);
+  archive << *this;
+  cerr << "Model saved." << endl;
+  // Create a soft link to the most recent model in order to make it
+  // easier to refer to it in a shell script.
+  if (!softlink_created) {
+    string softlink = "latest_model.params";
+
+    if (system((string("rm -f ") + softlink).c_str()) == 0
+        && system(("ln -s " + model_fname + " " + softlink).c_str()) == 0) {
+      cerr << "Created " << softlink << " as a soft link to " << model_fname
+           << " for convenience." << endl;
+    }
+  }
+}
