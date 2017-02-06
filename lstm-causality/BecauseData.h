@@ -1,6 +1,7 @@
 #ifndef LSTM_CAUSALITY_BECAUSEDATA_H_
 #define LSTM_CAUSALITY_BECAUSEDATA_H_
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -9,68 +10,82 @@
 
 class BecauseRelation {
 public:
+  typedef std::map<unsigned, std::reference_wrapper<const std::string>>
+      IndexedTokenList;
   typedef std::vector<std::reference_wrapper<const std::string>> TokenList;
   typedef std::vector<unsigned> IndexList;
   typedef std::vector<std::string> StringList;
 
-  const TokenList& GetSentenceTokens() const { return sentence_tokens; }
-
   const IndexList& GetConnectiveIndices() const { return connective_indices; }
+
+  IndexList* GetConnectiveIndices() { return &connective_indices; }
+
+  void AddConnectiveToken(unsigned index) {
+    connective_indices.push_back(index);
+  }
+
+  void AddToArgument(const unsigned arg_num, const unsigned index) {
+    assert(index < sentence.Size());
+    arguments[arg_num].push_back(index);
+  }
 
   const unsigned GetRelationType() const { return relation_type; }
 
-protected:
-  const StringList& arg_names;
-  const StringList& type_names;
-  std::vector<IndexList> arguments;
-  IndexList connective_indices;
-  unsigned relation_type;
-  TokenList sentence_tokens;
+  const IndexList& GetArgument(unsigned index) const {
+    return arguments[index];
+  }
 
-  friend std::ostream& operator<<(std::ostream& os, const BecauseRelation& rel);
-
-  BecauseRelation(const StringList& arg_names, const StringList& type_names,
-                    const IndexList& connective_indices,
-                    const unsigned relation_type,
-                    const std::vector<unsigned> known_word_ids,
-                    const StringList& unknown_word_strs,
-                    const lstm_parser::CorpusVocabulary& vocab) :
-      arg_names(arg_names), type_names(type_names), arguments(arg_names.size()),
-      connective_indices(connective_indices), relation_type(relation_type) {
-    assert(known_word_ids.size() == unknown_word_strs.size());
-    sentence_tokens.reserve(known_word_ids.size());
-    unsigned unk = vocab.GetWord(vocab.UNK);
-    for (size_t i = 0; i < known_word_ids.size(); ++i) {
-      unsigned word_id = known_word_ids[i];
-      if (word_id == unk) {
-        sentence_tokens.push_back(unknown_word_strs[i]);
-      } else {
-        sentence_tokens.push_back(vocab.int_to_words[word_id]);
-      }
-    }
+  IndexList* GetArgument(unsigned index) {
+    return &arguments[index];
   }
 
   void SetArgument(unsigned arg_num, const IndexList& indices) {
     for (unsigned i : indices) {
-      assert(i < sentence_tokens.size());
+      assert(i < sentence.Size());
     }
     arguments[arg_num] = indices;
   }
 
-  inline TokenList GetTokensForIndices(const IndexList& indices) const {
+protected:
+  const StringList& arg_names;
+  const StringList& type_names;
+
+  const lstm_parser::Sentence& sentence;
+  const lstm_parser::CorpusVocabulary& vocab;
+
+  unsigned relation_type;
+  IndexList connective_indices;
+  std::vector<IndexList> arguments;
+
+  friend std::ostream& operator<<(std::ostream& os, const BecauseRelation& rel);
+
+  BecauseRelation(const StringList& arg_names, const StringList& type_names,
+                  const lstm_parser::Sentence& sentence,
+                  const lstm_parser::CorpusVocabulary& vocab,
+                  const unsigned relation_type,
+                  const IndexList& connective_indices,
+                  const std::vector<IndexList>& arguments = {{}})
+      : arg_names(arg_names), type_names(type_names), sentence(sentence),
+        vocab(vocab), relation_type(relation_type),
+        connective_indices(connective_indices), arguments(arguments) {}
+
+  TokenList GetTokensForIndices(const IndexList& indices) const {
     TokenList tokens;
     tokens.reserve(indices.size());
-    for (size_t i = 0; i < indices.size(); ++i) {
-      tokens.push_back(sentence_tokens[indices[i]]);
+    unsigned unk = vocab.GetWord(vocab.UNK);
+    for (unsigned index : indices) {
+      unsigned word_id = sentence.words.at(word_id);
+      tokens.push_back(word_id == unk ? sentence.unk_surface_forms.at(index)
+                                      : vocab.int_to_words[word_id]);
     }
     return tokens;
   }
 
-  inline const std::string& ArgNameForArgIndex(unsigned arg_index) const {
+  const std::string& ArgNameForArgIndex(unsigned arg_index) const {
     return arg_names[arg_index];
   }
 
-  inline const std::string& GetRelationName(unsigned type_id = -1) const {
+  const std::string& GetRelationName(unsigned type_id = -1) const {
     if (type_id == static_cast<unsigned>(-1))
       type_id = relation_type;
     return type_names[type_id];
@@ -80,27 +95,43 @@ protected:
 
 class CausalityRelation: public BecauseRelation {
 public:
+  // TODO: Is there a better way to sync an enum and a string list?
   static const StringList ARG_NAMES;
+  enum ArgumentType {CAUSE = 0, EFFECT = 1, MEANS = 2};
   static const StringList TYPE_NAMES;
-  enum ArgumentTypes {CAUSE = 0, EFFECT = 1, MEANS = 2};
+  enum CausationType {CONSEQUENCE = 0, MOTIVATION = 1, PURPOSE = 3};
 
-  inline void SetCause(const IndexList& indices) {
+  CausalityRelation(const lstm_parser::Sentence& sentence,
+                    const lstm_parser::CorpusVocabulary& vocab,
+                    const unsigned relation_type = CONSEQUENCE,
+                    const IndexList& connective_indices = {},
+                    const std::vector<IndexList>& arguments = { {}})
+      : BecauseRelation(ARG_NAMES, TYPE_NAMES, sentence, vocab, relation_type,
+                        connective_indices, arguments) {}
+
+  void SetCause(const IndexList& indices) {
     SetArgument(CAUSE, indices);
   }
 
-  inline void SetEffect(const IndexList& indices) {
+  void SetEffect(const IndexList& indices) {
     SetArgument(EFFECT, indices);
   }
 
-  inline void SetMeans(const IndexList& indices) {
+  void SetMeans(const IndexList& indices) {
     SetArgument(MEANS, indices);
   }
 
-  inline const IndexList& GetCause() { return arguments[CAUSE]; }
+  const IndexList& GetCause() const { return GetArgument(CAUSE); }
 
-  inline const IndexList& GetEffect() { return arguments[EFFECT]; }
+  const IndexList& GetEffect() const { return GetArgument(EFFECT); }
 
-  inline const IndexList& GetMeans() { return arguments[MEANS]; }
+  const IndexList& GetMeans() const { return GetArgument(MEANS); }
+
+  IndexList* GetCause() { return GetArgument(CAUSE); }
+
+  IndexList* GetEffect() { return GetArgument(EFFECT); }
+
+  const IndexList* GetMeans() { return GetArgument(MEANS); }
 };
 
 

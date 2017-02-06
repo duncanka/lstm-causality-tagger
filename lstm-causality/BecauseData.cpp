@@ -5,12 +5,12 @@ using namespace std;
 #include "BecauseData.h"
 
 ostream& operator<<(ostream& os, const BecauseRelation& rel) {
-  auto print_tokens = [&os, &rel](const BecauseRelation::IndexList& indices) {
+  auto print_tokens = [&](const BecauseRelation::IndexList& indices) {
     const auto& tokens = rel.GetTokensForIndices(indices);
     for (auto i = tokens.begin(), end = tokens.end(); i != end; ++i) {
       os << i->get();
       if (i != end - 1)
-        os << ' ';
+      os << ' ';
     }
   };
 
@@ -28,4 +28,8 @@ ostream& operator<<(ostream& os, const BecauseRelation& rel) {
 
 const vector<string> CausalityRelation::ARG_NAMES = {
     "Cause", "Effect", "Means"
+};
+
+const vector<string> CausalityRelation::TYPE_NAMES = {
+    "Consequence", "Motivation", "Purpose"
 };
