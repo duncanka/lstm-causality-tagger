@@ -6,6 +6,7 @@
 #include "BecauseData.h"
 #include "BecauseOracleTransitionCorpus.h"
 #include "cnn/model.h"
+#include "parser/corpus.h"
 #include "parser/lstm-parser.h"
 
 class LSTMCausalityTagger {
@@ -21,15 +22,13 @@ public:
              const volatile bool* requested_stop = nullptr);
 
   std::vector<CausalityRelation> Tag(
-      const std::map<unsigned, unsigned>& sentence,
-      const std::map<unsigned, unsigned>& sentence_pos,
+      const lstm_parser::Sentence& sentence,
       const lstm_parser::CorpusVocabulary& vocab,
       double* correct = nullptr) {
     cnn::ComputationGraph hg;
-    std::vector<unsigned> actions = LogProbTagger(&hg, sentence, sentence_pos,
-                                                  std::vector<unsigned>(),
-                                                  vocab.actions,
-                                                  vocab.int_to_words, correct);
+    std::vector<unsigned> actions = LogProbTagger(
+        &hg, sentence, std::vector<unsigned>(), vocab.actions,
+        vocab.int_to_words, correct);
     return ReconstructCausations(sentence, actions, vocab);
   }
 
@@ -47,14 +46,13 @@ protected:
 
   std::vector<unsigned> LogProbTagger(
         cnn::ComputationGraph* hg,
-        const std::map<unsigned, unsigned>& sentence,
-        const std::map<unsigned, unsigned>& sentence_pos,
+        const lstm_parser::Sentence& sentence,
         const std::vector<unsigned>& correct_actions,
         const std::vector<std::string>& action_names,
         const std::vector<std::string>& int_to_words, double* correct);
 
   std::vector<CausalityRelation> ReconstructCausations(
-      const std::map<unsigned, unsigned>& sentence,
+      const lstm_parser::Sentence& sentence,
       const std::vector<unsigned> actions,
       const lstm_parser::CorpusVocabulary& vocab);
 

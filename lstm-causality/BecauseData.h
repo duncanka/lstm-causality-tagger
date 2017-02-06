@@ -13,7 +13,7 @@ public:
   typedef std::map<unsigned, std::reference_wrapper<const std::string>>
       IndexedTokenList;
   typedef std::vector<std::reference_wrapper<const std::string>> TokenList;
-  typedef std::vector<unsigned> IndexList;
+  typedef std::vector<unsigned> IndexList; // TODO: switch to set (no dupes)
   typedef std::vector<std::string> StringList;
 
   const IndexList& GetConnectiveIndices() const { return connective_indices; }

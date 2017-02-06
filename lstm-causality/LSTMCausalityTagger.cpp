@@ -57,20 +57,14 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
         random_shuffle(order.begin(), order.end());
       }
 
-      const map<unsigned, unsigned>& sentence =
-          corpus.sentences[order[sentence_i]];
-      const map<unsigned, unsigned>& sentence_pos =
-          corpus.sentences_pos[order[sentence_i]];
-      const vector<unsigned>& correct_actions =
-          corpus.correct_act_sent[order[sentence_i]];
+      const Sentence& sentence = corpus.sentences[order[sentence_i]];
+      const vector<unsigned>& correct_actions = corpus.correct_act_sent[sii];
 
       ComputationGraph cg;
       Expression parser_state;
-      parser.LogProbParser(sentence, sentence_pos, parser.vocab, &cg,
-                           &parser_state);
-      LogProbTagger(&cg, sentence, sentence_pos, correct_actions,
-                    corpus.vocab->actions, corpus.vocab->int_to_words,
-                    &correct);
+      parser.LogProbParser(sentence, parser.vocab, &cg, &parser_state);
+      LogProbTagger(&cg, sentence, correct_actions, corpus.vocab->actions,
+                    corpus.vocab->int_to_words, &correct);
       double lp = as_scalar(cg.incremental_forward());
       if (lp < 0) {
         cerr << "Log prob < 0 on sentence " << order[sentence_i] << ": lp="
@@ -106,13 +100,11 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
       BecauseRelationMetrics<> evaluation;
       const auto t_start = chrono::high_resolution_clock::now();
       for (unsigned sii = 0; sii < dev_size; ++sii) {
-        const map<unsigned, unsigned>& sentence = dev_corpus.sentences[sii];
-        const map<unsigned, unsigned>& sentence_pos =
-            dev_corpus.sentences_pos[sii];
+        const Sentence& sentence = dev_corpus.sentences[sii];
 
         cnn::ComputationGraph cg;
-        std::vector<unsigned> actions = LogProbTagger(
-            &cg, sentence, sentence_pos, dev_corpus.correct_act_sent[sii],
+        vector<unsigned> actions = LogProbTagger(
+            &cg, sentence, dev_corpus.correct_act_sent[sii],
             dev_corpus.vocab->actions, dev_corpus.vocab->int_to_words,
             &correct);
         llh += as_scalar(cg.incremental_forward());
