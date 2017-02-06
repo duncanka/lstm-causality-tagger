@@ -115,12 +115,12 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
             dev_corpus.vocab->actions, dev_corpus.vocab->int_to_words,
             &correct);
         llh += as_scalar(cg.incremental_forward());
-        vector<CausalityRelation> predicted = ReconstructCausations(
-            sentence, actions, *dev_corpus.vocab);
+        vector<CausalityRelation> predicted = Decode(sentence, actions,
+                                                     *dev_corpus.vocab);
 
         const vector<unsigned>& gold_actions = dev_corpus.correct_act_sent[sii];
-        vector<CausalityRelation> gold = ReconstructCausations(
-            sentence, gold_actions, *dev_corpus.vocab);
+        vector<CausalityRelation> gold = Decode(sentence, gold_actions,
+                                                *dev_corpus.vocab);
 
         num_actions += actions.size();
         evaluation += BecauseRelationMetrics<>(gold, predicted);
@@ -165,7 +165,7 @@ void LSTMCausalityTagger::SaveModel(const string& model_fname,
 }
 
 
-vector<CausalityRelation> LSTMCausalityTagger::ReconstructCausations(
+vector<CausalityRelation> LSTMCausalityTagger::Decode(
     const Sentence& sentence, const vector<unsigned> actions,
     const lstm_parser::CorpusVocabulary& vocab) {
   vector<CausalityRelation> relations;

@@ -29,7 +29,7 @@ public:
     std::vector<unsigned> actions = LogProbTagger(
         &hg, sentence, std::vector<unsigned>(), vocab.actions,
         vocab.int_to_words, correct);
-    return ReconstructCausations(sentence, actions, vocab);
+    return Decode(sentence, actions, vocab);
   }
 
   const lstm_parser::LSTMParser& GetParser() const { return parser; }
@@ -51,7 +51,7 @@ protected:
         const std::vector<std::string>& action_names,
         const std::vector<std::string>& int_to_words, double* correct);
 
-  std::vector<CausalityRelation> ReconstructCausations(
+  std::vector<CausalityRelation> Decode(
       const lstm_parser::Sentence& sentence,
       const std::vector<unsigned> actions,
       const lstm_parser::CorpusVocabulary& vocab);
