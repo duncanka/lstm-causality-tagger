@@ -4,6 +4,7 @@
 
 #include "BecauseOracleTransitionCorpus.h"
 #include "LSTMCausalityTagger.h"
+#include "Metrics.h"
 
 using namespace lstm_parser;
 namespace po = boost::program_options;

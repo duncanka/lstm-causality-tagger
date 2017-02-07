@@ -2,6 +2,8 @@
 #define LSTM_CAUSALITY_UTILITIES_H_
 
 #include <algorithm>
+#include <ostream>
+
 
 template <class T, class Cmp>
 size_t ReallyDeleteIf(T* container, Cmp& pred) {
@@ -23,5 +25,38 @@ struct ThresholdedCmp {
   }
 };
 
+
+// From http://stackoverflow.com/a/9600752
+class IndentingOStreambuf : public std::streambuf {
+public:
+  explicit IndentingOStreambuf(std::streambuf* dest, unsigned indent = 4)
+      : dest(dest), atStartOfLine(true), indent(indent, ' '), owner(nullptr) {}
+
+  explicit IndentingOStreambuf(std::ostream& dest, unsigned indent = 4)
+      : dest(dest.rdbuf()), atStartOfLine(true), indent(indent, ' '),
+        owner(&dest) {
+    owner->rdbuf(this);
+  }
+
+  virtual ~IndentingOStreambuf() {
+    if (owner != nullptr) {
+      owner->rdbuf(dest);
+    }
+  }
+
+protected:
+    std::streambuf* dest;
+    bool atStartOfLine;
+    std::string indent;
+    std::ostream* owner;
+
+  virtual int overflow(int ch) {
+    if (atStartOfLine && ch != '\n') {
+      dest->sputn(indent.data(), indent.size());
+    }
+    atStartOfLine = ch == '\n';
+    return dest->sputc(ch);
+  }
+};
 
 #endif /* LSTM_CAUSALITY_UTILITIES_H_ */

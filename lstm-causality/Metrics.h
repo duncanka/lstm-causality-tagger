@@ -6,6 +6,7 @@
 
 #include "BecauseOracleTransitionCorpus.h"
 #include "diff-cpp/lcs.h"
+#include "utilities.h"
 
 
 struct ClassificationMetrics {
@@ -63,6 +64,15 @@ struct ClassificationMetrics {
   }
 };
 
+inline std::ostream& operator<<(std::ostream& s,
+                         const ClassificationMetrics& metrics) {
+  s << "Accuracy: " << metrics.GetAccuracy()
+    << "\nPrecision: " << metrics.GetPrecision()
+    << "\nRecall: " << metrics.GetRecall()
+    << "\nF1: " << metrics.GetF1();
+  return s;
+}
+
 
 struct AccuracyMetrics {
   unsigned correct;
@@ -90,6 +100,12 @@ struct AccuracyMetrics {
   }
 };
 
+inline std::ostream& operator<<(std::ostream& s,
+                                const AccuracyMetrics& metrics) {
+  s << "Accuracy: " << metrics.GetAccuracy();
+  return s;
+}
+
 
 struct ArgumentMetrics {
   AccuracyMetrics spans;
@@ -115,6 +131,23 @@ struct ArgumentMetrics {
   }
 };
 
+inline std::ostream& operator<<(std::ostream& s,
+                                const ArgumentMetrics& metrics) {
+  s << "Spans:";
+  {
+    IndentingOStreambuf indent(std::cout);
+    s << '\n' << metrics.spans;
+  }
+  s << "\nHeads:";
+  {
+    IndentingOStreambuf indent(std::cout);
+    s << '\n' << metrics.heads;
+  }
+  s << "\nJaccard index: " << metrics.jaccard_index;
+  return s;
+}
+
+
 
 // TODO: add partial matching?
 template <class RelationType=CausalityRelation>
@@ -127,7 +160,8 @@ struct BecauseRelationMetrics {
 
   ClassificationMetrics connective_metrics;
   std::vector<ArgumentMetrics> argument_metrics;
-  typedef Diff<RandomAccessSequence<typename std::vector<RelationType>::const_iterator>,
+  typedef Diff<RandomAccessSequence<
+                   typename std::vector<RelationType>::const_iterator>,
                ConnectivesEqual> ConnectiveDiff;
 
   // Default constructor: initialize metrics with zero instances, and prepare
@@ -180,10 +214,23 @@ struct BecauseRelationMetrics {
 };
 
 template <typename RelationType>
-std::ostream& operator<<(std::ostream& s,
+inline std::ostream& operator<<(std::ostream& s,
                          const BecauseRelationMetrics<RelationType>& metrics) {
-  // TODO: fix me
-  s << "Output metrics here";
+  s << "Connectives:";
+  {
+    IndentingOStreambuf indent(std::cout);
+    s << '\n' << metrics.connective_metrics;
+  }
+  s << "\nArguments:";
+  {
+    IndentingOStreambuf indent(std::cout);
+    for (unsigned argi = 0; argi < RelationType::ARG_NAMES.size(); ++argi) {
+      s << '\n' << RelationType::ARG_NAMES[argi] << ':';
+      IndentingOStreambuf indent2(std::cout);
+      s << '\n' << metrics.argument_metrics[argi];
+    }
+  }
+
   return s;
 }
 
