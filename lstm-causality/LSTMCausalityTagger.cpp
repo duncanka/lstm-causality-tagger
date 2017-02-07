@@ -71,7 +71,7 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
       Expression parser_state;
       parser.LogProbParser(sentence, parser.vocab, &cg, &parser_state);
       LogProbTagger(&cg, sentence, correct_actions, corpus.vocab->actions,
-                    corpus.vocab->int_to_words, &correct);
+                    corpus.vocab->int_to_words, &parser_state, &correct);
       double lp = as_scalar(cg.incremental_forward());
       if (lp < 0) {
         cerr << "Log prob < 0 on sentence " << order[sentence_i] << ": lp="
@@ -109,11 +109,13 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
       for (unsigned sii = 0; sii < dev_size; ++sii) {
         const Sentence& sentence = dev_corpus.sentences[sii];
 
-        cnn::ComputationGraph cg;
+        ComputationGraph cg;
+        Expression parser_state;
+        parser.LogProbParser(sentence, parser.vocab, &cg, &parser_state);
         vector<unsigned> actions = LogProbTagger(
             &cg, sentence, dev_corpus.correct_act_sent[sii],
             dev_corpus.vocab->actions, dev_corpus.vocab->int_to_words,
-            &correct);
+            &parser_state, &correct);
         llh += as_scalar(cg.incremental_forward());
         vector<CausalityRelation> predicted = Decode(sentence, actions,
                                                      *dev_corpus.vocab);
@@ -296,7 +298,8 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
 vector<unsigned> LSTMCausalityTagger::LogProbTagger(
     cnn::ComputationGraph* hg, const Sentence& sentence,
     const vector<unsigned>& correct_actions, const vector<string>& action_names,
-    const vector<string>& int_to_words, double* correct) {
+    const vector<string>& int_to_words, expr::Expression* parser_state,
+    double* correct) {
   // TODO: Fill me in
   return {};
 }
