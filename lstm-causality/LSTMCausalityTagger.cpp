@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "cnn/expr.h"
 #include "cnn/model.h"
 #include "BecauseData.h"
 #include "LSTMCausalityTagger.h"
@@ -16,8 +17,10 @@
 
 using namespace std;
 using namespace cnn;
+using namespace cnn::expr;
 using namespace lstm_parser;
 typedef BecauseRelation::IndexList IndexList;
+
 
 void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
                                 const BecauseOracleTransitionCorpus& dev_corpus,
@@ -69,9 +72,11 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
 
       ComputationGraph cg;
       Expression parser_state;
-      parser.LogProbParser(sentence, parser.vocab, &cg, &parser_state);
-      LogProbTagger(&cg, sentence, correct_actions, corpus.vocab->actions,
-                    corpus.vocab->int_to_words, &parser_state, &correct);
+      parser.LogProbTagger(sentence, *parser.GetVocab(), &cg, true,
+                           &parser_state);
+      LogProbTagger(&cg, sentence, sentence.words, correct_actions,
+                    corpus.vocab->actions, corpus.vocab->int_to_words,
+                    &correct, &parser_state);
       double lp = as_scalar(cg.incremental_forward());
       if (lp < 0) {
         cerr << "Log prob < 0 on sentence " << order[sentence_i] << ": lp="
@@ -111,11 +116,10 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
 
         ComputationGraph cg;
         Expression parser_state;
-        parser.LogProbParser(sentence, parser.vocab, &cg, &parser_state);
-        vector<unsigned> actions = LogProbTagger(
-            &cg, sentence, dev_corpus.correct_act_sent[sii],
-            dev_corpus.vocab->actions, dev_corpus.vocab->int_to_words,
-            &parser_state, &correct);
+        parser.LogProbTagger(sentence, *parser.GetVocab(), &cg, true,
+                             &parser_state);
+        vector<unsigned> actions = LogProbTagger(sentence, *dev_corpus.vocab,
+                                                 &cg, false);
         llh += as_scalar(cg.incremental_forward());
         vector<CausalityRelation> predicted = Decode(sentence, actions,
                                                      *dev_corpus.vocab);
@@ -147,25 +151,6 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
   }
 }
 
-void LSTMCausalityTagger::SaveModel(const string& model_fname,
-                                    bool softlink_created) {
-  ofstream out_file(model_fname);
-  eos::portable_oarchive archive(out_file);
-  archive << *this;
-  cerr << "Model saved." << endl;
-  // Create a soft link to the most recent model in order to make it
-  // easier to refer to it in a shell script.
-  if (!softlink_created) {
-    string softlink = "latest_model.params";
-
-    if (system((string("rm -f ") + softlink).c_str()) == 0
-        && system(("ln -s " + model_fname + " " + softlink).c_str()) == 0) {
-      cerr << "Created " << softlink << " as a soft link to " << model_fname
-           << " for convenience." << endl;
-    }
-  }
-}
-
 
 vector<CausalityRelation> LSTMCausalityTagger::Decode(
     const Sentence& sentence, const vector<unsigned> actions,
@@ -184,7 +169,8 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
   CausalityRelation* current_rel = nullptr;
 
   auto AdvanceConnToken =
-      [&](vector<unsigned>::const_iterator iter) {
+      [&](vector<unsigned>::const_iterator iter,
+          vector<unsigned>::const_iterator end) {
         // Move the current token onto lambda_1 and advance to the next one.
         assert(!lambda_4.empty());
         lambda_1.push_back(current_conn_token);
@@ -235,7 +221,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
     unsigned action = *iter;
     const string& action_name = vocab.actions[action];
     if (action_name == "NO_CONN") {
-      AdvanceConnToken(iter);
+      AdvanceConnToken(iter, end);
     } else if (action_name == "NO-ARC-LEFT") {
       AdvanceArgTokenLeft();
     } else if (action_name == "NO-ARC-RIGHT") {
@@ -283,10 +269,10 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
         IndexList* arg_indices = current_rel->GetArgument(arg_num);
         ReallyDeleteIf(arg_indices, gte_repeated_index);
       }
-
+      // Don't advance the arg token
     } else if (action_name == "SHIFT") {
       // Complete a relation.
-      AdvanceConnToken(iter);
+      AdvanceConnToken(iter, end);
       current_rel = nullptr;
     }
   }
@@ -295,11 +281,150 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
 }
 
 
-vector<unsigned> LSTMCausalityTagger::LogProbTagger(
-    cnn::ComputationGraph* hg, const Sentence& sentence,
-    const vector<unsigned>& correct_actions, const vector<string>& action_names,
-    const vector<string>& int_to_words, expr::Expression* parser_state,
-    double* correct) {
-  // TODO: Fill me in
-  return {};
+void LSTMCausalityTagger::InitializeNetworkParameters() {
+  unsigned action_size = vocab.CountActions() + 1;
+  unsigned pos_size = vocab.CountPOS() + 10; // bad way of handling new POS
+  unsigned vocab_size = vocab.CountWords() + 1;
+  unsigned pretrained_dim = parser.pretrained.begin()->second.size();
+
+  assert(!parser.pretrained.empty());
+  assert(parser.options.use_pos);
+
+  p_w = model.add_lookup_parameters(vocab_size, {options.word_dim});
+  p_t = model.add_lookup_parameters(vocab_size, {pretrained_dim});
+  for (const auto& it : parser.pretrained)
+    p_t->Initialize(it.first, it.second);
+  p_a = model.add_lookup_parameters(action_size, {options.action_dim});
+  p_r = model.add_lookup_parameters(action_size, {options.rel_dim});
+  p_pos = model.add_lookup_parameters(pos_size, {options.pos_dim});
+
+  p_sbias = model.add_parameters({options.state_dim});
+  p_L1toS = model.add_parameters({options.state_dim, options.lstm_hidden_dim});
+  p_L2toS = model.add_parameters({options.state_dim, options.lstm_hidden_dim});
+  p_L3toS = model.add_parameters({options.state_dim, options.lstm_hidden_dim});
+  p_L4toS = model.add_parameters({options.state_dim, options.lstm_hidden_dim});
+  p_actions2S = model.add_parameters({options.state_dim,
+                                      options.lstm_hidden_dim});
+  p_rels2S = model.add_parameters({options.state_dim, options.rel_dim});
+  p_s2a = model.add_parameters({action_size, options.state_dim});
+  p_abias = model.add_parameters({action_size});
+
+  p_rbias = model.add_parameters({options.rel_dim});
+  p_connective_rel = model.add_parameters({options.rel_dim});
+  p_cause_rel = model.add_parameters({options.rel_dim});
+  p_effect_rel = model.add_parameters({options.rel_dim});
+  p_means_rel = model.add_parameters({options.rel_dim});
+
+  p_w2l = model.add_parameters({options.lstm_input_dim, options.word_dim});
+  p_t2l = model.add_parameters({options.lstm_input_dim, pretrained_dim});
+  p_p2l = model.add_parameters({options.lstm_input_dim, options.pos_dim});
+  p_ib = model.add_parameters({options.lstm_input_dim});
+  p_action_start = model.add_parameters({options.action_dim});
+
+  p_relations_guard = model.add_parameters({options.lstm_input_dim});
+  p_L1_guard = model.add_parameters({options.lstm_input_dim});
+  p_L2_guard = model.add_parameters({options.lstm_input_dim});
+  p_L3_guard = model.add_parameters({options.lstm_input_dim});
+  p_L4_guard = model.add_parameters({options.lstm_input_dim});
+  p_connective_guard = model.add_parameters({options.lstm_input_dim});
+  p_cause_guard = model.add_parameters({options.lstm_input_dim});
+  p_effect_guard = model.add_parameters({options.lstm_input_dim});
+  p_means_guard = model.add_parameters({options.lstm_input_dim});
+}
+
+
+LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
+    ComputationGraph* cg,
+    const Sentence& raw_sent,
+    const Sentence::SentenceMap& sentence,  // w/ OOVs replaced
+    const vector<unsigned>& correct_actions,
+    const vector<string>& action_names) {
+  CausalityTaggerState* state = new CausalityTaggerState;
+  state->current_conn_token = sentence.begin()->first;
+  state->current_arg_token = state->current_conn_token;
+  state->last_action = -1;
+
+  vector<reference_wrapper<LSTMBuilder>> lstms {
+    L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm,
+    relations_lstm, connective_lstm, cause_lstm, effect_lstm, means_lstm};
+  for (reference_wrapper<LSTMBuilder> builder : lstms) {
+    builder.get().new_graph(*cg);
+    builder.get().start_new_sequence();
+  }
+
+  // Initialize the sentence-level LSTMs. All but L4 should start out empty.
+  action_history_lstm.add_input(GetParamExpr(p_action_start));
+  relations_lstm.add_input(GetParamExpr(p_relations_guard));
+
+  L1_lstm.add_input(GetParamExpr(p_L1_guard));
+  state->L1.push_back(GetParamExpr(p_L1_guard));
+  state->L1i.push_back(-1);
+  L2_lstm.add_input(GetParamExpr(p_L2_guard));
+  state->L2.push_back(GetParamExpr(p_L2_guard));
+  state->L2i.push_back(-1);
+  L3_lstm.add_input(GetParamExpr(p_L3_guard));
+  state->L3.push_back(GetParamExpr(p_L3_guard));
+  state->L2i.push_back(-1);
+
+  state->L4.push_back(GetParamExpr(p_L4_guard));
+  state->L4i.push_back(-1);
+  // TODO: do we need to do anything special to handle OOV words?
+  for (const auto& index_and_word_id : sentence) {
+    const unsigned token_index = index_and_word_id.first;
+    const unsigned word_id = index_and_word_id.second;
+    unsigned pos_id = raw_sent.poses.at(token_index);
+
+    Expression word = lookup(*cg, p_w, word_id);
+    Expression pretrained = const_lookup(*cg, p_t, word_id);
+    Expression pos = lookup(*cg, p_pos, pos_id);
+    Expression full_word_repr = rectify(
+        affine_transform( {GetParamExpr(p_ib), GetParamExpr(p_w2l), word,
+            GetParamExpr(p_p2l), pos, GetParamExpr(p_t2l), pretrained}));
+
+    state->L4.push_back(full_word_repr);
+    state->L4i.push_back(token_index);
+  }
+  // Add to LSTM in reverse order so that rewind_one_step pulls off the left.
+  // (Add guard first; then skip it at the end.)
+  L4_lstm.add_input(GetParamExpr(p_L4_guard));
+  for (auto iter = state->L4.rbegin(); iter != state->L4.rend() - 1; ++iter) {
+    L4_lstm.add_input(*iter);
+  }
+
+  return state;
+}
+
+
+bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
+                                            const vector<string>& action_names,
+                                            const TaggerState& state) const {
+  const CausalityTaggerState& real_state =
+      static_cast<const CausalityTaggerState&>(state);
+  return false;
+}
+
+
+Expression LSTMCausalityTagger::GetActionProbabilities(
+    const TaggerState& state) {
+  // p_t = sbias + A * actions_lstm + rels2S * rels_lstm + \sum_i LToS_i * L_i
+  Expression p_t = affine_transform(
+      {GetParamExpr(p_sbias), GetParamExpr(p_actions2S),
+          action_history_lstm.back(), GetParamExpr(p_rels2S),
+          relations_lstm.back(), GetParamExpr(p_L1toS), L1_lstm.back(),
+          GetParamExpr(p_L2toS), L2_lstm.back(), GetParamExpr(p_L3toS),
+          L3_lstm.back(), GetParamExpr(p_L4toS), L4_lstm.back()});
+  Expression p_t_nonlinear = rectify(p_t);
+  // r_t = abias + p2a * nlp
+  Expression r_t = affine_transform({GetParamExpr(p_abias), GetParamExpr(p_s2a),
+                                     p_t_nonlinear});
+  return r_t;
+}
+
+
+void LSTMCausalityTagger::DoAction(unsigned action,
+                                   const vector<string>& action_names,
+                                   TaggerState* state, ComputationGraph* cg) {
+  const CausalityTaggerState* real_state =
+      static_cast<const CausalityTaggerState*>(state);
+
 }

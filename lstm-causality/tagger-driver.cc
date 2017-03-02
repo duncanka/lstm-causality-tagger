@@ -38,10 +38,10 @@ int main(int argc, char** argv) {
   po::variables_map conf;
   InitCommandLine(argc, argv, &conf);
 
-  LSTMCausalityTagger tagger(conf["parser-model"].as<string>());
-  CorpusVocabulary vocab(tagger.GetParser().vocab);
+  LSTMCausalityTagger tagger(conf["parser-model"].as<string>(), {});
   const string& training_path = conf["training-data"].as<string>();
-  BecauseOracleTransitionCorpus corpus(&vocab, training_path, true);
+  BecauseOracleTransitionCorpus corpus(tagger.GetVocab(), training_path, true);
+  tagger.FinalizeVocab();
 
   return 0;
 }

@@ -1,18 +1,50 @@
 #ifndef LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_
 #define LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_
 
+#include <boost/serialization/split_member.hpp>
+#include <deque>
 #include <string>
+#include <vector>
 
 #include "BecauseData.h"
 #include "BecauseOracleTransitionCorpus.h"
 #include "cnn/model.h"
 #include "parser/corpus.h"
 #include "parser/lstm-parser.h"
+#include "parser/lstm-transition-tagger.h"
 
-class LSTMCausalityTagger {
+class LSTMCausalityTagger : public lstm_parser::LSTMTransitionTagger {
 public:
-  explicit LSTMCausalityTagger(const std::string& parser_model_path)
-    : parser(parser_model_path) {}
+  struct TaggerOptions {
+    unsigned word_dim;
+    unsigned lstm_layers;
+    unsigned lstm_input_dim;
+    unsigned lstm_hidden_dim;
+    unsigned rel_dim;
+    unsigned action_dim;
+    unsigned pos_dim;
+    unsigned state_dim;  // dimension for the concatenated tagger state
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version) {
+      ar & word_dim;
+      ar & lstm_layers;
+      ar & lstm_input_dim;
+      ar & lstm_hidden_dim;
+      ar & rel_dim;
+      ar & action_dim;
+      ar & pos_dim;
+      ar & state_dim;
+    }
+  };
+
+  TaggerOptions options;
+
+  LSTMCausalityTagger(const std::string& parser_model_path,
+                      const TaggerOptions& options)
+      : options(options), parser(parser_model_path) {
+    vocab = *parser.GetVocab();  // now that parser is initialized, copy vocab
+  }
 
   virtual ~LSTMCausalityTagger() {}
 
@@ -26,39 +58,165 @@ public:
                                      double* correct = nullptr) {
     cnn::ComputationGraph cg;
     cnn::expr::Expression parser_state;
-    parser.LogProbParser(sentence, parser.vocab, &cg, &parser_state);
-    std::vector<unsigned> actions = LogProbTagger(
-        &cg, sentence, std::vector<unsigned>(), vocab.actions,
-        vocab.int_to_words, &parser_state, correct);
+    parser.LogProbTagger(sentence, *parser.GetVocab(), &cg, true,
+                         &parser_state);
+    std::vector<unsigned> actions = LogProbTagger(sentence, vocab, &cg,
+                                                  false, &parser_state);
     return Decode(sentence, actions, vocab);
   }
 
   const lstm_parser::LSTMParser& GetParser() const { return parser; }
 
-  template<class Archive>
-  void serialize(Archive & ar, const unsigned int version) {
-    ar & model;
-  }
-
-
 protected:
   lstm_parser::LSTMParser parser;
-  cnn::Model model;
 
-  std::vector<unsigned> LogProbTagger(
-        cnn::ComputationGraph* hg,
-        const lstm_parser::Sentence& sentence,
-        const std::vector<unsigned>& correct_actions,
-        const std::vector<std::string>& action_names,
-        const std::vector<std::string>& int_to_words,
-        cnn::expr::Expression* parser_state, double* correct);
+  cnn::LSTMBuilder L1_lstm;  // unprocessed words to left of current word
+  cnn::LSTMBuilder L2_lstm;  // processed words to left of current word
+  cnn::LSTMBuilder L3_lstm;  // unprocessed words to right of current word
+  cnn::LSTMBuilder L4_lstm;  // processed words to left of current word
+  cnn::LSTMBuilder action_history_lstm;
+  cnn::LSTMBuilder relations_lstm;
+
+  cnn::LSTMBuilder connective_lstm;
+  cnn::LSTMBuilder cause_lstm;
+  cnn::LSTMBuilder effect_lstm;
+  cnn::LSTMBuilder means_lstm;
+
+  // Lookup parameters
+  cnn::LookupParameters* p_w;  // word embeddings
+  cnn::LookupParameters* p_t;  // pretrained word embeddings (not updated)
+  cnn::LookupParameters* p_a;  // action embeddings (for action_history_lstm)
+  cnn::LookupParameters* p_r;  // embeddings of fully or partially completed
+                               // relations (composed for relations_lstm)
+  cnn::LookupParameters* p_pos;  // pos tag embeddings
+
+  // Parameters for overall tagger state
+  cnn::Parameters* p_sbias;       // tagger state bias
+  cnn::Parameters* p_L1toS;       // lambda 1 lstm to tagger state
+  cnn::Parameters* p_L2toS;       // lambda 2 lstm to tagger state
+  cnn::Parameters* p_L3toS;       // lambda 3 lstm to tagger state
+  cnn::Parameters* p_L4toS;       // lambda 4 lstm to tagger state
+  cnn::Parameters* p_actions2S;  // action history lstm to tagger state
+  cnn::Parameters* p_rels2S;     // relations lstm to tagger state
+  cnn::Parameters* p_s2a;         // parser state to action
+  cnn::Parameters* p_abias;       // bias for final action output
+
+  // Parameters for composition function for embedding a relation
+  cnn::Parameters* p_rbias;           // bias for composition function
+  cnn::Parameters* p_connective_rel;  // connective to relation embedding
+  cnn::Parameters* p_cause_rel;       // cause to relation embedding
+  cnn::Parameters* p_effect_rel;      // effect to relation embedding
+  cnn::Parameters* p_means_rel;       // means to relation embedding
+
+  // Parameters for LSTM input for stacks containing words
+  cnn::Parameters* p_w2l;           // word to LSTM input
+  cnn::Parameters* p_p2l;           // POS to LSTM input
+  cnn::Parameters* p_t2l;           // pretrained word embeddings to LSTM input
+  cnn::Parameters* p_ib;            // LSTM input bias
+  cnn::Parameters* p_action_start;  // action bias
+
+  // LSTM guards (create biases for different LSTMs)
+  cnn::Parameters* p_relations_guard;
+  cnn::Parameters* p_L1_guard;
+  cnn::Parameters* p_L2_guard;
+  cnn::Parameters* p_L3_guard;
+  cnn::Parameters* p_L4_guard;
+  // Guards for per-instance LSTMs
+  cnn::Parameters* p_connective_guard;
+  cnn::Parameters* p_cause_guard;
+  cnn::Parameters* p_effect_guard;
+  cnn::Parameters* p_means_guard;
+
+  struct CausalityTaggerState : public TaggerState {
+    std::vector<Expression> L1;
+    std::deque<Expression> L2;
+    std::vector<Expression> L3;
+    std::deque<Expression> L4;
+    std::vector<unsigned> L1i;
+    std::deque<unsigned> L2i;
+    std::vector<unsigned> L3i;
+    std::deque<unsigned> L4i;
+    std::vector<Expression> relations;
+    unsigned current_conn_token;
+    unsigned current_arg_token;
+    unsigned last_action;
+  };
+
+  virtual std::vector<cnn::Parameters*> GetParameters() override {
+    return {p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_actions2S, p_rels2S,
+      p_s2a, p_abias, p_rbias, p_connective_rel, p_cause_rel, p_effect_rel,
+      p_means_rel, p_w2l, p_p2l, p_t2l, p_ib, p_action_start, p_relations_guard,
+      p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard, p_connective_guard,
+      p_cause_guard, p_effect_guard, p_means_guard};
+  }
+
+  virtual TaggerState* InitializeParserState(
+      cnn::ComputationGraph* cg, const lstm_parser::Sentence& raw_sent,
+      const lstm_parser::Sentence::SentenceMap& sentence,
+      const std::vector<unsigned>& correct_actions,
+      const std::vector<std::string>& action_names) override;
+
+  virtual void InitializeNetworkParameters() override;
+
+  virtual bool ShouldTerminate(
+      const TaggerState& state, const lstm_parser::Sentence& raw_sent,
+      const lstm_parser::Sentence::SentenceMap& sent) const override {
+    const CausalityTaggerState& real_state =
+        static_cast<const CausalityTaggerState&>(state);
+    // We're done when we're looking at the last word, and we've compared
+    // every other word in the sentence to it.
+    return real_state.current_conn_token >= sent.rbegin()->first
+        && real_state.L2.empty() && real_state.L3.empty();
+  }
+
+  virtual bool IsActionForbidden(const unsigned action,
+                                 const std::vector<std::string>& action_names,
+                                 const TaggerState& state) const override;
+
+  virtual cnn::expr::Expression GetActionProbabilities(const TaggerState& state)
+      override;
+
+  virtual void DoAction(unsigned action,
+                        const std::vector<std::string>& action_names,
+                        TaggerState* state, cnn::ComputationGraph* cg) override;
+
+  virtual void DoSave(eos::portable_oarchive& archive) {
+    archive << *this;
+  }
 
   std::vector<CausalityRelation> Decode(
       const lstm_parser::Sentence& sentence,
       const std::vector<unsigned> actions,
       const lstm_parser::CorpusVocabulary& vocab);
 
-  void SaveModel(const std::string& model_fname, bool softlink_created);
+private:
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void save(Archive& ar, const unsigned int version) const {
+    ar & options;
+    ar & vocab;
+    ar & model;
+  }
+
+  template<class Archive>
+  void load(Archive& ar, const unsigned int version) {
+    finalized = false; // we'll need to re-finalize after resetting the network.
+
+    ar & options;
+    ar & vocab;
+    // Don't finalize yet...we want to finalize once our model is initialized.
+
+    model = cnn::Model();
+    // Reset the LSTMs *before* reading in the network model, to make sure the
+    // model knows how big it's supposed to be.
+    // TODO: initialize LSTM builders.
+
+    FinalizeVocab(); // OK, now finalize. :)
+
+    ar & model;
+  }
+  BOOST_SERIALIZATION_SPLIT_MEMBER();
 };
 
 #endif /* LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_ */
