@@ -139,7 +139,7 @@ protected:
     std::vector<Expression> relations;
     unsigned current_conn_token;
     unsigned current_arg_token;
-    unsigned last_action;
+    bool currently_processing_rel;
   };
 
   virtual std::vector<cnn::Parameters*> GetParameters() override {

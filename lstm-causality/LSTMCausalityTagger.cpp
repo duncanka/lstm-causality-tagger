@@ -19,6 +19,7 @@ using namespace std;
 using namespace cnn;
 using namespace cnn::expr;
 using namespace lstm_parser;
+using namespace boost::algorithm;
 typedef BecauseRelation::IndexList IndexList;
 
 
@@ -342,7 +343,7 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
   CausalityTaggerState* state = new CausalityTaggerState;
   state->current_conn_token = sentence.begin()->first;
   state->current_arg_token = state->current_conn_token;
-  state->last_action = -1;
+  state->currently_processing_rel = false;
 
   vector<reference_wrapper<LSTMBuilder>> lstms {
     L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm,
@@ -400,7 +401,14 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
                                             const TaggerState& state) const {
   const CausalityTaggerState& real_state =
       static_cast<const CausalityTaggerState&>(state);
-  return false;
+  const string& action_name = action_names[action];
+  if (!real_state.currently_processing_rel) {
+    return action_name[0] == 'N'  // NO-CONN
+        || action_name[0] = 'R'   // RIGHT-ARC
+        || action_name[0] = 'L';  // LEFT-ARC
+  } else { // When we're processing a relation, everything except NO-CONN is OK.
+    return action_name[0] != 'N';
+  }
 }
 
 
