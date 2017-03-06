@@ -42,16 +42,14 @@ public:
   TaggerOptions options;
 
   LSTMCausalityTagger(const std::string& parser_model_path,
-                      const TaggerOptions& options)
-      : options(options), parser(parser_model_path) {
-    vocab = *parser.GetVocab();  // now that parser is initialized, copy vocab
-  }
+                      const TaggerOptions& options);
+
+  // TODO: add constructor for loading from model
 
   virtual ~LSTMCausalityTagger() {}
 
   void Train(const BecauseOracleTransitionCorpus& corpus,
-             const BecauseOracleTransitionCorpus& dev_corpus,
-             const double unk_prob, const std::string& model_fname,
+             double dev_pct, const std::string& model_fname,
              const volatile bool* requested_stop = nullptr);
 
   std::vector<CausalityRelation> Tag(const lstm_parser::Sentence& sentence,
@@ -87,8 +85,6 @@ protected:
   cnn::LookupParameters* p_w;  // word embeddings
   cnn::LookupParameters* p_t;  // pretrained word embeddings (not updated)
   cnn::LookupParameters* p_a;  // action embeddings (for action_history_lstm)
-  cnn::LookupParameters* p_r;  // embeddings of fully or partially completed
-                               // relations (composed for relations_lstm)
   cnn::LookupParameters* p_pos;  // pos tag embeddings
 
   // Parameters for overall tagger state

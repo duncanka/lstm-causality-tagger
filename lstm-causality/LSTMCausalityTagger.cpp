@@ -22,10 +22,37 @@ using namespace lstm_parser;
 typedef BecauseRelation::IndexList IndexList;
 
 
+LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
+                                         const TaggerOptions& options)
+    : options(options), parser(parser_model_path),
+      L1_lstm(options.lstm_layers, options.lstm_input_dim,
+              options.lstm_hidden_dim, &model),
+      L2_lstm(options.lstm_layers, options.lstm_input_dim,
+              options.lstm_hidden_dim, &model),
+      L3_lstm(options.lstm_layers, options.lstm_input_dim,
+              options.lstm_hidden_dim, &model),
+      L4_lstm(options.lstm_layers, options.lstm_input_dim,
+              options.lstm_hidden_dim, &model),
+      action_history_lstm(options.lstm_layers, options.lstm_input_dim,
+                          options.lstm_hidden_dim, &model),
+      relations_lstm(options.lstm_layers, options.lstm_input_dim,
+                     options.lstm_hidden_dim, &model),
+      connective_lstm(options.lstm_layers, options.lstm_input_dim,
+                      options.lstm_hidden_dim, &model),
+      cause_lstm(options.lstm_layers, options.lstm_input_dim,
+              options.lstm_hidden_dim, &model),
+      effect_lstm(options.lstm_layers, options.lstm_input_dim,
+              options.lstm_hidden_dim, &model),
+      means_lstm(options.lstm_layers, options.lstm_input_dim,
+              options.lstm_hidden_dim, &model) {
+  vocab = *parser.GetVocab();  // now that parser is initialized, copy vocab
+  vocab.actions.clear();
+  vocab.actions_to_arc_labels.clear();
+}
+
+
 void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
-                                const BecauseOracleTransitionCorpus& dev_corpus,
-                                const double unk_prob,
-                                const string& model_fname,
+                                double dev_pct, const string& model_fname,
                                 const volatile bool* requested_stop) {
   const unsigned num_sentences = corpus.sentences.size();
   vector<unsigned> order(corpus.sentences.size());
@@ -52,11 +79,14 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
   bool first = true;
   int iter = -1;
 
-  unsigned sentence_i = num_sentences;
+  unsigned num_sentences_dev = round(dev_pct * num_sentences);
+  unsigned num_sentences_train = num_sentences - num_sentences_dev;
+
+  unsigned sentence_i = num_sentences_train;
   while (!requested_stop || !(*requested_stop)) {
     ++iter;
     for (unsigned sii = 0; sii < status_every_i_iterations; ++sii) {
-      if (sentence_i == num_sentences) {
+      if (sentence_i == num_sentences_train) {
         sentence_i = 0;
         if (first) {
           first = false;
@@ -104,29 +134,27 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
 
     if (iter % 25 == 1) {
       // report on dev set
-      unsigned dev_size = dev_corpus.sentences.size();
-      // dev_size = 100;
       double llh = 0;
       double num_actions = 0;
       double correct = 0;
       BecauseRelationMetrics<> evaluation;
       const auto t_start = chrono::high_resolution_clock::now();
-      for (unsigned sii = 0; sii < dev_size; ++sii) {
-        const Sentence& sentence = dev_corpus.sentences[sii];
+      for (unsigned sii = num_sentences_train; sii < num_sentences; ++sii) {
+        const Sentence& sentence = corpus.sentences[sii];
 
         ComputationGraph cg;
         Expression parser_state;
         parser.LogProbTagger(sentence, *parser.GetVocab(), &cg, true,
                              &parser_state);
-        vector<unsigned> actions = LogProbTagger(sentence, *dev_corpus.vocab,
+        vector<unsigned> actions = LogProbTagger(sentence, *corpus.vocab,
                                                  &cg, false);
         llh += as_scalar(cg.incremental_forward());
         vector<CausalityRelation> predicted = Decode(sentence, actions,
-                                                     *dev_corpus.vocab);
+                                                     *corpus.vocab);
 
-        const vector<unsigned>& gold_actions = dev_corpus.correct_act_sent[sii];
+        const vector<unsigned>& gold_actions = corpus.correct_act_sent[sii];
         vector<CausalityRelation> gold = Decode(sentence, gold_actions,
-                                                *dev_corpus.vocab);
+                                                *corpus.vocab);
 
         num_actions += actions.size();
         evaluation += BecauseRelationMetrics<>(gold, predicted);
@@ -138,7 +166,7 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
            << ")llh=" << llh << " ppl: " << exp(llh / num_actions)
            << "\terr: " << (num_actions - correct) / num_actions
            << " evaluation: \n  " << evaluation
-           << "\n[" << dev_size << " sents in "
+           << "\n[" << num_sentences_dev << " sentences in "
            << chrono::duration<double, milli>(t_end - t_start).count() << " ms]"
            << endl;
 
@@ -308,7 +336,6 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   for (const auto& it : parser.pretrained)
     p_t->Initialize(it.first, it.second);
   p_a = model.add_lookup_parameters(action_size, {options.action_dim});
-  p_r = model.add_lookup_parameters(action_size, {options.rel_dim});
   p_pos = model.add_lookup_parameters(pos_size, {options.pos_dim});
 
   p_sbias = model.add_parameters({options.state_dim});
