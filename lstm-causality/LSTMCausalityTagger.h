@@ -3,17 +3,18 @@
 
 #include <boost/serialization/split_member.hpp>
 #include <deque>
+#include <map>
 #include <string>
 #include <vector>
 
+#include "../lstm-parser/parser/neural-transition-tagger.h"
 #include "BecauseData.h"
 #include "BecauseOracleTransitionCorpus.h"
 #include "cnn/model.h"
 #include "parser/corpus.h"
 #include "parser/lstm-parser.h"
-#include "parser/lstm-transition-tagger.h"
 
-class LSTMCausalityTagger : public lstm_parser::LSTMTransitionTagger {
+class LSTMCausalityTagger : public lstm_parser::NeuralTransitionTagger {
 public:
   struct TaggerOptions {
     unsigned word_dim;
@@ -128,18 +129,31 @@ protected:
   cnn::Parameters* p_means_guard;
 
   struct CausalityTaggerState : public TaggerState {
-    std::vector<Expression> L1;
-    std::deque<Expression> L2;
-    std::vector<Expression> L3;
-    std::deque<Expression> L4;
+    std::map<unsigned, Expression> all_tokens;
+    std::vector<Expression> L1;  // unprocessed tokens to the left
+    std::deque<Expression> L2;   // processed tokens to the left
+    std::vector<Expression> L3;  // unprocessed tokens to the right
+    std::deque<Expression> L4;   // processed tokens to the right
     std::vector<unsigned> L1i;
     std::deque<unsigned> L2i;
     std::vector<unsigned> L3i;
     std::deque<unsigned> L4i;
-    std::vector<Expression> relations;
-    unsigned current_conn_token;
-    unsigned current_arg_token;
     bool currently_processing_rel;
+    // Need lists of token Expressions to duplicate if we get a SPLIT.
+    std::vector<unsigned> current_rel_conn_tokens;
+    std::vector<unsigned> current_rel_cause_tokens;
+    std::vector<unsigned> current_rel_effect_tokens;
+    std::vector<unsigned> current_rel_means_tokens;
+    Expression current_conn_token;
+    unsigned current_conn_token_i;
+    Expression current_arg_token;
+    unsigned current_arg_token_i;
+
+    CausalityTaggerState(const lstm_parser::Sentence& raw_sent,
+                         const lstm_parser::Sentence::SentenceMap& sent)
+    : TaggerState{raw_sent, sent}, currently_processing_rel(false),
+      current_conn_token_i(sentence.begin()->first),
+      current_arg_token_i(sentence.begin()->first) {}
   };
 
   virtual std::vector<cnn::Parameters*> GetParameters() override {
@@ -158,15 +172,13 @@ protected:
 
   virtual void InitializeNetworkParameters() override;
 
-  virtual bool ShouldTerminate(
-      const TaggerState& state, const lstm_parser::Sentence& raw_sent,
-      const lstm_parser::Sentence::SentenceMap& sent) const override {
+  virtual bool ShouldTerminate(const TaggerState& state) const override {
     const CausalityTaggerState& real_state =
         static_cast<const CausalityTaggerState&>(state);
     // We're done when we're looking at the last word, and we've compared
     // every other word in the sentence to it.
-    return real_state.current_conn_token >= sent.rbegin()->first
-        && real_state.L2.empty() && real_state.L3.empty();
+    return real_state.L2.empty() && real_state.L3.empty() &&
+        real_state.current_conn_token_i >= real_state.sentence.rbegin()->first;
   }
 
   virtual bool IsActionForbidden(const unsigned action,

@@ -19,7 +19,6 @@ using namespace std;
 using namespace cnn;
 using namespace cnn::expr;
 using namespace lstm_parser;
-using namespace boost::algorithm;
 typedef BecauseRelation::IndexList IndexList;
 
 
@@ -169,22 +168,6 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
   unsigned current_arg_token = sentence.words.begin()->first;
   CausalityRelation* current_rel = nullptr;
 
-  auto AdvanceConnToken =
-      [&](vector<unsigned>::const_iterator iter,
-          vector<unsigned>::const_iterator end) {
-        // Move the current token onto lambda_1 and advance to the next one.
-        assert(!lambda_4.empty());
-        lambda_1.push_back(current_conn_token);
-        lambda_4.pop_front();// remove duplicate of current_conn_token
-        if (!lambda_4.empty()) {
-          current_conn_token = lambda_4.front();
-        } else {
-          // If we have no more tokens to pull in, we'd better be on the last
-          // action.
-          assert(iter == end - 1);
-        }
-      };
-
   auto AdvanceArgTokenLeft =
       [&]() {
         assert(!lambda_1.empty());
@@ -222,7 +205,18 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
     unsigned action = *iter;
     const string& action_name = vocab.actions[action];
     if (action_name == "NO_CONN") {
-      AdvanceConnToken(iter, end);
+      // At a minimum, L4 should have the current token duplicate
+      assert(!lambda_4.empty());
+      lambda_1.push_back(current_conn_token);
+      lambda_4.pop_front();// remove duplicate of current_conn_token
+      if (!lambda_4.empty()) {
+        current_conn_token = lambda_4.front();
+        // Arg token stays the same -- first token in the sentence.
+      } else {
+        // If we have no more tokens to pull in, we'd better be on the last
+        // action.
+        assert(iter == end - 1);
+      }
     } else if (action_name == "NO-ARC-LEFT") {
       AdvanceArgTokenLeft();
     } else if (action_name == "NO-ARC-RIGHT") {
@@ -270,10 +264,28 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
         IndexList* arg_indices = current_rel->GetArgument(arg_num);
         ReallyDeleteIf(arg_indices, gte_repeated_index);
       }
-      // Don't advance the arg token
+      // Don't advance the arg token.
     } else if (action_name == "SHIFT") {
       // Complete a relation.
-      AdvanceConnToken(iter, end);
+      assert(lambda_4.empty() && lambda_1.empty());  // processed all tokens?
+      copy(make_move_iterator(lambda_2.begin()),  // move all of L2 back to L1
+           make_move_iterator(lambda_2.end()), lambda_1.begin());
+      lambda_1.push_back(current_conn_token);
+      // Move L3 back to L4, skipping current token copy.
+      auto lambda_3_iter = lambda_3.begin();
+      lambda_3_iter += 1; // skip copy of the current token
+      if (lambda_3_iter != lambda_3.end()) {
+        current_conn_token = *lambda_3_iter;
+        current_arg_token = lambda_1.front();
+        lambda_4.resize(lambda_3.size() - 1);
+        copy(make_move_iterator(lambda_3_iter),
+             make_move_iterator(lambda_3.end()), lambda_4.begin());
+        lambda_3.clear();
+      } else {
+        // If we have no more tokens to pull in, we'd better be on the last
+        // action.
+        assert(iter == end - 1);
+      }
       current_rel = nullptr;
     }
   }
@@ -340,16 +352,18 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     const Sentence::SentenceMap& sentence,  // w/ OOVs replaced
     const vector<unsigned>& correct_actions,
     const vector<string>& action_names) {
-  CausalityTaggerState* state = new CausalityTaggerState;
-  state->current_conn_token = sentence.begin()->first;
-  state->current_arg_token = state->current_conn_token;
-  state->currently_processing_rel = false;
+  CausalityTaggerState* state = new CausalityTaggerState(raw_sent, sentence);
 
-  vector<reference_wrapper<LSTMBuilder>> lstms {
+  vector<reference_wrapper<LSTMBuilder>> all_lstms = {
     L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm,
     relations_lstm, connective_lstm, cause_lstm, effect_lstm, means_lstm};
-  for (reference_wrapper<LSTMBuilder> builder : lstms) {
+  for (reference_wrapper<LSTMBuilder> builder : all_lstms) {
     builder.get().new_graph(*cg);
+  }
+  // Non-persistent LSTMs get sequences started in StartNewRelation.
+  vector<reference_wrapper<LSTMBuilder>> persistent_lstms = {
+    L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm, relations_lstm};
+  for (reference_wrapper<LSTMBuilder> builder : persistent_lstms) {
     builder.get().start_new_sequence();
   }
 
@@ -379,11 +393,12 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     Expression pretrained = const_lookup(*cg, p_t, word_id);
     Expression pos = lookup(*cg, p_pos, pos_id);
     Expression full_word_repr = rectify(
-        affine_transform( {GetParamExpr(p_ib), GetParamExpr(p_w2l), word,
+        affine_transform({GetParamExpr(p_ib), GetParamExpr(p_w2l), word,
             GetParamExpr(p_p2l), pos, GetParamExpr(p_t2l), pretrained}));
 
     state->L4.push_back(full_word_repr);
     state->L4i.push_back(token_index);
+    state->all_tokens[token_index] = full_word_repr;
   }
   // Add to LSTM in reverse order so that rewind_one_step pulls off the left.
   // (Add guard first; then skip it at the end.)
@@ -391,6 +406,9 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
   for (auto iter = state->L4.rbegin(); iter != state->L4.rend() - 1; ++iter) {
     L4_lstm.add_input(*iter);
   }
+
+  state->current_conn_token = state->L4.front();
+  state->current_arg_token = state->L4.front();
 
   return state;
 }
@@ -404,10 +422,15 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
   const string& action_name = action_names[action];
   if (!real_state.currently_processing_rel) {
     return action_name[0] == 'N'  // NO-CONN
-        || action_name[0] = 'R'   // RIGHT-ARC
-        || action_name[0] = 'L';  // LEFT-ARC
-  } else { // When we're processing a relation, everything except NO-CONN is OK.
-    return action_name[0] != 'N';
+        || action_name[0] == 'R'   // RIGHT-ARC
+        || action_name[0] == 'L';  // LEFT-ARC
+  } else { // When we're processing a relation, everything but NO-CONN is OK...
+    // ...except SHIFT is allowed only once all tokens have been compared.
+    if (action_name[0] == 'S' && action_name[1] == 'H') {
+      return real_state.L1.empty() && real_state.L4.empty();
+    } else  {
+      return action_name[0] != 'N';
+    }
   }
 }
 
@@ -429,10 +452,210 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
 }
 
 
+// Macros are ugly, but this is easier than trying to make sure we remember to
+// do all steps for each push/pop, and easier than defining 4 different
+// templatized helper functions with lots of arguments. Makes the code below
+// much cleaner.
+// TODO: switch the deque code over to using entirely vectors, with some growing
+// from conceptual back to conceptual front. Should be more efficient.
+// TODO: switch to map-based algorithm where we only maintain indices, not
+// Expressions?
+#define DO_LIST_PUSH(side, list_name, var_name) \
+    list_name.push_##side(var_name); \
+    list_name##i.push_##side(var_name##_i); \
+    list_name##_lstm.add_input(var_name);
+#define DO_LIST_POP(side, list_name) \
+    list_name.pop_##side(); \
+    list_name##i.pop_##side(); \
+    list_name##_lstm.rewind_one_step();
+#define SET_LIST_BASED_VARS(var_name, list, expr) \
+    var_name = list.expr; \
+    var_name##_i = list##i.expr;
+
 void LSTMCausalityTagger::DoAction(unsigned action,
                                    const vector<string>& action_names,
                                    TaggerState* state, ComputationGraph* cg) {
-  const CausalityTaggerState* real_state =
-      static_cast<const CausalityTaggerState*>(state);
+  CausalityTaggerState* cst = static_cast<CausalityTaggerState*>(state);
+  const string& action_name = action_names[action];
 
+  // Alias key state variables for ease of reference
+  auto& L1 = cst->L1;
+  auto& L1i = cst->L1i;
+  auto& L2 = cst->L2;
+  auto& L2i = cst->L2i;
+  auto& L3 = cst->L3;
+  auto& L3i = cst->L3i;
+  auto& L4 = cst->L4;
+  auto& L4i = cst->L4i;
+  auto& current_conn_token = cst->current_conn_token;
+  auto& current_conn_token_i = cst->current_conn_token_i;
+  auto& current_arg_token = cst->current_arg_token;
+  auto& current_arg_token_i = cst->current_arg_token_i;
+
+  assert(L1.size() == L1i.size() && L2.size() == L2i.size() &&
+         L3.size() == L3i.size() && L4.size() == L4i.size());
+
+  Expression to_push;  // dummy variables for use below
+  unsigned to_push_i;
+
+  auto AdvanceArgTokenLeft = [&]() {
+    assert(!L1.empty());
+    SET_LIST_BASED_VARS(to_push, L1, back());
+    DO_LIST_PUSH(front, L2, to_push);
+    DO_LIST_POP(back, L1);
+    SET_LIST_BASED_VARS(current_arg_token, L1, back());
+  };
+
+  auto AdvanceArgTokenRight = [&]() {
+    assert(!L4.empty());
+    SET_LIST_BASED_VARS(to_push, L4, front());
+    DO_LIST_PUSH(back, L3, to_push);
+    DO_LIST_POP(front, L4);
+    SET_LIST_BASED_VARS(current_arg_token, L4, front());
+  };
+
+  auto EmbedCurrentRelation = [&]() {
+    Expression current_rel_embedding = rectify(affine_transform(
+          {GetParamExpr(p_rbias), GetParamExpr(p_connective_rel),
+              connective_lstm.back(), GetParamExpr(p_cause_rel),
+              cause_lstm.back(), GetParamExpr(p_effect_rel), effect_lstm.back(),
+              GetParamExpr(p_means_rel), means_lstm.back()}));
+    relations_lstm.add_input(current_rel_embedding);
+  };
+
+  auto UpdateCurrentRelationEmbedding = [&]() {
+    relations_lstm.rewind_one_step(); // replace existing relation embedding
+    EmbedCurrentRelation();
+  };
+
+  auto StartNewRelation = [&]() {
+    connective_lstm.start_new_sequence();
+    cause_lstm.start_new_sequence();
+    effect_lstm.start_new_sequence();
+    means_lstm.start_new_sequence();
+    cst->currently_processing_rel = true;
+  };
+
+  auto EnsureRelationWithConnective = [&](bool embed) {
+    if (!cst->currently_processing_rel) {
+      StartNewRelation();
+      connective_lstm.add_input(current_conn_token);
+      cst->current_rel_conn_tokens.push_back(current_conn_token_i);
+      if (embed) {
+        EmbedCurrentRelation();
+      }
+    }
+  };
+
+  auto AddArc = [&](unsigned action) {
+    EnsureRelationWithConnective(false);  // Don't embed yet -- wait for arg
+
+    const string& arc_type = vocab.actions_to_arc_labels[action];
+    LSTMBuilder* arg_builder;
+    vector<unsigned>* arg_list;
+    if (arc_type == "Cause") {
+      arg_builder = &cause_lstm;
+      arg_list = &cst->current_rel_cause_tokens;
+    } else if (arc_type == "Effect") {
+      arg_builder = &effect_lstm;
+      arg_list = &cst->current_rel_effect_tokens;
+    } else {  // arc_type == "Means"
+      arg_builder = &means_lstm;
+      arg_list = &cst->current_rel_means_tokens;
+    }
+    arg_builder->add_input(cst->all_tokens.at(current_arg_token_i));
+    arg_list->push_back(current_arg_token_i);
+
+    EmbedCurrentRelation();
+  };
+
+  if (action_name == "NO_CONN") {
+    assert(!L4.empty());  // @ minimum, L4 should have duplicate of current conn
+    DO_LIST_PUSH(back, L1, current_conn_token);
+    DO_LIST_POP(front, L4);  // remove duplicate of current_conn_token
+    if (!L4.empty()) {
+      SET_LIST_BASED_VARS(current_conn_token, L4, front());
+    }
+  } else if (action_name == "NO-ARC-LEFT") {
+    EnsureRelationWithConnective(true);
+    AdvanceArgTokenLeft();
+  } else if (action_name == "NO-ARC-RIGHT") {
+    EnsureRelationWithConnective(true);
+    AdvanceArgTokenRight();
+  } else if (action_name == "CONN-FRAG-LEFT") {
+    connective_lstm.add_input(current_arg_token);
+    UpdateCurrentRelationEmbedding();
+    AdvanceArgTokenLeft();
+  } else if (action_name == "CONN-FRAG-RIGHT") {
+    connective_lstm.add_input(current_arg_token);
+    UpdateCurrentRelationEmbedding();
+    AdvanceArgTokenRight();
+  } else if (boost::algorithm::starts_with(action_name, "RIGHT-ARC")) {
+    AddArc(action);
+    AdvanceArgTokenRight();
+  } else if (boost::algorithm::starts_with(action_name, "LEFT-ARC")) {
+    AddArc(action);
+    AdvanceArgTokenLeft();
+  } else if (action_name == "SPLIT") {
+    // Find the last connective word that shares the same lemma, if possible.
+    // Default is cut off after initial connective word.
+    unsigned connective_repeated_token_index =
+        cst->current_rel_conn_tokens.front();
+    for (auto token_iter = cst->current_rel_conn_tokens.rbegin();
+        token_iter != cst->current_rel_conn_tokens.rend(); ++token_iter) {
+      if (cst->sentence.at(*token_iter)
+          == cst->sentence.at(current_arg_token_i)) {
+        connective_repeated_token_index = *token_iter;
+        break;
+      }
+    }
+
+    // Now copy the current relation over to a new one, keeping only the
+    // tokens up to the repeated connective token.
+    StartNewRelation();
+    const vector<LSTMBuilder*> builders(
+        {&connective_lstm, &cause_lstm, &effect_lstm, &means_lstm});
+    const vector<vector<unsigned>*> token_lists(
+        {&cst->current_rel_conn_tokens, &cst->current_rel_cause_tokens,
+         &cst->current_rel_effect_tokens, &cst->current_rel_means_tokens});
+    for (unsigned i = 0; i < builders.size(); ++i) {
+      vector<unsigned> new_token_list;
+      new_token_list.reserve(token_lists[i]->size());  // can't get any bigger
+      for (unsigned token_index : *token_lists[i]) {
+        if (token_index < connective_repeated_token_index) {
+          builders[i]->add_input(cst->all_tokens.at(token_index));
+          new_token_list.push_back(token_index);
+        }
+      }
+      *token_lists[i] = move(new_token_list);
+    }
+    EmbedCurrentRelation();
+    // Don't advance the arg token.
+  } else if (action_name == "SHIFT") {
+    assert(L4.empty() && L1.empty());  // processed all tokens?
+    // Move L2 back to L1.
+    while (!L2.empty()) {
+      SET_LIST_BASED_VARS(to_push, L2, front());
+      DO_LIST_POP(front, L2);
+      DO_LIST_PUSH(back, L1, to_push);
+    }
+    // Move L3 back to L4.
+    while (!L3.empty()) {
+      if (L3.size() > 1) {  // skip the last item (duplicate of current token)
+        SET_LIST_BASED_VARS(to_push, L3, back());
+        DO_LIST_PUSH(front, L4, to_push);
+      }
+      DO_LIST_POP(back, L3);
+    }
+
+    if (!L4.empty()) {
+      SET_LIST_BASED_VARS(current_conn_token, L4, front());
+    }
+
+    cst->currently_processing_rel = false;
+    cst->current_rel_conn_tokens.clear();
+    cst->current_rel_cause_tokens.clear();
+    cst->current_rel_effect_tokens.clear();
+    cst->current_rel_means_tokens.clear();
+  }
 }
