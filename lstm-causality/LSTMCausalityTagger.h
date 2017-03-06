@@ -19,9 +19,11 @@ public:
   struct TaggerOptions {
     unsigned word_dim;
     unsigned lstm_layers;
-    unsigned lstm_input_dim;
-    unsigned lstm_hidden_dim;
-    unsigned rel_dim;
+    unsigned token_dim;
+    unsigned lambda_hidden_dim;
+    unsigned actions_hidden_dim;
+    unsigned span_hidden_dim;
+    unsigned rels_hidden_dim;
     unsigned action_dim;
     unsigned pos_dim;
     unsigned state_dim;  // dimension for the concatenated tagger state
@@ -30,9 +32,11 @@ public:
     void serialize(Archive & ar, const unsigned int version) {
       ar & word_dim;
       ar & lstm_layers;
-      ar & lstm_input_dim;
-      ar & lstm_hidden_dim;
-      ar & rel_dim;
+      ar & token_dim;
+      ar & lambda_hidden_dim;
+      ar & actions_hidden_dim;
+      ar & span_hidden_dim;
+      ar & rels_hidden_dim;
       ar & action_dim;
       ar & pos_dim;
       ar & state_dim;
@@ -100,16 +104,16 @@ protected:
 
   // Parameters for composition function for embedding a relation
   cnn::Parameters* p_rbias;           // bias for composition function
-  cnn::Parameters* p_connective_rel;  // connective to relation embedding
-  cnn::Parameters* p_cause_rel;       // cause to relation embedding
-  cnn::Parameters* p_effect_rel;      // effect to relation embedding
-  cnn::Parameters* p_means_rel;       // means to relation embedding
+  cnn::Parameters* p_connective2rel;  // connective to relation embedding
+  cnn::Parameters* p_cause2rel;       // cause to relation embedding
+  cnn::Parameters* p_effect2rel;      // effect to relation embedding
+  cnn::Parameters* p_means2rel;       // means to relation embedding
 
   // Parameters for LSTM input for stacks containing words
-  cnn::Parameters* p_w2l;           // word to LSTM input
-  cnn::Parameters* p_p2l;           // POS to LSTM input
-  cnn::Parameters* p_t2l;           // pretrained word embeddings to LSTM input
-  cnn::Parameters* p_ib;            // LSTM input bias
+  cnn::Parameters* p_w2t;           // word to LSTM input
+  cnn::Parameters* p_p2t;           // POS to LSTM input
+  cnn::Parameters* p_v2t;           // pretrained word embeddings to LSTM input
+  cnn::Parameters* p_tbias;            // LSTM input bias
   cnn::Parameters* p_action_start;  // action bias
 
   // LSTM guards (create biases for different LSTMs)
@@ -154,8 +158,8 @@ protected:
 
   virtual std::vector<cnn::Parameters*> GetParameters() override {
     return {p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_actions2S, p_rels2S,
-      p_s2a, p_abias, p_rbias, p_connective_rel, p_cause_rel, p_effect_rel,
-      p_means_rel, p_w2l, p_p2l, p_t2l, p_ib, p_action_start, p_relations_guard,
+      p_s2a, p_abias, p_rbias, p_connective2rel, p_cause2rel, p_effect2rel,
+      p_means2rel, p_w2t, p_p2t, p_v2t, p_tbias, p_action_start, p_relations_guard,
       p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard, p_connective_guard,
       p_cause_guard, p_effect_guard, p_means_guard};
   }

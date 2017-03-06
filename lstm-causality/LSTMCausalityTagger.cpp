@@ -25,26 +25,26 @@ typedef BecauseRelation::IndexList IndexList;
 LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
                                          const TaggerOptions& options)
     : options(options), parser(parser_model_path),
-      L1_lstm(options.lstm_layers, options.lstm_input_dim,
-              options.lstm_hidden_dim, &model),
-      L2_lstm(options.lstm_layers, options.lstm_input_dim,
-              options.lstm_hidden_dim, &model),
-      L3_lstm(options.lstm_layers, options.lstm_input_dim,
-              options.lstm_hidden_dim, &model),
-      L4_lstm(options.lstm_layers, options.lstm_input_dim,
-              options.lstm_hidden_dim, &model),
-      action_history_lstm(options.lstm_layers, options.lstm_input_dim,
-                          options.lstm_hidden_dim, &model),
-      relations_lstm(options.lstm_layers, options.lstm_input_dim,
-                     options.lstm_hidden_dim, &model),
-      connective_lstm(options.lstm_layers, options.lstm_input_dim,
-                      options.lstm_hidden_dim, &model),
-      cause_lstm(options.lstm_layers, options.lstm_input_dim,
-              options.lstm_hidden_dim, &model),
-      effect_lstm(options.lstm_layers, options.lstm_input_dim,
-              options.lstm_hidden_dim, &model),
-      means_lstm(options.lstm_layers, options.lstm_input_dim,
-              options.lstm_hidden_dim, &model) {
+      L1_lstm(options.lstm_layers, options.token_dim,
+              options.lambda_hidden_dim, &model),
+      L2_lstm(options.lstm_layers, options.token_dim,
+              options.lambda_hidden_dim, &model),
+      L3_lstm(options.lstm_layers, options.token_dim,
+              options.lambda_hidden_dim, &model),
+      L4_lstm(options.lstm_layers, options.token_dim,
+              options.lambda_hidden_dim, &model),
+      action_history_lstm(options.lstm_layers, options.action_dim,
+                          options.actions_hidden_dim, &model),
+      relations_lstm(options.lstm_layers, options.span_hidden_dim,
+                     options.rels_hidden_dim, &model),
+      connective_lstm(options.lstm_layers, options.token_dim,
+                      options.span_hidden_dim, &model),
+      cause_lstm(options.lstm_layers, options.token_dim,
+              options.span_hidden_dim, &model),
+      effect_lstm(options.lstm_layers, options.token_dim,
+              options.span_hidden_dim, &model),
+      means_lstm(options.lstm_layers, options.token_dim,
+              options.span_hidden_dim, &model) {
   vocab = *parser.GetVocab();  // now that parser is initialized, copy vocab
   vocab.actions.clear();
   vocab.actions_to_arc_labels.clear();
@@ -331,45 +331,58 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   assert(!parser.pretrained.empty());
   assert(parser.options.use_pos);
 
+  // Parameters for token representation
   p_w = model.add_lookup_parameters(vocab_size, {options.word_dim});
   p_t = model.add_lookup_parameters(vocab_size, {pretrained_dim});
   for (const auto& it : parser.pretrained)
     p_t->Initialize(it.first, it.second);
   p_a = model.add_lookup_parameters(action_size, {options.action_dim});
   p_pos = model.add_lookup_parameters(pos_size, {options.pos_dim});
+  p_tbias = model.add_parameters({options.token_dim});
+  p_w2t = model.add_parameters({options.token_dim, options.word_dim});
+  p_v2t = model.add_parameters({options.token_dim, pretrained_dim});
+  p_p2t = model.add_parameters({options.token_dim, options.pos_dim});
 
+  // Parameters for overall state representation
   p_sbias = model.add_parameters({options.state_dim});
-  p_L1toS = model.add_parameters({options.state_dim, options.lstm_hidden_dim});
-  p_L2toS = model.add_parameters({options.state_dim, options.lstm_hidden_dim});
-  p_L3toS = model.add_parameters({options.state_dim, options.lstm_hidden_dim});
-  p_L4toS = model.add_parameters({options.state_dim, options.lstm_hidden_dim});
-  p_actions2S = model.add_parameters({options.state_dim,
-                                      options.lstm_hidden_dim});
-  p_rels2S = model.add_parameters({options.state_dim, options.rel_dim});
-  p_s2a = model.add_parameters({action_size, options.state_dim});
+  p_L1toS = model.add_parameters(
+      {options.state_dim, options.lambda_hidden_dim});
+  p_L2toS = model.add_parameters(
+      {options.state_dim, options.lambda_hidden_dim});
+  p_L3toS = model.add_parameters(
+      {options.state_dim, options.lambda_hidden_dim});
+  p_L4toS = model.add_parameters(
+      {options.state_dim, options.lambda_hidden_dim});
+  p_actions2S = model.add_parameters(
+      {options.state_dim, options.actions_hidden_dim});
+  p_rels2S = model.add_parameters({options.state_dim, options.rels_hidden_dim});
+
+  // Parameters for turning states into actions
   p_abias = model.add_parameters({action_size});
+  p_s2a = model.add_parameters({action_size, options.state_dim});
 
-  p_rbias = model.add_parameters({options.rel_dim});
-  p_connective_rel = model.add_parameters({options.rel_dim});
-  p_cause_rel = model.add_parameters({options.rel_dim});
-  p_effect_rel = model.add_parameters({options.rel_dim});
-  p_means_rel = model.add_parameters({options.rel_dim});
+  // Parameters for relation list representation
+  p_rbias = model.add_parameters({options.rels_hidden_dim});
+  p_connective2rel = model.add_parameters(
+      {options.rels_hidden_dim, options.span_hidden_dim});
+  p_cause2rel = model.add_parameters(
+      {options.rels_hidden_dim, options.span_hidden_dim});
+  p_effect2rel = model.add_parameters(
+      {options.rels_hidden_dim, options.span_hidden_dim});
+  p_means2rel = model.add_parameters(
+      {options.rels_hidden_dim, options.span_hidden_dim});
 
-  p_w2l = model.add_parameters({options.lstm_input_dim, options.word_dim});
-  p_t2l = model.add_parameters({options.lstm_input_dim, pretrained_dim});
-  p_p2l = model.add_parameters({options.lstm_input_dim, options.pos_dim});
-  p_ib = model.add_parameters({options.lstm_input_dim});
+  // Parameters for guard/start items in empty lists
   p_action_start = model.add_parameters({options.action_dim});
-
-  p_relations_guard = model.add_parameters({options.lstm_input_dim});
-  p_L1_guard = model.add_parameters({options.lstm_input_dim});
-  p_L2_guard = model.add_parameters({options.lstm_input_dim});
-  p_L3_guard = model.add_parameters({options.lstm_input_dim});
-  p_L4_guard = model.add_parameters({options.lstm_input_dim});
-  p_connective_guard = model.add_parameters({options.lstm_input_dim});
-  p_cause_guard = model.add_parameters({options.lstm_input_dim});
-  p_effect_guard = model.add_parameters({options.lstm_input_dim});
-  p_means_guard = model.add_parameters({options.lstm_input_dim});
+  p_relations_guard = model.add_parameters({options.span_hidden_dim});
+  p_L1_guard = model.add_parameters({options.token_dim});
+  p_L2_guard = model.add_parameters({options.token_dim});
+  p_L3_guard = model.add_parameters({options.token_dim});
+  p_L4_guard = model.add_parameters({options.token_dim});
+  p_connective_guard = model.add_parameters({options.token_dim});
+  p_cause_guard = model.add_parameters({options.token_dim});
+  p_effect_guard = model.add_parameters({options.token_dim});
+  p_means_guard = model.add_parameters({options.token_dim});
 }
 
 
@@ -420,8 +433,8 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     Expression pretrained = const_lookup(*cg, p_t, word_id);
     Expression pos = lookup(*cg, p_pos, pos_id);
     Expression full_word_repr = rectify(
-        affine_transform({GetParamExpr(p_ib), GetParamExpr(p_w2l), word,
-            GetParamExpr(p_p2l), pos, GetParamExpr(p_t2l), pretrained}));
+        affine_transform({GetParamExpr(p_tbias), GetParamExpr(p_w2t), word,
+            GetParamExpr(p_p2t), pos, GetParamExpr(p_v2t), pretrained}));
 
     state->L4.push_back(full_word_repr);
     state->L4i.push_back(token_index);
@@ -543,10 +556,10 @@ void LSTMCausalityTagger::DoAction(unsigned action,
 
   auto EmbedCurrentRelation = [&]() {
     Expression current_rel_embedding = rectify(affine_transform(
-          {GetParamExpr(p_rbias), GetParamExpr(p_connective_rel),
-              connective_lstm.back(), GetParamExpr(p_cause_rel),
-              cause_lstm.back(), GetParamExpr(p_effect_rel), effect_lstm.back(),
-              GetParamExpr(p_means_rel), means_lstm.back()}));
+          {GetParamExpr(p_rbias), GetParamExpr(p_connective2rel),
+              connective_lstm.back(), GetParamExpr(p_cause2rel),
+              cause_lstm.back(), GetParamExpr(p_effect2rel), effect_lstm.back(),
+              GetParamExpr(p_means2rel), means_lstm.back()}));
     relations_lstm.add_input(current_rel_embedding);
   };
 

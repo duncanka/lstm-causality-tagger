@@ -32,17 +32,21 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Dimension for vector representation of parts of speech")
     ("word-dim,w", po::value<unsigned>()->default_value(50),
      "Dimension for entire vector representation of words")
-    ("rel-dim,r", po::value<unsigned>()->default_value(100),
+    ("rels-hidden-dim,r", po::value<unsigned>()->default_value(100),
      "Dimension for vector representation of an entire causal relation")
     ("state-dim,s", po::value<unsigned>()->default_value(100),
      "Dimension for overall tagger state")
-    ("lstm-hidden-dim,h", po::value<unsigned>()->default_value(64),
-     "Size of each stack LSTM's portion of the overall tagger state")
-    ("lstm-input-dim,i", po::value<unsigned>()->default_value(64),
-     "Input dimension for each stack LSTM")
+    ("token-dim,i", po::value<unsigned>()->default_value(64),
+     "Dimension for representation of tokens as input to span or lambda LSTMs")
+    ("lambda-hidden-dim,h", po::value<unsigned>()->default_value(64),
+     "Dimension of the hidden state of each lambda LSTM")
+    ("actions-hidden-dim,c", po::value<unsigned>()->default_value(64),
+     "Dimension of the hidden state of the action history LSTM")
+    ("span-hidden-dim,n", po::value<unsigned>()->default_value(64),
+     "Dimension of each connective/argument span LSTM's hidden state")
     ("lstm-layers,l", po::value<unsigned>()->default_value(2),
-     "Number of layers for each stack LSTM")
-;
+     "Number of layers for each stack LSTM");
+
      po::options_description dcmdline_options;
   dcmdline_options.add(opts);
   po::store(parse_command_line(argc, argv, dcmdline_options), *conf);
@@ -76,11 +80,16 @@ int main(int argc, char** argv) {
 
   LSTMCausalityTagger tagger(
       conf["parser-model"].as<string>(),
-      {conf["word-dim"].as<unsigned>(), conf["lstm-layers"].as<unsigned>(),
-          conf["lstm-input-dim"].as<unsigned>(),
-          conf["lstm-hidden-dim"].as<unsigned>(),
-          conf["rel-dim"].as<unsigned>(), conf["action-dim"].as<unsigned>(),
-          conf["pos-dim"].as<unsigned>(), conf["state-dim"].as<unsigned>()});
+      {conf["word-dim"].as<unsigned>(),
+       conf["lstm-layers"].as<unsigned>(),
+       conf["token-dim"].as<unsigned>(),
+       conf["lambda-hidden-dim"].as<unsigned>(),
+       conf["actions-hidden-dim"].as<unsigned>(),
+       conf["span-hidden-dim"].as<unsigned>(),
+       conf["rels-hidden-dim"].as<unsigned>(),
+       conf["action-dim"].as<unsigned>(),
+       conf["pos-dim"].as<unsigned>(),
+       conf["state-dim"].as<unsigned>()});
   if (conf.count("train")) {
     double dev_pct = conf["dev-pct"].as<double>();
     if (dev_pct < 0.0 || dev_pct > 1.0) {
@@ -96,11 +105,13 @@ int main(int argc, char** argv) {
 
     ostringstream os;
     os << "tagger_" << '_' << tagger.options.action_dim
-       << '_' << tagger.options.lstm_hidden_dim
-       << '_' << tagger.options.lstm_input_dim
+       << '_' << tagger.options.token_dim
+       << '_' << tagger.options.lambda_hidden_dim
+       << '_' << tagger.options.actions_hidden_dim
+       << '_' << tagger.options.span_hidden_dim
        << '_' << tagger.options.lstm_layers
        << '_' << tagger.options.pos_dim
-       << '_' << tagger.options.rel_dim
+       << '_' << tagger.options.rels_hidden_dim
        << '_' << tagger.options.state_dim
        << '_' << tagger.options.word_dim
        << "-pid" << getpid() << ".params";
