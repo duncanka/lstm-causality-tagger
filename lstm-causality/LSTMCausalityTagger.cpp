@@ -573,6 +573,12 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     cause_lstm.start_new_sequence();
     effect_lstm.start_new_sequence();
     means_lstm.start_new_sequence();
+
+    connective_lstm.add_input(GetParamExpr(p_connective_guard));
+    cause_lstm.add_input(GetParamExpr(p_cause_guard));
+    effect_lstm.add_input(GetParamExpr(p_effect_guard));
+    means_lstm.add_input(GetParamExpr(p_means_guard));
+
     cst->currently_processing_rel = true;
   };
 
