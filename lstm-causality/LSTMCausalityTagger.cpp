@@ -518,6 +518,10 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
 #define SET_LIST_BASED_VARS(var_name, list, expr) \
     var_name = list.expr; \
     var_name##_i = list##i.expr;
+#define MOVE_LIST_ITEM(from_list, from_side, to_list, to_side, tmp_var) \
+    SET_LIST_BASED_VARS(tmp_var, from_list, from_side()); \
+    DO_LIST_PUSH(to_side, to_list, tmp_var); \
+    DO_LIST_POP(from_side, from_list);
 
 void LSTMCausalityTagger::DoAction(unsigned action,
                                    const vector<string>& action_names,
@@ -548,17 +552,13 @@ void LSTMCausalityTagger::DoAction(unsigned action,
 
   auto AdvanceArgTokenLeft = [&]() {
     assert(L1.size() > 1);
-    SET_LIST_BASED_VARS(to_push, L1, back());
-    DO_LIST_PUSH(front, L2, to_push);
-    DO_LIST_POP(back, L1);
+    MOVE_LIST_ITEM(L1, back, L2, front, to_push);
     SET_LIST_BASED_VARS(current_arg_token, L1, back());
   };
 
   auto AdvanceArgTokenRight = [&]() {
     assert(L4.size() > 1);
-    SET_LIST_BASED_VARS(to_push, L4, front());
-    DO_LIST_PUSH(back, L3, to_push);
-    DO_LIST_POP(front, L4);
+    MOVE_LIST_ITEM(L4, front, L3, back, to_push);
     SET_LIST_BASED_VARS(current_arg_token, L4, front());
   };
 
@@ -623,7 +623,7 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     EmbedCurrentRelation();
   };
 
-  if (action_name == "NO_CONN") {
+  if (action_name == "NO-CONN") {
     assert(L4.size() > 1);  // L4 should have at least duplicate of current conn
     DO_LIST_PUSH(back, L1, current_conn_token);
     DO_LIST_POP(front, L4);  // remove duplicate of current_conn_token
@@ -690,18 +690,13 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     assert(L4.size() == 1 && L1.size() == 1);  // processed all tokens?
     // Move L2 back to L1.
     while (L2.size() > 1) {
-      SET_LIST_BASED_VARS(to_push, L2, front());
-      DO_LIST_POP(front, L2);
-      DO_LIST_PUSH(back, L1, to_push);
+      MOVE_LIST_ITEM(L2, front, L1, back, to_push);
     }
-    // Move L3 back to L4.
-    while (L3.size() > 1) {
-      if (L3.size() > 1) {  // skip the last item (duplicate of current token)
-        SET_LIST_BASED_VARS(to_push, L3, back());
-        DO_LIST_PUSH(front, L4, to_push);
-      }
-      DO_LIST_POP(back, L3);
+    // Move L3 back to L4 -- except the last item, which we'll move to L1.
+    while (L3.size() > 2) {
+      MOVE_LIST_ITEM(L3, back, L4, front, to_push);
     }
+    MOVE_LIST_ITEM(L3, back, L1, back, to_push);
 
     if (L4.size() > 1) {
       SET_LIST_BASED_VARS(current_conn_token, L4, front());
