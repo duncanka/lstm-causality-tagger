@@ -464,14 +464,18 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
       static_cast<const CausalityTaggerState&>(state);
   const string& action_name = action_names[action];
   if (!real_state.currently_processing_rel) {
-    return action_name[0] != 'N'  // NO-CONN
+    // Anything but the three actions below is a problem.
+    return action_name[0] != 'N'   // NO-CONN
         && action_name[0] != 'R'   // RIGHT-ARC
         && action_name[0] != 'L';  // LEFT-ARC
   } else { // When we're processing a relation, everything but NO-CONN is OK...
-    // ...except SHIFT is allowed only once all tokens have been compared.
+    // ...except SHIFT is allowed only once all tokens have been compared...
     if (action_name[0] == 'S' && action_name[1] == 'H') {
-      return !real_state.L1.empty() || !real_state.L4.empty();
-    } else  {
+      return real_state.L1.size() > 1 || real_state.L4.size() > 1;
+    // ...and SPLIT is allowed only if we have at least two connective words.
+    } else if (action_name[0] == 'S' && action_name[1] == 'P')  {
+      return real_state.current_rel_conn_tokens.size() < 2;
+    } else {
       return action_name[0] == 'N';  // NO-CONN
     }
   }
@@ -520,6 +524,7 @@ void LSTMCausalityTagger::DoAction(unsigned action,
                                    TaggerState* state, ComputationGraph* cg) {
   CausalityTaggerState* cst = static_cast<CausalityTaggerState*>(state);
   const string& action_name = action_names[action];
+  cerr << "Performing action " << action_name << endl;
 
   // Alias key state variables for ease of reference
   auto& L1 = cst->L1;
@@ -542,7 +547,7 @@ void LSTMCausalityTagger::DoAction(unsigned action,
   unsigned to_push_i;
 
   auto AdvanceArgTokenLeft = [&]() {
-    assert(!L1.empty());
+    assert(L1.size() > 1);
     SET_LIST_BASED_VARS(to_push, L1, back());
     DO_LIST_PUSH(front, L2, to_push);
     DO_LIST_POP(back, L1);
@@ -550,7 +555,7 @@ void LSTMCausalityTagger::DoAction(unsigned action,
   };
 
   auto AdvanceArgTokenRight = [&]() {
-    assert(!L4.empty());
+    assert(L4.size() > 1);
     SET_LIST_BASED_VARS(to_push, L4, front());
     DO_LIST_PUSH(back, L3, to_push);
     DO_LIST_POP(front, L4);
@@ -619,10 +624,10 @@ void LSTMCausalityTagger::DoAction(unsigned action,
   };
 
   if (action_name == "NO_CONN") {
-    assert(!L4.empty());  // @ minimum, L4 should have duplicate of current conn
+    assert(L4.size() > 1);  // L4 should have at least duplicate of current conn
     DO_LIST_PUSH(back, L1, current_conn_token);
     DO_LIST_POP(front, L4);  // remove duplicate of current_conn_token
-    if (!L4.empty()) {
+    if (L4.size() > 1) {
       SET_LIST_BASED_VARS(current_conn_token, L4, front());
     }
   } else if (action_name == "NO-ARC-LEFT") {
@@ -651,7 +656,8 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     unsigned connective_repeated_token_index =
         cst->current_rel_conn_tokens.front();
     for (auto token_iter = cst->current_rel_conn_tokens.rbegin();
-        token_iter != cst->current_rel_conn_tokens.rend(); ++token_iter) {
+        // Ignore the connective guard.
+        token_iter != cst->current_rel_conn_tokens.rend() - 1; ++token_iter) {
       if (cst->sentence.at(*token_iter)
           == cst->sentence.at(current_arg_token_i)) {
         connective_repeated_token_index = *token_iter;
@@ -681,15 +687,15 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     EmbedCurrentRelation();
     // Don't advance the arg token.
   } else if (action_name == "SHIFT") {
-    assert(L4.empty() && L1.empty());  // processed all tokens?
+    assert(L4.size() == 1 && L1.size() == 1);  // processed all tokens?
     // Move L2 back to L1.
-    while (!L2.empty()) {
+    while (L2.size() > 1) {
       SET_LIST_BASED_VARS(to_push, L2, front());
       DO_LIST_POP(front, L2);
       DO_LIST_PUSH(back, L1, to_push);
     }
     // Move L3 back to L4.
-    while (!L3.empty()) {
+    while (L3.size() > 1) {
       if (L3.size() > 1) {  // skip the last item (duplicate of current token)
         SET_LIST_BASED_VARS(to_push, L3, back());
         DO_LIST_PUSH(front, L4, to_push);
@@ -697,7 +703,7 @@ void LSTMCausalityTagger::DoAction(unsigned action,
       DO_LIST_POP(back, L3);
     }
 
-    if (!L4.empty()) {
+    if (L4.size() > 1) {
       SET_LIST_BASED_VARS(current_conn_token, L4, front());
     }
 
