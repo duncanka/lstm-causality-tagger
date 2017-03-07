@@ -68,8 +68,6 @@ public:
     return Decode(sentence, actions, vocab);
   }
 
-  const lstm_parser::LSTMParser& GetParser() const { return parser; }
-
 protected:
   lstm_parser::LSTMParser parser;
 

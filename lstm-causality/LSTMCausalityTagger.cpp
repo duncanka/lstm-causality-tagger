@@ -422,7 +422,7 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
   state->L2i.push_back(-1);
   L3_lstm.add_input(GetParamExpr(p_L3_guard));
   state->L3.push_back(GetParamExpr(p_L3_guard));
-  state->L2i.push_back(-1);
+  state->L3i.push_back(-1);
 
   state->L4.push_back(GetParamExpr(p_L4_guard));
   state->L4i.push_back(-1);
@@ -464,15 +464,15 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
       static_cast<const CausalityTaggerState&>(state);
   const string& action_name = action_names[action];
   if (!real_state.currently_processing_rel) {
-    return action_name[0] == 'N'  // NO-CONN
-        || action_name[0] == 'R'   // RIGHT-ARC
-        || action_name[0] == 'L';  // LEFT-ARC
+    return action_name[0] != 'N'  // NO-CONN
+        && action_name[0] != 'R'   // RIGHT-ARC
+        && action_name[0] != 'L';  // LEFT-ARC
   } else { // When we're processing a relation, everything but NO-CONN is OK...
     // ...except SHIFT is allowed only once all tokens have been compared.
     if (action_name[0] == 'S' && action_name[1] == 'H') {
-      return real_state.L1.empty() && real_state.L4.empty();
+      return !real_state.L1.empty() || !real_state.L4.empty();
     } else  {
-      return action_name[0] != 'N';
+      return action_name[0] == 'N';  // NO-CONN
     }
   }
 }
