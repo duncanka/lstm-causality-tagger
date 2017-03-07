@@ -50,6 +50,7 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
       next_line_type = SENTENCE_START_LINE;
       continue; // don't update next_line_type again
     }
+    first = false;
 
     if (next_line_type == SENTENCE_START_LINE) {
       // the initial line in each sentence should look like:
