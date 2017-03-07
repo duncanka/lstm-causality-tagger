@@ -28,10 +28,10 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("train", "Whether to train the tagger")
     ("action-dim,a", po::value<unsigned>()->default_value(20),
      "Dimension for vector representation of actions")
-    ("pos-dim,p", po::value<unsigned>()->default_value(12),
+    ("pos-dim,p", po::value<unsigned>()->default_value(20),
      "Dimension for vector representation of parts of speech")
-    ("word-dim,w", po::value<unsigned>()->default_value(50),
-     "Dimension for entire vector representation of words")
+    ("word-dim,w", po::value<unsigned>()->default_value(48),
+     "Dimension for vector representation of words")
     ("rels-hidden-dim,r", po::value<unsigned>()->default_value(100),
      "Dimension for vector representation of an entire causal relation")
     ("state-dim,s", po::value<unsigned>()->default_value(100),

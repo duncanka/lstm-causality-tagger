@@ -35,7 +35,10 @@ LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
               options.lambda_hidden_dim, &model),
       action_history_lstm(options.lstm_layers, options.action_dim,
                           options.actions_hidden_dim, &model),
-      relations_lstm(options.lstm_layers, options.span_hidden_dim,
+      // Input to relations LSTM is an embedded relation, whose dimension is
+      // already transformed from span_hidden_dim. (In theory, we could control
+      // this input dim with another parameter, but it doesn't seem worth it.)
+      relations_lstm(options.lstm_layers, options.rels_hidden_dim,
                      options.rels_hidden_dim, &model),
       connective_lstm(options.lstm_layers, options.token_dim,
                       options.span_hidden_dim, &model),
@@ -374,7 +377,7 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
 
   // Parameters for guard/start items in empty lists
   p_action_start = model.add_parameters({options.action_dim});
-  p_relations_guard = model.add_parameters({options.span_hidden_dim});
+  p_relations_guard = model.add_parameters({options.rels_hidden_dim});
   p_L1_guard = model.add_parameters({options.token_dim});
   p_L2_guard = model.add_parameters({options.token_dim});
   p_L3_guard = model.add_parameters({options.token_dim});
