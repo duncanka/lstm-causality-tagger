@@ -463,7 +463,7 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
   const CausalityTaggerState& real_state =
       static_cast<const CausalityTaggerState&>(state);
   const string& action_name = action_names[action];
-  if (!real_state.currently_processing_rel) {
+  if (!real_state.currently_processing_rel) { // TODO: fix to only allow right/left at appropriate times
     // Anything but the three actions below is a problem.
     return action_name[0] != 'N'   // NO-CONN
         && action_name[0] != 'R'   // RIGHT-ARC
@@ -559,6 +559,17 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     SET_LIST_BASED_VARS(current_arg_token, L4, back());
   };
 
+  auto SetNewConnectiveToken = [&]() {
+    if (L4.size() > 1) {
+      SET_LIST_BASED_VARS(current_conn_token, L4, back());
+      // We're recording the fact that the connective token has changed. That
+      // means we have at least one thing in L1: the previous connective token.
+      // Set the current arg token to the *first* available item in L1,
+      // excluding the guard.
+      SET_LIST_BASED_VARS(current_arg_token, L1, back());
+    }
+  };
+
   auto EmbedCurrentRelation = [&]() {
     Expression current_rel_embedding = rectify(affine_transform(
           {GetParamExpr(p_rbias), GetParamExpr(p_connective2rel),
@@ -624,10 +635,7 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     assert(L4.size() > 1);  // L4 should have at least duplicate of current conn
     DO_LIST_PUSH(L1, current_conn_token);
     DO_LIST_POP(L4);  // remove duplicate of current_conn_token
-    if (L4.size() > 1) {
-      SET_LIST_BASED_VARS(current_conn_token, L4, back());
-      SET_LIST_BASED_VARS(current_arg_token, L4, back());
-    }
+    SetNewConnectiveToken();
   } else if (action_name == "NO-ARC-LEFT") {
     EnsureRelationWithConnective(true);
     AdvanceArgTokenLeft();
@@ -697,11 +705,7 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     }
     assert(L3.size() == 2);
     MOVE_LIST_ITEM(L3, L1, to_push);
-
-    if (L4.size() > 1) {
-      SET_LIST_BASED_VARS(current_conn_token, L4, back());
-      SET_LIST_BASED_VARS(current_arg_token, L4, back());
-    }
+    SetNewConnectiveToken();
 
     cst->currently_processing_rel = false;
     cst->current_rel_conn_tokens.clear();
