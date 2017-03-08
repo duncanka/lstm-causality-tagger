@@ -28,7 +28,7 @@ private:
 
   protected:
     inline void ReadFile(const std::string& file_name,
-                                      Corpus* corpus) const;
+                         TrainingCorpus* corpus) const;
   };
 };
 

@@ -12,6 +12,8 @@ using namespace std;
 
 void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadSentences(
     const std::string& directory_path, Corpus* corpus) const {
+  TrainingCorpus* training_corpus = static_cast<TrainingCorpus*>(corpus);
+
   cerr << "Loading " << (is_training ? "training" : "dev")
        << " corpus from " << directory_path << "..." << flush;
   for (fs::recursive_directory_iterator file_iter(directory_path), end;
@@ -19,12 +21,20 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadSentences(
     const fs::path& file_path = file_iter->path();
     if (fs::is_directory(file_path) || file_path.extension() != FILE_EXTENSION)
       continue;
-    ReadFile(file_path.string(), corpus);
+    ReadFile(file_path.string(), training_corpus);
+  }
+
+  cerr << "done." << "\n";
+  if (is_training) {
+    for (auto a : training_corpus->vocab->actions) {
+      cerr << a << "\n";
+    }
+    cerr << "# of actions: " << training_corpus->vocab->CountActions() << "\n";
   }
 }
 
 void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
-    const string& file_name, Corpus* corpus) const {
+    const string& file_name, TrainingCorpus* corpus) const {
   enum LineType {
     SENTENCE_START_LINE, STATE_LINE, RELS_LINE, ARC_LINE
   };
@@ -91,13 +101,5 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
   if (!sentence.empty()) {
     RecordSentence(training_corpus, &sentence, &sentence_pos,
                    &sentence_unk_surface_forms, true);
-  }
-
-  cerr << "done." << "\n";
-  if (is_training) {
-    for (auto a : training_corpus->vocab->actions) {
-      cerr << a << "\n";
-    }
-    cerr << "# of actions: " << training_corpus->vocab->CountActions() << "\n";
   }
 }
