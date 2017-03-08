@@ -243,7 +243,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       lambda_4.pop_front();// remove duplicate of current_conn_token
       if (!lambda_4.empty()) {
         current_conn_token = lambda_4.front();
-        // Arg token stays the same -- first token in the sentence.
+        current_arg_token = lambda_1.back();
       } else {
         // If we have no more tokens to pull in, we'd better be on the last
         // action.
@@ -308,7 +308,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       lambda_3_iter += 1; // skip copy of the current token
       if (lambda_3_iter != lambda_3.end()) {
         current_conn_token = *lambda_3_iter;
-        current_arg_token = lambda_1.front();
+        current_arg_token = lambda_1.back();
         lambda_4.resize(lambda_3.size() - 1);
         copy(make_move_iterator(lambda_3_iter),
              make_move_iterator(lambda_3.end()), lambda_4.begin());
