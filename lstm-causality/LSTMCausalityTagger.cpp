@@ -524,7 +524,7 @@ void LSTMCausalityTagger::DoAction(unsigned action,
                                    TaggerState* state, ComputationGraph* cg) {
   CausalityTaggerState* cst = static_cast<CausalityTaggerState*>(state);
   const string& action_name = action_names[action];
-  cerr << "Performing action " << action_name << endl;
+  // cerr << "Performing action " << action_name << endl;
 
   // Alias key state variables for ease of reference
   auto& L1 = cst->L1;
