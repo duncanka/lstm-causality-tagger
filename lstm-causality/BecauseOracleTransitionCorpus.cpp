@@ -90,7 +90,7 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
 
   if (!sentence.empty()) {
     RecordSentence(training_corpus, &sentence, &sentence_pos,
-                   &sentence_unk_surface_forms);
+                   &sentence_unk_surface_forms, true);
   }
 
   cerr << "done." << "\n";

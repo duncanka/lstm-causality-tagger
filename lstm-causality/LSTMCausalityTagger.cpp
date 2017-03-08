@@ -89,7 +89,7 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
   unsigned sentence_i = num_sentences_train;
   while (!requested_stop || !(*requested_stop)) {
     ++iter;
-    for (unsigned sii = 0; sii < status_every_i_iterations; ++sii) {
+    for (unsigned iter_i = 0; iter_i < status_every_i_iterations; ++iter_i) {
       if (sentence_i == num_sentences_train) {
         sentence_i = 0;
         if (first) {
@@ -102,7 +102,8 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
       }
 
       const Sentence& sentence = corpus.sentences[order[sentence_i]];
-      const vector<unsigned>& correct_actions = corpus.correct_act_sent[sii];
+      const vector<unsigned>& correct_actions =
+          corpus.correct_act_sent[order[sentence_i]];
 
       ComputationGraph cg;
       Expression parser_state;
