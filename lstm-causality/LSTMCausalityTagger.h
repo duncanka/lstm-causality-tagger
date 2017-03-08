@@ -2,7 +2,6 @@
 #define LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_
 
 #include <boost/serialization/split_member.hpp>
-#include <deque>
 #include <map>
 #include <string>
 #include <vector>
@@ -128,14 +127,14 @@ protected:
 
   struct CausalityTaggerState : public TaggerState {
     std::map<unsigned, Expression> all_tokens;
-    std::vector<Expression> L1;  // unprocessed tokens to the left
-    std::deque<Expression> L2;   // processed tokens to the left
-    std::vector<Expression> L3;  // unprocessed tokens to the right
-    std::deque<Expression> L4;   // processed tokens to the right
+    std::vector<Expression> L1; // unprocessed tokens to the left
+    std::vector<Expression> L2; // processed tokens to the left (reverse order)
+    std::vector<Expression> L3; // unprocessed tokens to the right
+    std::vector<Expression> L4; // processed tokens to the right (reverse order)
     std::vector<unsigned> L1i;
-    std::deque<unsigned> L2i;
+    std::vector<unsigned> L2i;
     std::vector<unsigned> L3i;
-    std::deque<unsigned> L4i;
+    std::vector<unsigned> L4i;
     bool currently_processing_rel;
     // Need lists of token Expressions to duplicate if we get a SPLIT.
     std::vector<unsigned> current_rel_conn_tokens;

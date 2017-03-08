@@ -1,4 +1,5 @@
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/range/adaptors.hpp>
 #include <chrono>
 #include <deque>
 #include <functional>
@@ -235,7 +236,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
   for (auto iter = actions.begin(), end = actions.end(); iter != end; ++iter) {
     unsigned action = *iter;
     const string& action_name = vocab.actions[action];
-    if (action_name == "NO_CONN") {
+    if (action_name == "NO-CONN") {
       // At a minimum, L4 should have the current token duplicate
       assert(!lambda_4.empty());
       lambda_1.push_back(current_conn_token);
@@ -426,8 +427,12 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
 
   state->L4.push_back(GetParamExpr(p_L4_guard));
   state->L4i.push_back(-1);
+  L4_lstm.add_input(GetParamExpr(p_L4_guard));
   // TODO: do we need to do anything special to handle OOV words?
-  for (const auto& index_and_word_id : sentence) {
+  // Add words to L4 in reversed order: other than the initial guard entry,
+  // the back of the L4 vector is conceptually the front, contiguous with the
+  // back of L3.
+  for (const auto& index_and_word_id : sentence | boost::adaptors::reversed) {
     const unsigned token_index = index_and_word_id.first;
     const unsigned word_id = index_and_word_id.second;
     unsigned pos_id = raw_sent.poses.at(token_index);
@@ -441,17 +446,12 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
 
     state->L4.push_back(full_word_repr);
     state->L4i.push_back(token_index);
+    L4_lstm.add_input(full_word_repr);
     state->all_tokens[token_index] = full_word_repr;
   }
-  // Add to LSTM in reverse order so that rewind_one_step pulls off the left.
-  // (Add guard first; then skip it at the end.)
-  L4_lstm.add_input(GetParamExpr(p_L4_guard));
-  for (auto iter = state->L4.rbegin(); iter != state->L4.rend() - 1; ++iter) {
-    L4_lstm.add_input(*iter);
-  }
 
-  state->current_conn_token = state->L4.front();
-  state->current_arg_token = state->L4.front();
+  state->current_conn_token = state->L4.back();
+  state->current_arg_token = state->L4.back();
 
   return state;
 }
@@ -500,28 +500,25 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
 
 
 // Macros are ugly, but this is easier than trying to make sure we remember to
-// do all steps for each push/pop, and easier than defining 4 different
-// templatized helper functions with lots of arguments. Makes the code below
-// much cleaner.
-// TODO: switch the deque code over to using entirely vectors, with some growing
-// from conceptual back to conceptual front. Should be more efficient.
+// do all steps for each push/pop. Makes the code below much cleaner.
 // TODO: switch to map-based algorithm where we only maintain indices, not
 // Expressions?
-#define DO_LIST_PUSH(side, list_name, var_name) \
-    list_name.push_##side(var_name); \
-    list_name##i.push_##side(var_name##_i); \
+#define DO_LIST_PUSH(list_name, var_name) \
+    list_name.push_back(var_name); \
+    list_name##i.push_back(var_name##_i); \
     list_name##_lstm.add_input(var_name);
-#define DO_LIST_POP(side, list_name) \
-    list_name.pop_##side(); \
-    list_name##i.pop_##side(); \
+#define DO_LIST_POP(list_name) \
+    list_name.pop_back(); \
+    list_name##i.pop_back(); \
     list_name##_lstm.rewind_one_step();
 #define SET_LIST_BASED_VARS(var_name, list, expr) \
     var_name = list.expr; \
     var_name##_i = list##i.expr;
-#define MOVE_LIST_ITEM(from_list, from_side, to_list, to_side, tmp_var) \
-    SET_LIST_BASED_VARS(tmp_var, from_list, from_side()); \
-    DO_LIST_PUSH(to_side, to_list, tmp_var); \
-    DO_LIST_POP(from_side, from_list);
+// TODO: redefine to use std::move?
+#define MOVE_LIST_ITEM(from_list, to_list, tmp_var) \
+    SET_LIST_BASED_VARS(tmp_var, from_list, back()); \
+    DO_LIST_PUSH(to_list, tmp_var); \
+    DO_LIST_POP(from_list);
 
 void LSTMCausalityTagger::DoAction(unsigned action,
                                    const vector<string>& action_names,
@@ -552,14 +549,14 @@ void LSTMCausalityTagger::DoAction(unsigned action,
 
   auto AdvanceArgTokenLeft = [&]() {
     assert(L1.size() > 1);
-    MOVE_LIST_ITEM(L1, back, L2, front, to_push);
+    MOVE_LIST_ITEM(L1, L2, to_push);
     SET_LIST_BASED_VARS(current_arg_token, L1, back());
   };
 
   auto AdvanceArgTokenRight = [&]() {
     assert(L4.size() > 1);
-    MOVE_LIST_ITEM(L4, front, L3, back, to_push);
-    SET_LIST_BASED_VARS(current_arg_token, L4, front());
+    MOVE_LIST_ITEM(L4, L3, to_push);
+    SET_LIST_BASED_VARS(current_arg_token, L4, back());
   };
 
   auto EmbedCurrentRelation = [&]() {
@@ -625,10 +622,11 @@ void LSTMCausalityTagger::DoAction(unsigned action,
 
   if (action_name == "NO-CONN") {
     assert(L4.size() > 1);  // L4 should have at least duplicate of current conn
-    DO_LIST_PUSH(back, L1, current_conn_token);
-    DO_LIST_POP(front, L4);  // remove duplicate of current_conn_token
+    DO_LIST_PUSH(L1, current_conn_token);
+    DO_LIST_POP(L4);  // remove duplicate of current_conn_token
     if (L4.size() > 1) {
-      SET_LIST_BASED_VARS(current_conn_token, L4, front());
+      SET_LIST_BASED_VARS(current_conn_token, L4, back());
+      SET_LIST_BASED_VARS(current_arg_token, L4, back());
     }
   } else if (action_name == "NO-ARC-LEFT") {
     EnsureRelationWithConnective(true);
@@ -690,16 +688,19 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     assert(L4.size() == 1 && L1.size() == 1);  // processed all tokens?
     // Move L2 back to L1.
     while (L2.size() > 1) {
-      MOVE_LIST_ITEM(L2, front, L1, back, to_push);
+      MOVE_LIST_ITEM(L2, L1, to_push);
     }
     // Move L3 back to L4 -- except the last item, which we'll move to L1.
+    // (There has to be at least one item on L3.)
     while (L3.size() > 2) {
-      MOVE_LIST_ITEM(L3, back, L4, front, to_push);
+      MOVE_LIST_ITEM(L3, L4, to_push);
     }
-    MOVE_LIST_ITEM(L3, back, L1, back, to_push);
+    assert(L3.size() == 2);
+    MOVE_LIST_ITEM(L3, L1, to_push);
 
     if (L4.size() > 1) {
-      SET_LIST_BASED_VARS(current_conn_token, L4, front());
+      SET_LIST_BASED_VARS(current_conn_token, L4, back());
+      SET_LIST_BASED_VARS(current_arg_token, L4, back());
     }
 
     cst->currently_processing_rel = false;
