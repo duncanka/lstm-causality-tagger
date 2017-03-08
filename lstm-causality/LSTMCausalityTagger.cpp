@@ -200,38 +200,36 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
   unsigned current_arg_token = sentence.words.begin()->first;
   CausalityRelation* current_rel = nullptr;
 
-  auto AdvanceArgTokenLeft =
-      [&]() {
-        assert(!lambda_1.empty());
-        lambda_2.push_front(lambda_1.back());
-        lambda_1.pop_back();
-        current_arg_token = lambda_1.back();
-      };
+  auto AdvanceArgTokenLeft = [&]() {
+    assert(!lambda_1.empty());
+    lambda_2.push_front(lambda_1.back());
+    lambda_1.pop_back();
+    current_arg_token = lambda_1.empty() ? lambda_4.front() : lambda_1.back();
+  };
 
-  auto AdvanceArgTokenRight =
-      [&]() {
-        assert(!lambda_4.empty());
-        lambda_3.push_back(lambda_4.front());
-        lambda_4.pop_front();
-        current_arg_token = lambda_4.front();
-      };
+  auto AdvanceArgTokenRight = [&]() {
+    assert(!lambda_4.empty());
+    lambda_3.push_back(lambda_4.front());
+    lambda_4.pop_front();
+    if (!lambda_4.empty())
+      current_arg_token = lambda_4.front();
+  };
 
-  auto AddArc =
-      [&](unsigned action) {
-        const string& arc_type = vocab.actions_to_arc_labels[action];
-        auto arg_iter = find(CausalityRelation::ARG_NAMES.begin(),
-                             CausalityRelation::ARG_NAMES.end(), arc_type);
-        assert(arg_iter != CausalityRelation::ARG_NAMES.end());
+  auto AddArc = [&](unsigned action) {
+    const string& arc_type = vocab.actions_to_arc_labels[action];
+    auto arg_iter = find(CausalityRelation::ARG_NAMES.begin(),
+        CausalityRelation::ARG_NAMES.end(), arc_type);
+    assert(arg_iter != CausalityRelation::ARG_NAMES.end());
 
-        if (!current_rel) {
-          relations.emplace_back(
-              sentence, vocab, CausalityRelation::CONSEQUENCE,
-              IndexList({current_conn_token}));
-          current_rel = &relations.back();
-        }
-        current_rel->AddToArgument(
-            arg_iter - CausalityRelation::ARG_NAMES.begin(), current_arg_token);
-      };
+    if (!current_rel) {
+      relations.emplace_back(
+          sentence, vocab, CausalityRelation::CONSEQUENCE,
+          IndexList({current_conn_token}));
+      current_rel = &relations.back();
+    }
+    current_rel->AddToArgument(
+        arg_iter - CausalityRelation::ARG_NAMES.begin(), current_arg_token);
+  };
 
   for (auto iter = actions.begin(), end = actions.end(); iter != end; ++iter) {
     unsigned action = *iter;
@@ -550,7 +548,11 @@ void LSTMCausalityTagger::DoAction(unsigned action,
   auto AdvanceArgTokenLeft = [&]() {
     assert(L1.size() > 1);
     MOVE_LIST_ITEM(L1, L2, to_push);
-    SET_LIST_BASED_VARS(current_arg_token, L1, back());
+    if (L1.size() > 1) {
+      SET_LIST_BASED_VARS(current_arg_token, L1, back());
+    } else {
+      SET_LIST_BASED_VARS(current_arg_token, L4, back());
+    }
   };
 
   auto AdvanceArgTokenRight = [&]() {
