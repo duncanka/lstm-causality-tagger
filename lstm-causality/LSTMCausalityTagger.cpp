@@ -17,6 +17,7 @@
 #include "utilities.h"
 
 using namespace std;
+using namespace boost::algorithm;
 using namespace cnn;
 using namespace cnn::expr;
 using namespace lstm_parser;
@@ -258,10 +259,10 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
     } else if (action_name == "CONN-FRAG-RIGHT") {
       current_rel->AddConnectiveToken(current_arg_token);
       AdvanceArgTokenRight();
-    } else if (boost::algorithm::starts_with(action_name, "RIGHT-ARC")) {
+    } else if (starts_with(action_name, "RIGHT-ARC")) {
       AddArc(action);
       AdvanceArgTokenRight();
-    } else if (boost::algorithm::starts_with(action_name, "LEFT-ARC")) {
+    } else if (::starts_with(action_name, "LEFT-ARC")) {
       AddArc(action);
       AdvanceArgTokenLeft();
     } else if (action_name == "SPLIT") {
@@ -462,20 +463,29 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
   const CausalityTaggerState& real_state =
       static_cast<const CausalityTaggerState&>(state);
   const string& action_name = action_names[action];
-  if (!real_state.currently_processing_rel) { // TODO: fix to only allow right/left at appropriate times
-    // Anything but the three actions below is a problem.
-    return action_name[0] != 'N'   // NO-CONN
-        && action_name[0] != 'R'   // RIGHT-ARC
-        && action_name[0] != 'L';  // LEFT-ARC
+  bool processing_left = !real_state.L1.empty();
+  if (!real_state.currently_processing_rel) {
+    // Anything but NO-CONN or an arc is a problem.
+    bool is_ok = action_name[0] == 'N'                  // NO-CONN
+        || (action_name[0] == 'R' && !processing_left)  // RIGHT-ARC
+        || (action_name[0] == 'L' && processing_left);  // LEFT-ARC
+    return !is_ok;
   } else { // When we're processing a relation, everything but NO-CONN is OK...
     // ...except SHIFT is allowed only once all tokens have been compared...
     if (action_name[0] == 'S' && action_name[1] == 'H') {
       return real_state.L1.size() > 1 || real_state.L4.size() > 1;
-    // ...and SPLIT is allowed only if we have at least two connective words.
+    // ...and SPLIT is allowed only if we have at least two connective words...
     } else if (action_name[0] == 'S' && action_name[1] == 'P')  {
       return real_state.current_rel_conn_tokens.size() < 2;
     } else {
-      return action_name[0] == 'N';  // NO-CONN
+      return action_name[0] == 'N'  // NO-CONN
+          // ...and we have to make sure it's an action in the right direction.
+          || (processing_left
+              && (starts_with(action_name, "RIGHT")
+                  || ends_with(action_name, "RIGHT")))
+          || (!processing_left
+              && (starts_with(action_name, "LEFT")
+                  || ends_with(action_name, "LEFT")));
     }
   }
 }
@@ -653,10 +663,10 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     connective_lstm.add_input(current_arg_token);
     UpdateCurrentRelationEmbedding();
     AdvanceArgTokenRight();
-  } else if (boost::algorithm::starts_with(action_name, "RIGHT-ARC")) {
+  } else if (starts_with(action_name, "RIGHT-ARC")) {
     AddArc(action);
     AdvanceArgTokenRight();
-  } else if (boost::algorithm::starts_with(action_name, "LEFT-ARC")) {
+  } else if (starts_with(action_name, "LEFT-ARC")) {
     AddArc(action);
     AdvanceArgTokenLeft();
   } else if (action_name == "SPLIT") {
