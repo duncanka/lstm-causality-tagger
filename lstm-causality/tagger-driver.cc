@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
     }
 
     ostringstream os;
-    os << "tagger_" << '_' << tagger.options.action_dim
+    os << "tagger_" << tagger.options.action_dim
        << '_' << tagger.options.token_dim
        << '_' << tagger.options.lambda_hidden_dim
        << '_' << tagger.options.actions_hidden_dim

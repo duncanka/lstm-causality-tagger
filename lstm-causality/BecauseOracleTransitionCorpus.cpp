@@ -80,7 +80,9 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
         string pos = word.substr(pos_index + 1);
         word = word.substr(0, pos_index);
 
-        // Use 1-indexed token IDs to leave room for ROOT in position 0.
+        // Use 1-indexed token IDs to leave room for ROOT in position 0. (We
+        // don't use ROOT, but this makes it easier to match up to the syntactic
+        // parse.)
         unsigned next_token_index = sentence.size() + 1;
         RecordWord(word, pos, next_token_index, training_corpus,
                    &sentence, &sentence_pos, &sentence_unk_surface_forms);

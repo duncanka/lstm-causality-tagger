@@ -463,6 +463,8 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
   const CausalityTaggerState& real_state =
       static_cast<const CausalityTaggerState&>(state);
   const string& action_name = action_names[action];
+  // TODO: switch this over to a state machine?
+  // TODO: forbid CONN-FRAG after SPLIT?
   bool processing_left = !real_state.L1.empty();
   if (!real_state.currently_processing_rel) {
     // Anything but NO-CONN or an arc is a problem.
@@ -534,7 +536,6 @@ void LSTMCausalityTagger::DoAction(unsigned action,
                                    TaggerState* state, ComputationGraph* cg) {
   CausalityTaggerState* cst = static_cast<CausalityTaggerState*>(state);
   const string& action_name = action_names[action];
-  // cerr << "Performing action " << action_name << endl;
 
   // Alias key state variables for ease of reference
   auto& L1 = cst->L1;
@@ -552,6 +553,12 @@ void LSTMCausalityTagger::DoAction(unsigned action,
 
   assert(L1.size() == L1i.size() && L2.size() == L2i.size() &&
          L3.size() == L3i.size() && L4.size() == L4i.size());
+
+  cerr << "Performing action " << action_name << " on connective word "
+       << vocab.int_to_words.at(
+           cst->raw_sentence.words.at(current_conn_token_i))
+       << " and argument word " << vocab.int_to_words.at(
+             cst->raw_sentence.words.at(current_arg_token_i)) << endl;
 
   Expression to_push;  // dummy variables for use below
   unsigned to_push_i;
