@@ -174,7 +174,7 @@ protected:
         static_cast<const CausalityTaggerState&>(state);
     // We're done when we're looking at the last word, and we've compared
     // every other word in the sentence to it.
-    return real_state.L2.size() == 1 && real_state.L3.size() == 1 &&
+    return real_state.L1.size() == 1 && real_state.L4.size() == 1 &&
         real_state.current_conn_token_i >= real_state.sentence.rbegin()->first;
   }
 
