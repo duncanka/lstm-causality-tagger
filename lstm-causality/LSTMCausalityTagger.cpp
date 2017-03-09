@@ -190,7 +190,7 @@ double LSTMCausalityTagger::DoDevEvaluation(
        << (sentences_seen / num_sentences)
        << ")llh=" << llh_dev << " ppl: " << exp(llh_dev / num_actions)
        << "\terr: " << (num_actions - correct_dev) / num_actions
-       << " evaluation: \n  " << evaluation
+       << " evaluation: \n" << evaluation
        << "\n[" << num_sentences_dev << " sentences in "
        << chrono::duration<double, milli>(t_end - t_start).count() << " ms]"
        << endl;

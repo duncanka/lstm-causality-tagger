@@ -219,15 +219,15 @@ inline std::ostream& operator<<(std::ostream& s,
                          const BecauseRelationMetrics<RelationType>& metrics) {
   s << "Connectives:";
   {
-    IndentingOStreambuf indent(std::cout);
+    IndentingOStreambuf indent(s);
     s << '\n' << metrics.connective_metrics;
   }
   s << "\nArguments:";
   {
-    IndentingOStreambuf indent(std::cout);
+    IndentingOStreambuf indent(s);
     for (unsigned argi = 0; argi < RelationType::ARG_NAMES.size(); ++argi) {
       s << '\n' << RelationType::ARG_NAMES[argi] << ':';
-      IndentingOStreambuf indent2(std::cout);
+      IndentingOStreambuf indent2(s);
       s << '\n' << metrics.argument_metrics[argi];
     }
   }
