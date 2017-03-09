@@ -172,10 +172,12 @@ protected:
   virtual bool ShouldTerminate(const TaggerState& state) const override {
     const CausalityTaggerState& real_state =
         static_cast<const CausalityTaggerState&>(state);
-    // We're done when we're looking at the last word, and we've compared
-    // every other word in the sentence to it.
-    return real_state.L1.size() == 1 && real_state.L4.size() == 1 &&
-        real_state.current_conn_token_i >= real_state.sentence.rbegin()->first;
+    // We're done when we're looking at the last word, and we're no longer
+    // processing a relation, i.e., either the last word wasn't the start of a
+    // connective or we already SHIFTed it off.
+    return real_state.current_conn_token_i
+              >= real_state.sentence.rbegin()->first
+        && !real_state.currently_processing_rel;
   }
 
   virtual bool IsActionForbidden(const unsigned action,
