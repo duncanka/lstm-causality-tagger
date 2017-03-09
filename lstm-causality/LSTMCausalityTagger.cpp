@@ -237,18 +237,21 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       current_arg_token = lambda_4.front();
   };
 
-  auto AddArc = [&](unsigned action) {
-    const string& arc_type = vocab.actions_to_arc_labels[action];
-    auto arg_iter = find(CausalityRelation::ARG_NAMES.begin(),
-        CausalityRelation::ARG_NAMES.end(), arc_type);
-    assert(arg_iter != CausalityRelation::ARG_NAMES.end());
-
+  auto EnsureCurrentRelation = [&]() {
     if (!current_rel) {
       relations.emplace_back(
           sentence, vocab, CausalityRelation::CONSEQUENCE,
           IndexList({current_conn_token}));
       current_rel = &relations.back();
     }
+  };
+
+  auto AddArc = [&](unsigned action) {
+    EnsureCurrentRelation();
+    const string& arc_type = vocab.actions_to_arc_labels[action];
+    auto arg_iter = find(CausalityRelation::ARG_NAMES.begin(),
+        CausalityRelation::ARG_NAMES.end(), arc_type);
+    assert(arg_iter != CausalityRelation::ARG_NAMES.end());
     current_rel->AddToArgument(
         arg_iter - CausalityRelation::ARG_NAMES.begin(), current_arg_token);
   };
@@ -256,6 +259,12 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
   for (auto iter = actions.begin(), end = actions.end(); iter != end; ++iter) {
     unsigned action = *iter;
     const string& action_name = vocab.actions[action];
+    /*
+    cerr << "Decoding action " << action_name << " on connective word \""
+         << vocab.int_to_words.at(sentence.words.at(current_conn_token))
+         << "\" and argument word \"" << vocab.int_to_words.at(
+               sentence.words.at(current_arg_token)) << '"' << endl;
+    //*/
     if (action_name == "NO-CONN") {
       // At a minimum, L4 should have the current token duplicate
       assert(!lambda_4.empty());
@@ -270,13 +279,17 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
         assert(iter == end - 1);
       }
     } else if (action_name == "NO-ARC-LEFT") {
+      EnsureCurrentRelation();
       AdvanceArgTokenLeft();
     } else if (action_name == "NO-ARC-RIGHT") {
+      EnsureCurrentRelation();
       AdvanceArgTokenRight();
     } else if (action_name == "CONN-FRAG-LEFT") {
+      EnsureCurrentRelation();
       current_rel->AddConnectiveToken(current_arg_token);
       AdvanceArgTokenLeft();
     } else if (action_name == "CONN-FRAG-RIGHT") {
+      EnsureCurrentRelation();
       current_rel->AddConnectiveToken(current_arg_token);
       AdvanceArgTokenRight();
     } else if (starts_with(action_name, "RIGHT-ARC")) {
@@ -286,6 +299,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       AddArc(action);
       AdvanceArgTokenLeft();
     } else if (action_name == "SPLIT") {
+      assert(current_rel);
       // Make a copy of the current relation.
       relations.push_back(*current_rel);
       current_rel = &relations.back();
@@ -318,24 +332,26 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       }
       // Don't advance the arg token.
     } else if (action_name == "SHIFT") {
-      // Complete a relation.
-      assert(lambda_4.empty() && lambda_1.empty());  // processed all tokens?
-      copy(make_move_iterator(lambda_2.begin()),  // move all of L2 back to L1
-           make_move_iterator(lambda_2.end()), lambda_1.begin());
-      lambda_1.push_back(current_conn_token);
-      // Move L3 back to L4, skipping current token copy.
-      auto lambda_3_iter = lambda_3.begin();
-      lambda_3_iter += 1; // skip copy of the current token
-      if (lambda_3_iter != lambda_3.end()) {
-        current_conn_token = *lambda_3_iter;
+      if (lambda_3.size() > 1) {  // contains more than just current token copy
+        assert(current_rel);
+        // Complete a relation.
+        assert(lambda_4.empty() && lambda_1.empty());  // processed all tokens?
+        while (!lambda_2.empty()) {  // move all of L2 back to L1
+          lambda_1.push_back(move(lambda_2.front()));
+          lambda_2.pop_front();
+        }
+        lambda_1.push_back(current_conn_token);
+        // Move L3 back to L4, skipping current token copy.
+        while (lambda_3.size() > 1) {
+          lambda_4.push_front(move(lambda_3.back()));
+          lambda_3.pop_back();
+        }
+        lambda_3.pop_back();  // current token copy
+        current_conn_token = lambda_4.front();
         current_arg_token = lambda_1.back();
-        lambda_4.resize(lambda_3.size() - 1);
-        copy(make_move_iterator(lambda_3_iter),
-             make_move_iterator(lambda_3.end()), lambda_4.begin());
-        lambda_3.clear();
       } else {
-        // If we have no more tokens to pull in, we'd better be on the last
-        // action.
+        // If we have no more tokens to pull in, don't bother updating lambdas,
+        // but we'd better be on the last action.
         assert(iter == end - 1);
       }
       current_rel = nullptr;

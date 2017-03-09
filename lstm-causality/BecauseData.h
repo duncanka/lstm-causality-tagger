@@ -109,7 +109,7 @@ public:
                     const lstm_parser::CorpusVocabulary& vocab,
                     const unsigned relation_type = CONSEQUENCE,
                     const IndexList& connective_indices = {},
-                    const std::vector<IndexList>& arguments = { {}})
+                    const std::vector<IndexList>& arguments = {{}})
       : BecauseRelation(ARG_NAMES, TYPE_NAMES, sentence, vocab, relation_type,
                         connective_indices, arguments) {}
 
