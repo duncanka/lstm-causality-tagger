@@ -591,6 +591,7 @@ void LSTMCausalityTagger::DoAction(unsigned action,
 
   assert(L1.size() == L1i.size() && L2.size() == L2i.size() &&
          L3.size() == L3i.size() && L4.size() == L4i.size());
+  assert(!L1i.empty() && !L2i.empty() && !L3i.empty() && !L4i.empty());
 
   /*
   cerr << "Performing action " << action_name << " on connective word \""
