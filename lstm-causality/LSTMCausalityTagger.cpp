@@ -81,7 +81,7 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
   //sgd.eta_decay = 0.05;
 
   double sentences_seen = 0;
-  double best_f1 = 0;
+  double best_f1 = nan("");
   unsigned actions_seen = 0;
   double correct = 0;
   double llh = 0;
