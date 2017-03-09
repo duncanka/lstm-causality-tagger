@@ -562,9 +562,12 @@ void LSTMCausalityTagger::DoAction(unsigned action,
 
   cerr << "Performing action " << action_name << " on connective word "
        << vocab.int_to_words.at(
-           cst->raw_sentence.words.at(current_conn_token_i))
-       << " and argument word " << vocab.int_to_words.at(
-             cst->raw_sentence.words.at(current_arg_token_i)) << endl;
+           cst->raw_sentence.words.at(current_conn_token_i));
+  if (current_arg_token_i != static_cast<unsigned>(-1)) {
+    cerr << " and argument word " << vocab.int_to_words.at(
+             cst->raw_sentence.words.at(current_arg_token_i));
+  }
+  cerr << endl;
 
   Expression to_push;  // dummy variables for use below
   unsigned to_push_i;
