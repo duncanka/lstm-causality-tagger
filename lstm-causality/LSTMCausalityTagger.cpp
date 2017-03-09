@@ -162,7 +162,7 @@ double LSTMCausalityTagger::DoDevEvaluation(
   double llh_dev = 0;
   double num_actions = 0;
   double correct_dev = 0;
-  BecauseRelationMetrics<> evaluation;
+  CausalityMetrics evaluation;
   const auto t_start = chrono::high_resolution_clock::now();
   for (unsigned sii = num_sentences_train; sii < num_sentences; ++sii) {
     const Sentence& sentence = corpus.sentences[sii];
@@ -182,7 +182,7 @@ double LSTMCausalityTagger::DoDevEvaluation(
                                             *corpus.vocab);
 
     num_actions += actions.size();
-    evaluation += BecauseRelationMetrics<>(gold, predicted);
+    evaluation += CausalityMetrics(gold, predicted);
   }
 
   auto t_end = chrono::high_resolution_clock::now();

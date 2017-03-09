@@ -150,7 +150,7 @@ inline std::ostream& operator<<(std::ostream& s,
 
 
 // TODO: add partial matching?
-template <class RelationType=CausalityRelation>
+template <class RelationType>
 struct BecauseRelationMetrics {
   struct ConnectivesEqual {
     bool operator()(const RelationType& i1, const RelationType& i2) {
@@ -168,11 +168,12 @@ struct BecauseRelationMetrics {
   // argument metrics to contain the correct number of entries for the relation
   // type.
   BecauseRelationMetrics()
-      : argument_metrics(CausalityRelation::ARG_NAMES.size()) {}
+      : argument_metrics(RelationType::ARG_NAMES.size()) {}
 
   BecauseRelationMetrics(
       const std::vector<RelationType>& sentence_gold,
-      const std::vector<RelationType>& sentence_predicted) {
+      const std::vector<RelationType>& sentence_predicted)
+  : argument_metrics(RelationType::ARG_NAMES.size()) {
 
     unsigned tp = 0;
     unsigned fp = 0;
