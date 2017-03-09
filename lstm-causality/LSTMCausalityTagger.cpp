@@ -51,8 +51,12 @@ LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
       means_lstm(options.lstm_layers, options.token_dim,
               options.span_hidden_dim, &model) {
   vocab = *parser.GetVocab();  // now that parser is initialized, copy vocab
+  // Reset actions
   vocab.actions.clear();
   vocab.actions_to_arc_labels.clear();
+  // We don't care about characters
+  vocab.chars_to_int.clear();
+  vocab.int_to_chars.clear();
 }
 
 
@@ -105,6 +109,8 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
       const Sentence& sentence = corpus.sentences[order[sentence_i]];
       const vector<unsigned>& correct_actions =
           corpus.correct_act_sent[order[sentence_i]];
+
+      // cerr << "Starting sentence " << sentence << endl;
 
       ComputationGraph cg;
       Expression parser_state;

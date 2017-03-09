@@ -21,6 +21,7 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadSentences(
     const fs::path& file_path = file_iter->path();
     if (fs::is_directory(file_path) || file_path.extension() != FILE_EXTENSION)
       continue;
+    // cerr << "Loading from file " << file_path << endl;
     ReadFile(file_path.string(), training_corpus);
   }
 
@@ -31,6 +32,9 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadSentences(
     }
     cerr << "# of actions: " << training_corpus->vocab->CountActions() << "\n";
   }
+
+  training_corpus->sentences.shrink_to_fit();
+  training_corpus->correct_act_sent.shrink_to_fit();
 }
 
 void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
@@ -49,13 +53,13 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
   map<unsigned, unsigned> sentence;
   map<unsigned, unsigned> sentence_pos;
   map<unsigned, string> sentence_unk_surface_forms;
-  training_corpus->correct_act_sent.push_back({});
+  vector<unsigned> correct_actions;
 
   while (getline(actions_file, line)) {
     if (line.empty()) { // An empty line marks the end of a sentence.
       if (!first) { // if first, first line is blank, but no sentence yet
         RecordSentence(training_corpus, &sentence, &sentence_pos,
-                       &sentence_unk_surface_forms);
+                       &sentence_unk_surface_forms, &correct_actions);
       }
       next_line_type = SENTENCE_START_LINE;
       continue; // don't update next_line_type again
@@ -95,13 +99,13 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
       // Ignore relations line. TODO: check that our internal state matches?
       next_line_type = ARC_LINE;
     } else { // next_line_type == ARC_LINE
-      RecordAction(line, training_corpus);
+      RecordAction(line, training_corpus, &correct_actions);
       next_line_type = STATE_LINE;
     }
   }
 
   if (!sentence.empty()) {
     RecordSentence(training_corpus, &sentence, &sentence_pos,
-                   &sentence_unk_surface_forms, true);
+                   &sentence_unk_surface_forms, &correct_actions);
   }
 }
