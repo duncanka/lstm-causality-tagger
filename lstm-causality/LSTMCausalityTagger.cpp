@@ -315,8 +315,8 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
         }
       }
       cerr << "Splitting " << *current_rel << " at "
-           << vocab.int_to_words[
-               sentence.words.at(connective_repeated_token_index)];
+           << vocab.int_to_words[sentence.words.at(
+               connective_repeated_token_index)] << endl;
 
       // Now replace that index and everything after it with the new token.
       ThresholdedCmp<greater_equal<unsigned>> gte_repeated_index(
