@@ -1,6 +1,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/range/adaptors.hpp>
 #include <chrono>
+#include <cmath>
 #include <deque>
 #include <functional>
 #include <iomanip>
@@ -79,7 +80,6 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
   sgd.eta_decay = 0.08;
   //sgd.eta_decay = 0.05;
 
-  bool softlink_created = false;
   double sentences_seen = 0;
   double best_f1 = 0;
   unsigned actions_seen = 0;
@@ -144,57 +144,71 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
     // TODO: move declaration to make this unnecessary.
     llh = actions_seen = correct = 0;
 
-    if (iter % 25 == 1) {
-      // report on dev set
-      double llh = 0;
-      double num_actions = 0;
-      double correct = 0;
-      BecauseRelationMetrics<> evaluation;
-      const auto t_start = chrono::high_resolution_clock::now();
-      for (unsigned sii = num_sentences_train; sii < num_sentences; ++sii) {
-        const Sentence& sentence = corpus.sentences[sii];
-
-        ComputationGraph cg;
-        Expression parser_state;
-        parser.LogProbTagger(sentence, *parser.GetVocab(), &cg, true,
-                             &parser_state);
-        vector<unsigned> actions = LogProbTagger(sentence, *corpus.vocab,
-                                                 &cg, false);
-        llh += as_scalar(cg.incremental_forward());
-        vector<CausalityRelation> predicted = Decode(sentence, actions,
-                                                     *corpus.vocab);
-
-        const vector<unsigned>& gold_actions = corpus.correct_act_sent[sii];
-        vector<CausalityRelation> gold = Decode(sentence, gold_actions,
-                                                *corpus.vocab);
-
-        num_actions += actions.size();
-        evaluation += BecauseRelationMetrics<>(gold, predicted);
-      }
-
-      auto t_end = chrono::high_resolution_clock::now();
-      cerr << "  **dev (iter=" << iter << " epoch="
-           << (sentences_seen / num_sentences)
-           << ")llh=" << llh << " ppl: " << exp(llh / num_actions)
-           << "\terr: " << (num_actions - correct) / num_actions
-           << " evaluation: \n  " << evaluation
-           << "\n[" << num_sentences_dev << " sentences in "
-           << chrono::duration<double, milli>(t_end - t_start).count() << " ms]"
-           << endl;
-
-      if (evaluation.connective_metrics.GetF1() > best_f1) {
-        best_f1 = evaluation.connective_metrics.GetF1();
-        SaveModel(model_fname, softlink_created);
-        softlink_created = true;
-      }
+    if (iter % 25 == 0) {
+      best_f1 = DoDevEvaluation(num_sentences, num_sentences_train,
+                                num_sentences_dev, iter, sentences_seen, corpus,
+                                &parser, best_f1, model_fname);
     }
   }
+}
+
+
+double LSTMCausalityTagger::DoDevEvaluation(
+    unsigned num_sentences, unsigned num_sentences_train,
+    unsigned num_sentences_dev, unsigned iter, unsigned sentences_seen,
+    const TrainingCorpus& corpus, LSTMParser* parser, double best_f1,
+    const string& model_fname) {
+  // report on dev set
+  double llh_dev = 0;
+  double num_actions = 0;
+  double correct_dev = 0;
+  BecauseRelationMetrics<> evaluation;
+  const auto t_start = chrono::high_resolution_clock::now();
+  for (unsigned sii = num_sentences_train; sii < num_sentences; ++sii) {
+    const Sentence& sentence = corpus.sentences[sii];
+
+    ComputationGraph cg;
+    Expression parser_state;
+    parser->LogProbTagger(sentence, *parser->GetVocab(), &cg, true,
+                          &parser_state);
+    vector<unsigned> actions = LogProbTagger(sentence, *corpus.vocab,
+                                             &cg, false);
+    llh_dev += as_scalar(cg.incremental_forward());
+    vector<CausalityRelation> predicted = Decode(sentence, actions,
+                                                 *corpus.vocab);
+
+    const vector<unsigned>& gold_actions = corpus.correct_act_sent[sii];
+    vector<CausalityRelation> gold = Decode(sentence, gold_actions,
+                                            *corpus.vocab);
+
+    num_actions += actions.size();
+    evaluation += BecauseRelationMetrics<>(gold, predicted);
+  }
+
+  auto t_end = chrono::high_resolution_clock::now();
+  cerr << "  **dev (iter=" << iter << " epoch="
+       << (sentences_seen / num_sentences)
+       << ")llh=" << llh_dev << " ppl: " << exp(llh_dev / num_actions)
+       << "\terr: " << (num_actions - correct_dev) / num_actions
+       << " evaluation: \n  " << evaluation
+       << "\n[" << num_sentences_dev << " sentences in "
+       << chrono::duration<double, milli>(t_end - t_start).count() << " ms]"
+       << endl;
+
+  if (evaluation.connective_metrics.GetF1() > best_f1 || isnan(best_f1)) {
+    best_f1 = evaluation.connective_metrics.GetF1();
+    SaveModel(model_fname, !isnan(best_f1));
+  }
+
+  return best_f1;
 }
 
 
 vector<CausalityRelation> LSTMCausalityTagger::Decode(
     const Sentence& sentence, const vector<unsigned> actions,
     const lstm_parser::CorpusVocabulary& vocab) {
+  cerr << "Decoding sentence " << sentence << endl;
+
   vector<CausalityRelation> relations;
   vector<unsigned> lambda_1;
   deque<unsigned> lambda_2; // we'll be appending to the left end

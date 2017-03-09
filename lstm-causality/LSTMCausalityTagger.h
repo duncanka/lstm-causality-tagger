@@ -195,6 +195,13 @@ protected:
     archive << *this;
   }
 
+  double DoDevEvaluation(unsigned num_sentences, unsigned num_sentences_train,
+                         unsigned num_sentences_dev, unsigned iter,
+                         unsigned sentences_seen,
+                         const lstm_parser::TrainingCorpus& corpus,
+                         lstm_parser::LSTMParser* parser, double best_f1,
+                         const std::string& model_fname);
+
   std::vector<CausalityRelation> Decode(
       const lstm_parser::Sentence& sentence,
       const std::vector<unsigned> actions,
