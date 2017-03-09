@@ -67,7 +67,11 @@ protected:
                   const std::vector<IndexList>& arguments = {{}})
       : arg_names(arg_names), type_names(type_names), sentence(sentence),
         vocab(vocab), relation_type(relation_type),
-        connective_indices(connective_indices), arguments(arguments) {}
+        connective_indices(connective_indices), arguments(arguments) {
+    assert(arguments.size() < arg_names.size());
+    // Make sure all arguments are created, even if they weren't yet specified.
+    this->arguments.resize(arg_names.size());
+  }
 
   TokenList GetTokensForIndices(const IndexList& indices) const {
     TokenList tokens;

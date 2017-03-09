@@ -207,7 +207,7 @@ double LSTMCausalityTagger::DoDevEvaluation(
 vector<CausalityRelation> LSTMCausalityTagger::Decode(
     const Sentence& sentence, const vector<unsigned> actions,
     const lstm_parser::CorpusVocabulary& vocab) {
-  cerr << "Decoding sentence " << sentence << endl;
+  // cerr << "Decoding sentence " << sentence << endl;
 
   vector<CausalityRelation> relations;
   vector<unsigned> lambda_1;
