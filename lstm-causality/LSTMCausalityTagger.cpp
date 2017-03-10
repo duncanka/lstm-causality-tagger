@@ -503,7 +503,7 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
   const string& action_name = action_names[action];
   // TODO: switch this over to a state machine?
   // TODO: forbid CONN-FRAG after SPLIT?
-  bool processing_left = !real_state.L1.empty();
+  bool processing_left = real_state.L1.size() <= 1;
   if (!real_state.currently_processing_rel) {
     // Anything but NO-CONN or an arc is a problem.
     bool is_ok = action_name[0] == 'N'                  // NO-CONN
@@ -777,4 +777,7 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     cst->current_rel_effect_tokens.clear();
     cst->current_rel_means_tokens.clear();
   }
+  assert(!L1i.empty() && !L2i.empty() && !L3i.empty() && !L4i.empty());
+  assert(L1.size() == L1i.size() && L2.size() == L2i.size() &&
+         L3.size() == L3i.size() && L4.size() == L4i.size());
 }
