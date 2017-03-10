@@ -68,12 +68,12 @@ void signal_callback_handler(int /* signum */) {
 
 
 int main(int argc, char** argv) {
-  cnn::Initialize(argc, argv);
-
   cerr << "COMMAND:";
   for (unsigned i = 0; i < static_cast<unsigned>(argc); ++i)
     cerr << ' ' << argv[i];
   cerr << endl;
+
+  cnn::Initialize(argc, argv);
 
   po::variables_map conf;
   InitCommandLine(argc, argv, &conf);
