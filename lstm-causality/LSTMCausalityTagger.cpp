@@ -299,7 +299,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       AddArc(action);
       AdvanceArgTokenLeft();
     } else if (action_name == "SPLIT") {
-      assert(current_rel);
+      assert(current_rel && current_rel->GetConnectiveIndices()->size() > 1);
       // Make a copy of the current relation.
       relations.push_back(*current_rel);
       current_rel = &relations.back();
@@ -322,7 +322,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
 
       // Now replace that index and everything after it with the new token.
       ThresholdedCmp<greater_equal<unsigned>> gte_repeated_index(
-          connective_repeated_token_index);
+          (*connective_indices)[connective_repeated_token_index]);
       ReallyDeleteIf(connective_indices, gte_repeated_index);
       connective_indices->push_back(current_arg_token);
       // Delete all arg words that came after the previous last connective word.
@@ -707,10 +707,12 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     EnsureRelationWithConnective(true);
     AdvanceArgTokenRight();
   } else if (action_name == "CONN-FRAG-LEFT") {
+    cst->current_rel_conn_tokens.push_back(current_arg_token_i);
     connective_lstm.add_input(current_arg_token);
     UpdateCurrentRelationEmbedding();
     AdvanceArgTokenLeft();
   } else if (action_name == "CONN-FRAG-RIGHT") {
+    cst->current_rel_conn_tokens.push_back(current_arg_token_i);
     connective_lstm.add_input(current_arg_token);
     UpdateCurrentRelationEmbedding();
     AdvanceArgTokenRight();
@@ -721,10 +723,11 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     AddArc(action);
     AdvanceArgTokenLeft();
   } else if (action_name == "SPLIT") {
+    assert(cst->current_rel_conn_tokens.size() > 1);
     // Find the last connective word that shares the same lemma, if possible.
     // Default is cut off after initial connective word.
     unsigned connective_repeated_token_index =
-        cst->current_rel_conn_tokens.front();
+        cst->current_rel_conn_tokens.at(1);
     for (auto token_iter = cst->current_rel_conn_tokens.rbegin();
         // Ignore the connective guard.
         token_iter != cst->current_rel_conn_tokens.rend() - 1; ++token_iter) {
@@ -737,7 +740,7 @@ void LSTMCausalityTagger::DoAction(unsigned action,
 
     // Now copy the current relation over to a new one, keeping only the
     // tokens up to the repeated connective token.
-    StartNewRelation();
+    StartNewRelation();  // reset all the relation-specific LSTMs
     const vector<LSTMBuilder*> builders(
         {&connective_lstm, &cause_lstm, &effect_lstm, &means_lstm});
     const vector<vector<unsigned>*> token_lists(
@@ -754,8 +757,12 @@ void LSTMCausalityTagger::DoAction(unsigned action,
       }
       *token_lists[i] = move(new_token_list);
     }
+
+    // Add the repeated token to the relation -- but don't advance the arg
+    // token; in theory, this could still be an argument word.
+    connective_lstm.add_input(current_arg_token);
+    cst->current_rel_conn_tokens.push_back(current_arg_token_i);
     EmbedCurrentRelation();
-    // Don't advance the arg token.
   } else if (action_name == "SHIFT") {
     assert(L4.size() == 1 && L1.size() == 1);  // processed all tokens?
     // Move L2 back to L1.
