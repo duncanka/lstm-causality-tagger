@@ -171,8 +171,8 @@ double LSTMCausalityTagger::DoDevEvaluation(
     Expression parser_state;
     parser->LogProbTagger(sentence, *parser->GetVocab(), &cg, true,
                           &parser_state);
-    vector<unsigned> actions = LogProbTagger(sentence, *corpus.vocab,
-                                             &cg, false);
+    vector<unsigned> actions = LogProbTagger(sentence, *corpus.vocab, &cg,
+                                             false);
     llh_dev += as_scalar(cg.incremental_forward());
     vector<CausalityRelation> predicted = Decode(sentence, actions,
                                                  *corpus.vocab);
@@ -501,7 +501,7 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
   const CausalityTaggerState& real_state =
       static_cast<const CausalityTaggerState&>(state);
   const string& action_name = action_names[action];
-  bool next_arg_token_is_left = real_state.L1.size() >= 1;
+  bool next_arg_token_is_left = real_state.L1.size() > 1;
 
   if (real_state.currently_processing_rel) {
     // SHIFT is mandatory if there are no more tokens to compare.
@@ -659,8 +659,8 @@ void LSTMCausalityTagger::DoAction(unsigned action,
       SET_LIST_BASED_VARS(current_conn_token, L4, back());
       // We're recording the fact that the connective token has changed. That
       // means we have at least one thing in L1: the previous connective token.
-      // Set the current arg token to the *first* available item in L1,
-      // excluding the guard.
+      // Set the current arg token to the first available item in L1, excluding
+      // the guard.
       SET_LIST_BASED_VARS(current_arg_token, L1, back());
     }
   };
