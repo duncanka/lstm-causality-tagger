@@ -136,6 +136,7 @@ protected:
     std::vector<unsigned> L3i;
     std::vector<unsigned> L4i;
     bool currently_processing_rel;
+    unsigned prev_action;
     // Need lists of token Expressions to duplicate if we get a SPLIT.
     std::vector<unsigned> current_rel_conn_tokens;
     std::vector<unsigned> current_rel_cause_tokens;
@@ -149,7 +150,7 @@ protected:
     CausalityTaggerState(const lstm_parser::Sentence& raw_sent,
                          const lstm_parser::Sentence::SentenceMap& sent)
     : TaggerState{raw_sent, sent}, currently_processing_rel(false),
-      current_conn_token_i(sentence.begin()->first),
+      prev_action(-1), current_conn_token_i(sentence.begin()->first),
       current_arg_token_i(sentence.begin()->first) {}
   };
 

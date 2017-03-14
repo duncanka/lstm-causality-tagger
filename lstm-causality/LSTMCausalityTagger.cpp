@@ -501,31 +501,62 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
   const CausalityTaggerState& real_state =
       static_cast<const CausalityTaggerState&>(state);
   const string& action_name = action_names[action];
-  // TODO: switch this over to a state machine?
-  // TODO: forbid CONN-FRAG after SPLIT?
-  bool processing_left = real_state.L1.size() <= 1;
-  if (!real_state.currently_processing_rel) {
-    // Anything but NO-CONN or an arc is a problem.
-    bool is_ok = action_name[0] == 'N'                  // NO-CONN
-        || (action_name[0] == 'R' && !processing_left)  // RIGHT-ARC
-        || (action_name[0] == 'L' && processing_left);  // LEFT-ARC
-    return !is_ok;
-  } else { // When we're processing a relation, everything but NO-CONN is OK...
-    // ...except SHIFT is allowed only once all tokens have been compared...
-    if (action_name[0] == 'S' && action_name[1] == 'H') {
-      return real_state.L1.size() > 1 || real_state.L4.size() > 1;
-    // ...and SPLIT is allowed only if we have at least two connective words...
-    } else if (action_name[0] == 'S' && action_name[1] == 'P')  {
-      return real_state.current_rel_conn_tokens.size() < 2;
+  bool next_arg_token_is_left = real_state.L1.size() >= 1;
+
+  if (real_state.currently_processing_rel) {
+    // SHIFT is mandatory if there are no more tokens to compare.
+    if (real_state.L1.size() <= 1 && real_state.L4.size() <= 1) {
+      return action_name[0] != 'S' || action_name[1] != 'H';
+    }
+
+    if (next_arg_token_is_left) {
+      // SHIFT, CONN-FRAG, and SPLIT are all forbidden when working to the left,
+      // as are rightward-oriented operations.
+      return !starts_with(action_name, "LEFT")
+          && !ends_with(action_name, "LEFT");
+    } else {  // processing right side
+      // SHIFT is forbidden if some tokens have not yet been compared.
+      if (action_name[0] == 'S' && action_name[1] == 'H') {
+        return real_state.L1.size() > 1 || real_state.L4.size() > 1;
+      }
+
+      // We should never end up processing a relation after 0 actions.
+      assert(real_state.prev_action != static_cast<unsigned>(-1));
+      // If there was a last action, check that this one is compatible.
+      const string& last_action_name = action_names[real_state.prev_action];
+      // SPLIT has unique requirements: can't come after a SPLIT or a
+      // CONN-FRAG. Also, we can't have less than two connective words.
+      if (action_name[0] == 'S' && action_name[1] == 'P') {
+        return real_state.current_rel_conn_tokens.size() < 2
+            || (last_action_name[0] == 'S' && last_action_name[1] == 'P')
+            || last_action_name[0] == 'C';
+      }
+
+      // Another special case: forbid CONN-FRAG after SPLIT.
+      if (last_action_name[0] == 'S' && last_action_name[1] == 'P'
+          && action_name[0] == 'C')
+        return false;
+
+      // If it's not a split, a shift, or a forbidden post-split operation,
+      // forbid any operation that doesn't act on arg tokens to the right.
+      return !starts_with(action_name, "RIGHT")
+          && !ends_with(action_name, "RIGHT");
+    }
+  } else {  // not currently processing a relation
+    // NO-CONN is always legal when we're not processing a relation.
+    if (action_name[0] == 'N' && action_name[3] == 'C') {
+      return false;
+    }
+
+    // Even if we're not processing a relation, we still need to check whether
+    // we have any words to compare on the left. If we do, only leftward
+    // operations are allowed; if not, only rightward ones.
+    if (next_arg_token_is_left) {
+      return action_name[0] != 'L'              // LEFT-ARC
+          && !ends_with(action_name, "LEFT");   // NO-ARC-LEFT
     } else {
-      return action_name[0] == 'N'  // NO-CONN
-          // ...and we have to make sure it's an action in the right direction.
-          || (processing_left
-              && (starts_with(action_name, "RIGHT")
-                  || ends_with(action_name, "RIGHT")))
-          || (!processing_left
-              && (starts_with(action_name, "LEFT")
-                  || ends_with(action_name, "LEFT")));
+      return action_name[0] != 'R'              // RIGHT-ARC
+          && !ends_with(action_name, "RIGHT");  // NO-ARC-RIGHT
     }
   }
 }
@@ -723,7 +754,8 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     AddArc(action);
     AdvanceArgTokenLeft();
   } else if (action_name == "SPLIT") {
-    assert(cst->current_rel_conn_tokens.size() > 1);
+    assert(cst->current_rel_conn_tokens.size() > 1
+           && cst->currently_processing_rel);
     // Find the last connective word that shares the same lemma, if possible.
     // Default is cut off after initial connective word.
     unsigned connective_repeated_token_index =
@@ -784,6 +816,8 @@ void LSTMCausalityTagger::DoAction(unsigned action,
     cst->current_rel_effect_tokens.clear();
     cst->current_rel_means_tokens.clear();
   }
+
+  cst->prev_action = action;
   assert(!L1i.empty() && !L2i.empty() && !L3i.empty() && !L4i.empty());
   assert(L1.size() == L1i.size() && L2.size() == L2i.size() &&
          L3.size() == L3i.size() && L4.size() == L4i.size());
