@@ -2,6 +2,7 @@
 #include <boost/range/adaptors.hpp>
 #include <chrono>
 #include <cmath>
+#include <csignal>
 #include <deque>
 #include <functional>
 #include <iomanip>
@@ -63,7 +64,7 @@ LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
 
 void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
                                 double dev_pct, const string& model_fname,
-                                const volatile bool* requested_stop) {
+                                const volatile sig_atomic_t* requested_stop) {
   const unsigned num_sentences = corpus.sentences.size();
   vector<unsigned> order(corpus.sentences.size());
   for (unsigned i = 0; i < corpus.sentences.size(); ++i)

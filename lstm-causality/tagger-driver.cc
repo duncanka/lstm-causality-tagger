@@ -1,6 +1,6 @@
 #include <boost/program_options.hpp>
 #include <iostream>
-#include <signal.h>
+#include <csignal>
 #include <string>
 #include <sstream>
 
@@ -12,7 +12,7 @@ using namespace lstm_parser;
 namespace po = boost::program_options;
 using namespace std;
 
-volatile bool requested_stop = false;
+volatile sig_atomic_t requested_stop = false;
 
 void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
   po::options_description opts("Configuration options");
@@ -47,7 +47,7 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("lstm-layers,l", po::value<unsigned>()->default_value(2),
      "Number of layers for each stack LSTM");
 
-     po::options_description dcmdline_options;
+  po::options_description dcmdline_options;
   dcmdline_options.add(opts);
   po::store(parse_command_line(argc, argv, dcmdline_options), *conf);
   if (conf->count("help")) {

@@ -2,6 +2,7 @@
 #define LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_
 
 #include <boost/serialization/split_member.hpp>
+#include <csignal>
 #include <map>
 #include <string>
 #include <vector>
@@ -53,7 +54,7 @@ public:
 
   void Train(const BecauseOracleTransitionCorpus& corpus,
              double dev_pct, const std::string& model_fname,
-             const volatile bool* requested_stop = nullptr);
+             const volatile sig_atomic_t* requested_stop = nullptr);
 
   std::vector<CausalityRelation> Tag(const lstm_parser::Sentence& sentence,
                                      const lstm_parser::CorpusVocabulary& vocab,

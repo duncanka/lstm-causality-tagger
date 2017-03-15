@@ -12,7 +12,6 @@ public:
       : TrainingCorpus(vocab) {
     BecauseTransitionsReader(is_training).ReadSentences(file, this);
   }
-  virtual ~BecauseOracleTransitionCorpus() {}
 
 private:
   class BecauseTransitionsReader: public OracleTransitionsCorpusReader {
