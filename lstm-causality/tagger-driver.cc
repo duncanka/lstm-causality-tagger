@@ -116,16 +116,16 @@ int main(int argc, char** argv) {
     }
 
     ostringstream os;
-    os << "tagger_" << tagger.options.action_dim
+    os << "tagger_" << tagger.options.word_dim
+       << '_' << tagger.options.lstm_layers
        << '_' << tagger.options.token_dim
        << '_' << tagger.options.lambda_hidden_dim
        << '_' << tagger.options.actions_hidden_dim
        << '_' << tagger.options.span_hidden_dim
-       << '_' << tagger.options.lstm_layers
-       << '_' << tagger.options.pos_dim
        << '_' << tagger.options.rels_hidden_dim
+       << '_' << tagger.options.action_dim
+       << '_' << tagger.options.pos_dim
        << '_' << tagger.options.state_dim
-       << '_' << tagger.options.word_dim
        << "-pid" << getpid() << ".params";
     const string fname = os.str();
     cerr << "Writing parameters to file: " << fname << endl;
