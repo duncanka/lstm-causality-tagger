@@ -175,8 +175,8 @@ int main(int argc, char** argv) {
       assert(fold_train_order.size()
              == num_sentences - (current_cutoff - previous_cutoff));
 
-      tagger.Train(full_corpus, fold_train_order, dev_pct, fname, epochs_cutoff,
-                   &requested_stop);
+      tagger.Train(&full_corpus, fold_train_order, dev_pct, fname,
+                   epochs_cutoff, &requested_stop);
 
       vector<unsigned> fold_test_order(
           all_sentence_indices.begin() + previous_cutoff,

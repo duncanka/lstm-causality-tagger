@@ -66,7 +66,7 @@ LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
 }
 
 
-void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
+void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
                                 vector<unsigned> selections, double dev_pct,
                                 const string& model_fname,
                                 double epochs_cutoff,
@@ -112,24 +112,32 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
         random_shuffle(sub_order.begin(), sub_order.end());
       }
 
-      const Sentence& sentence =
-          corpus.sentences[selections[sub_order[sentence_i]]];
+      unsigned sentence_index = selections[sub_order[sentence_i]];
+      const Sentence& sentence = corpus->sentences[sentence_index];
       const vector<unsigned>& correct_actions =
-          corpus.correct_act_sent[selections[sub_order[sentence_i]]];
+          corpus->correct_act_sent[sentence_index];
 
       // cerr << "Starting sentence " << sentence << endl;
 
       ComputationGraph cg;
       Expression parser_state;
-      parser.LogProbTagger(sentence, *parser.GetVocab(), &cg, true,
-                           &parser_state);
+      vector<unsigned> parse_actions = parser.LogProbTagger(
+          sentence, *parser.GetVocab(), &cg, true, &parser_state);
+      // Cache parse if we haven't yet.
+      if (!corpus->sentence_parses[sentence_index]) {
+        double parser_lp = as_scalar(cg.incremental_forward());
+        auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp);
+        corpus->sentence_parses[sentence_index].reset(
+            new ParseTree(move(tree)));
+      }
+      // TODO: simplify LogProbTager to use its own vocab?
       LogProbTagger(&cg, sentence, sentence.words, correct_actions,
-                    corpus.vocab->actions, corpus.vocab->int_to_words,
+                    corpus->vocab->actions, corpus->vocab->int_to_words,
                     &correct, &parser_state);
       double lp = as_scalar(cg.incremental_forward());
       if (lp < 0) {
         cerr << "Log prob " << lp << " < 0 on sentence "
-             << corpus.sentences[selections[sub_order[sentence_i]]]<< endl;
+             << corpus->sentences[sentence_index]<< endl;
         assert(lp >= 0.0);
       }
       cg.backward();
@@ -153,7 +161,7 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
     llh = actions_seen = correct = 0;
 
     if (iteration % 25 == 0) {
-      best_f1 = DoDevEvaluation(corpus, selections, &parser,
+      best_f1 = DoDevEvaluation(*corpus, selections, &parser,
                                 num_sentences_train, iteration, sentences_seen,
                                 best_f1, model_fname, &last_epoch_saved);
       if (epoch - last_epoch_saved > epochs_cutoff) {
@@ -168,10 +176,10 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
 
 
 double LSTMCausalityTagger::DoDevEvaluation(
-    const TrainingCorpus& corpus, const vector<unsigned>& selections,
-    LSTMParser* parser, unsigned num_sentences_train, unsigned iteration,
-    unsigned sentences_seen, double best_f1, const string& model_fname,
-    double* last_epoch_saved) {
+    const BecauseOracleTransitionCorpus& corpus,
+    const vector<unsigned>& selections, LSTMParser* parser,
+    unsigned num_sentences_train, unsigned iteration, unsigned sentences_seen,
+    double best_f1, const string& model_fname, double* last_epoch_saved) {
   // report on dev set
   const unsigned num_sentences = selections.size();
   double llh_dev = 0;
@@ -180,23 +188,26 @@ double LSTMCausalityTagger::DoDevEvaluation(
   CausalityMetrics evaluation;
   const auto t_start = chrono::high_resolution_clock::now();
   for (unsigned sii = num_sentences_train; sii < num_sentences; ++sii) {
-    const Sentence& sentence = corpus.sentences[selections[sii]];
+    unsigned sentence_index = selections[sii];
+    const Sentence& sentence = corpus.sentences[sentence_index];
 
     ComputationGraph cg;
     Expression parser_state;
     parser->LogProbTagger(sentence, *parser->GetVocab(), &cg, true,
                           &parser_state);
+    cg.incremental_forward();
     vector<unsigned> actions = LogProbTagger(sentence, *corpus.vocab, &cg,
                                              false);
     llh_dev += as_scalar(cg.incremental_forward());
     vector<CausalityRelation> predicted = Decode(sentence, actions);
 
     const vector<unsigned>& gold_actions =
-        corpus.correct_act_sent[selections[sii]];
+        corpus.correct_act_sent[sentence_index];
     vector<CausalityRelation> gold = Decode(sentence, gold_actions);
 
     num_actions += actions.size();
-    evaluation += CausalityMetrics(gold, predicted);
+    const ParseTree& parse = *corpus.sentence_parses[sentence_index];
+    evaluation += CausalityMetrics(gold, predicted, parse);
   }
 
   auto t_end = chrono::high_resolution_clock::now();
@@ -388,8 +399,9 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
     const vector<unsigned>& gold_actions =
         corpus.correct_act_sent[sentence_index];
     vector<CausalityRelation> gold = Decode(sentence, gold_actions);
-    vector<CausalityRelation> predicted = Tag(sentence);
-    evaluation += CausalityMetrics(gold, predicted);
+    ParseTree parse(sentence);
+    vector<CausalityRelation> predicted = Tag(sentence, &parse);
+    evaluation += CausalityMetrics(gold, predicted, parse);
   }
   return evaluation;
 }

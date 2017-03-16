@@ -54,17 +54,24 @@ public:
 
   virtual ~LSTMCausalityTagger() {}
 
-  void Train(const BecauseOracleTransitionCorpus& corpus,
+  void Train(BecauseOracleTransitionCorpus* corpus,
              std::vector<unsigned> selectetions, double dev_pct,
              const std::string& model_fname,
              double epochs_cutoff = std::numeric_limits<double>::infinity(),
              const volatile sig_atomic_t* requested_stop = nullptr);
 
-  std::vector<CausalityRelation> Tag(const lstm_parser::Sentence& sentence) {
+  std::vector<CausalityRelation> Tag(const lstm_parser::Sentence& sentence,
+                                     lstm_parser::ParseTree* parse = nullptr) {
     cnn::ComputationGraph cg;
     cnn::expr::Expression parser_state;
-    parser.LogProbTagger(sentence, *parser.GetVocab(), &cg, true,
-                         &parser_state);
+    vector<unsigned> parse_actions = parser.LogProbTagger(
+        sentence, *parser.GetVocab(), &cg, true, &parser_state);
+    if (parse) {
+      double parser_lp = as_scalar(cg.incremental_forward());
+      auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp,
+                                          parse->IsLabeled());
+      *parse = std::move(tree);
+    }
     std::vector<unsigned> actions = LogProbTagger(sentence, vocab, &cg,
                                                   false, &parser_state);
     return Decode(sentence, actions);
@@ -202,7 +209,7 @@ protected:
     archive << *this;
   }
 
-  double DoDevEvaluation(const lstm_parser::TrainingCorpus& corpus,
+  double DoDevEvaluation(const BecauseOracleTransitionCorpus& corpus,
                          const std::vector<unsigned>& selections,
                          lstm_parser::LSTMParser* parser,
                          unsigned num_sentences_train, unsigned iteration,

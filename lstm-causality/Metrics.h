@@ -294,7 +294,8 @@ public:
   }
 
   BecauseRelationMetrics(const std::vector<RelationType>& sentence_gold,
-                         const std::vector<RelationType>& sentence_predicted)
+                         const std::vector<RelationType>& sentence_predicted,
+                         const lstm_parser::ParseTree& parse)
       : argument_metrics(RelationType::ARG_NAMES.size()) {
     for (unsigned i = 0; i < argument_metrics.size(); ++i) {
       argument_metrics[i].reset(new ArgumentMetrics);
@@ -319,7 +320,7 @@ public:
     connective_metrics.reset(new ClassificationMetrics(tp, fp, fn));
 
     // TODO: implement calculating argument metrics
-    // TODO: implement head matching (requires having parse trees)
+    // TODO: implement head matching
   }
 
   void operator+=(const BecauseRelationMetrics<RelationType>& other) {
