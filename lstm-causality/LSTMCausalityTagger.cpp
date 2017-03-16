@@ -9,6 +9,7 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <numeric>
 #include <string>
 #include <utility>
@@ -68,6 +69,7 @@ LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
 void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
                                 vector<unsigned> selections, double dev_pct,
                                 const string& model_fname,
+                                double epochs_cutoff,
                                 const volatile sig_atomic_t* requested_stop) {
   const unsigned num_sentences = selections.size();
   // selections gives us the subcorpus to use for training at all. But we'll
@@ -93,14 +95,22 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
   double correct = 0;
   double llh = 0;
   bool first = true;
-  int iter = -1;
+  double last_epoch_saved = nan("");
 
   unsigned num_sentences_dev = round(dev_pct * num_sentences);
   unsigned num_sentences_train = num_sentences - num_sentences_dev;
 
   unsigned sentence_i = num_sentences_train;
-  while (!requested_stop || !(*requested_stop)) {
-    ++iter;
+  for (unsigned iteration = 0; !requested_stop || !(*requested_stop);
+       ++iteration) {
+    double epoch = sentences_seen / num_sentences;
+    if (epoch - last_epoch_saved > epochs_cutoff) {
+      cerr << "Reached cutoff for epochs with no increase in max dev F1: "
+           << epoch - last_epoch_saved << " > " << epochs_cutoff
+           << "; terminating training" << endl;
+      break;
+    }
+
     for (unsigned iter_i = 0; iter_i < status_every_i_iterations; ++iter_i) {
       if (sentence_i == num_sentences_train) {
         sentence_i = 0;
@@ -145,17 +155,17 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
     sgd.status();
     time_t time_now = chrono::system_clock::to_time_t(
         chrono::system_clock::now());
-    cerr << "update #" << iter << " (epoch " << (sentences_seen / num_sentences)
+    cerr << "update #" << iteration << " (epoch " << epoch
          << " |time=" << put_time(localtime(&time_now), "%c %Z") << ")\tllh: "
          << llh << " ppl: " << exp(llh / actions_seen) << " err: "
          << (actions_seen - correct) / actions_seen << endl;
     // TODO: move declaration to make this unnecessary.
     llh = actions_seen = correct = 0;
 
-    if (iter % 25 == 0) {
+    if (iteration % 25 == 0) {
       best_f1 = DoDevEvaluation(corpus, selections, &parser,
-                                num_sentences_train, iter, sentences_seen,
-                                best_f1, model_fname);
+                                num_sentences_train, iteration, sentences_seen,
+                                best_f1, model_fname, &last_epoch_saved);
     }
   }
 }
@@ -164,7 +174,8 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
 double LSTMCausalityTagger::DoDevEvaluation(
     const TrainingCorpus& corpus, const vector<unsigned>& selections,
     LSTMParser* parser, unsigned num_sentences_train, unsigned iteration,
-    unsigned sentences_seen, double best_f1, const string& model_fname) {
+    unsigned sentences_seen, double best_f1, const string& model_fname,
+    double* last_epoch_saved) {
   // report on dev set
   const unsigned num_sentences = selections.size();
   double llh_dev = 0;
@@ -193,8 +204,8 @@ double LSTMCausalityTagger::DoDevEvaluation(
   }
 
   auto t_end = chrono::high_resolution_clock::now();
-  cerr << "  **dev (iter=" << iteration << " epoch="
-       << (sentences_seen / selections.size())
+  double epoch = sentences_seen / static_cast<double>(selections.size());
+  cerr << "  **dev (iter=" << iteration << " epoch=" << epoch
        << ")llh=" << llh_dev << " ppl: " << exp(llh_dev / num_actions)
        << "\terr: " << (num_actions - correct_dev) / num_actions
        << " evaluation: \n" << evaluation
@@ -202,9 +213,10 @@ double LSTMCausalityTagger::DoDevEvaluation(
        << chrono::duration<double, milli>(t_end - t_start).count() << " ms]"
        << endl;
 
-  if (evaluation.connective_metrics.GetF1() > best_f1 || isnan(best_f1)) {
+  if (evaluation.connective_metrics.GetF1() > best_f1) {
     best_f1 = evaluation.connective_metrics.GetF1();
-    SaveModel(model_fname, !isnan(best_f1));
+    SaveModel(model_fname, !isnan(*last_epoch_saved));
+    *last_epoch_saved = epoch;
   }
 
   return best_f1;

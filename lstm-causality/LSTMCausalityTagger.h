@@ -3,6 +3,7 @@
 
 #include <boost/serialization/split_member.hpp>
 #include <csignal>
+#include <limits>
 #include <map>
 #include <string>
 #include <vector>
@@ -56,6 +57,7 @@ public:
   void Train(const BecauseOracleTransitionCorpus& corpus,
              std::vector<unsigned> selectetions, double dev_pct,
              const std::string& model_fname,
+             double epochs_cutoff = std::numeric_limits<double>::infinity(),
              const volatile sig_atomic_t* requested_stop = nullptr);
 
   std::vector<CausalityRelation> Tag(const lstm_parser::Sentence& sentence) {
@@ -205,7 +207,8 @@ protected:
                          lstm_parser::LSTMParser* parser,
                          unsigned num_sentences_train, unsigned iteration,
                          unsigned sentences_seen, double best_f1,
-                         const std::string& model_fname);
+                         const std::string& model_fname,
+                         double* last_epoch_saved);
 
   std::vector<CausalityRelation> Decode(
       const lstm_parser::Sentence& sentence,

@@ -57,7 +57,10 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("span-hidden-dim,S", po::value<unsigned>()->default_value(64),
      "Dimension of each connective/argument span LSTM's hidden state")
     ("lstm-layers,l", po::value<unsigned>()->default_value(2),
-     "Number of layers for each stack LSTM");
+     "Number of layers for each stack LSTM")
+    ("epochs-cutoff,e", po::value<double>()->default_value(10.0),
+     "Number of training epochs without an improvement in the best F1 to allow"
+     " before stopping training on that fold (SIGINT always works to stop)");
 
   po::options_description dcmdline_options;
   dcmdline_options.add(opts);
@@ -108,12 +111,12 @@ int main(int argc, char** argv) {
       cerr << "Invalid dev percentage: " << dev_pct << endl;
       abort();
     }
-
     if (!conf.count("training-data")) {
       cerr << "Can't train without training corpus!"
               " Please provide --training-data." << endl;
       abort();
     }
+    double epochs_cutoff = conf["epochs-cutoff"].as<double>();
 
     ostringstream os;
     os << "tagger_" << tagger.options.word_dim
@@ -146,6 +149,7 @@ int main(int argc, char** argv) {
     vector<unsigned> fold_cutoffs(folds);
     unsigned uneven_sentences_to_distribute = num_sentences % folds;
     unsigned next_cutoff = num_sentences / folds;
+    // TODO: merge this loop with the one below?
     for (unsigned i = 0; i < folds; ++i, next_cutoff += num_sentences / folds) {
       if (uneven_sentences_to_distribute > 0) {
         ++next_cutoff;
@@ -166,11 +170,10 @@ int main(int argc, char** argv) {
       vector<unsigned> fold_train_order(training_range.begin(),
                                         training_range.end());
 
-      unsigned fold_test_size = current_cutoff - previous_cutoff;
-      unsigned fold_training_size = num_sentences - fold_test_size;
-      assert(fold_train_order.size() == fold_training_size);
+      assert(fold_train_order.size()
+             == num_sentences - (current_cutoff - previous_cutoff));
 
-      tagger.Train(full_corpus, fold_train_order, dev_pct, fname,
+      tagger.Train(full_corpus, fold_train_order, dev_pct, fname, epochs_cutoff,
                    &requested_stop);
 
       vector<unsigned> fold_test_order(
