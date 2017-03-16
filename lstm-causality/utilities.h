@@ -59,4 +59,5 @@ protected:
   }
 };
 
+
 #endif /* LSTM_CAUSALITY_UTILITIES_H_ */

@@ -1,6 +1,10 @@
+#include <algorithm>
+#include <boost/range/adaptors.hpp>
+#include <boost/range/join.hpp>
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <csignal>
+#include <numeric>
 #include <string>
 #include <sstream>
 
@@ -10,6 +14,7 @@
 
 using namespace lstm_parser;
 namespace po = boost::program_options;
+namespace ad = boost::adaptors;
 using namespace std;
 
 volatile sig_atomic_t requested_stop = false;
@@ -23,8 +28,10 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "File from which to load saved syntactic parser model")
     ("training-data,t", po::value<string>(),
      "Directory containing training data")
+    ("folds,f", po::value<unsigned>()->default_value(20),
+     "How many folds to split the data into for cross-validation")
     ("dev-pct,d", po::value<double>()->default_value(0.2),
-     "Percent of data in each training shuffle to use as dev (tuning)")
+     "Percent of training data in each shuffle to use as dev (tuning)")
     ("train", "Whether to train the tagger")
     ("action-dim,a", po::value<unsigned>()->default_value(20),
      "Dimension for vector representation of actions")
@@ -119,12 +126,60 @@ int main(int argc, char** argv) {
     cerr << "Writing parameters to file: " << fname << endl;
 
     const string& training_path = conf["training-data"].as<string>();
-    BecauseOracleTransitionCorpus corpus(tagger.GetVocab(), training_path,
-                                         true);
+    BecauseOracleTransitionCorpus full_corpus(tagger.GetVocab(), training_path,
+                                              true);
     tagger.FinalizeVocab();
     signal(SIGINT, signal_callback_handler);
 
-    tagger.Train(corpus, dev_pct, fname, &requested_stop);
+    unsigned num_sentences = full_corpus.sentences.size();
+    cerr << "Corpus size: " << num_sentences << " sentences" << endl;
+    vector<unsigned> all_sentence_indices(num_sentences);
+    iota(all_sentence_indices.begin(), all_sentence_indices.end(), 0);
+    random_shuffle(all_sentence_indices.begin(), all_sentence_indices.end());
+    unsigned folds = conf["folds"].as<unsigned>();
+    // For cutoffs, we use one *past* the index where the fold should stop.
+    vector<unsigned> fold_cutoffs(folds);
+    unsigned uneven_sentences_to_distribute = num_sentences % folds;
+    unsigned next_cutoff = num_sentences / folds;
+    for (unsigned i = 0; i < folds; ++i, next_cutoff += num_sentences / folds) {
+      if (uneven_sentences_to_distribute > 0) {
+        ++next_cutoff;
+        --uneven_sentences_to_distribute;
+      }
+      fold_cutoffs[i] = next_cutoff;
+    }
+    assert(fold_cutoffs.back() == all_sentence_indices.size());
+
+    unsigned previous_cutoff = 0;
+    for (unsigned fold = 0; fold < folds; ++fold) {
+      cerr << "Starting fold " << fold + 1 << " of " << folds << endl;
+      unsigned current_cutoff = fold_cutoffs[fold];
+      auto training_range = join(
+          all_sentence_indices | ad::sliced(0, previous_cutoff),
+          all_sentence_indices | ad::sliced(current_cutoff,
+                                            all_sentence_indices.size()));
+      vector<unsigned> fold_train_order(training_range.begin(),
+                                        training_range.end());
+
+      unsigned fold_test_size = current_cutoff - previous_cutoff;
+      unsigned fold_training_size = num_sentences - fold_test_size;
+      assert(fold_train_order.size() == fold_training_size);
+
+      tagger.Train(full_corpus, fold_train_order, dev_pct, fname,
+                   &requested_stop);
+
+      vector<unsigned> fold_test_order(
+          all_sentence_indices.begin() + previous_cutoff,
+          all_sentence_indices.begin() + current_cutoff);
+      CausalityMetrics evaluation = tagger.Evaluate(full_corpus,
+                                                    fold_test_order);
+      cerr << "Evaluation for fold " << fold << ':' << endl;
+      cerr << evaluation << endl << endl;
+
+      requested_stop = false;
+      previous_cutoff = current_cutoff;
+    }
+
   }
 
 

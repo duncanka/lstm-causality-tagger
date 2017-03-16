@@ -1,5 +1,6 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/range/adaptors.hpp>
+#include <boost/range/combine.hpp>
 #include <chrono>
 #include <cmath>
 #include <csignal>
@@ -7,6 +8,7 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <numeric>
 #include <string>
 #include <utility>
 #include <vector>
@@ -63,12 +65,15 @@ LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
 
 
 void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
-                                double dev_pct, const string& model_fname,
+                                vector<unsigned> selections, double dev_pct,
+                                const string& model_fname,
                                 const volatile sig_atomic_t* requested_stop) {
-  const unsigned num_sentences = corpus.sentences.size();
-  vector<unsigned> order(corpus.sentences.size());
-  for (unsigned i = 0; i < corpus.sentences.size(); ++i)
-    order[i] = i;
+  const unsigned num_sentences = selections.size();
+  // selections gives us the subcorpus to use for training at all. But we'll
+  // still keep shuffling each time we've gone through all the training
+  // sentences, so we track the order imposed by that shuffle.
+  vector<unsigned> sub_order(num_sentences);
+  iota(sub_order.begin(), sub_order.end(), 0);
   const unsigned status_every_i_iterations = min(100, num_sentences);
   cerr << "NUMBER OF TRAINING SENTENCES: " << num_sentences << endl;
   time_t time_start = chrono::system_clock::to_time_t(
@@ -104,12 +109,13 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
           sgd.update_epoch();
         }
         cerr << "**SHUFFLE\n";
-        random_shuffle(order.begin(), order.end());
+        random_shuffle(sub_order.begin(), sub_order.end());
       }
 
-      const Sentence& sentence = corpus.sentences[order[sentence_i]];
+      const Sentence& sentence =
+          corpus.sentences[selections[sub_order[sentence_i]]];
       const vector<unsigned>& correct_actions =
-          corpus.correct_act_sent[order[sentence_i]];
+          corpus.correct_act_sent[selections[sub_order[sentence_i]]];
 
       // cerr << "Starting sentence " << sentence << endl;
 
@@ -122,8 +128,8 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
                     &correct, &parser_state);
       double lp = as_scalar(cg.incremental_forward());
       if (lp < 0) {
-        cerr << "Log prob < 0 on sentence " << order[sentence_i] << ": lp="
-             << lp << endl;
+        cerr << "Log prob " << lp << " < 0 on sentence "
+             << corpus.sentences[selections[sub_order[sentence_i]]]<< endl;
         assert(lp >= 0.0);
       }
       cg.backward();
@@ -146,27 +152,27 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
     llh = actions_seen = correct = 0;
 
     if (iter % 25 == 0) {
-      best_f1 = DoDevEvaluation(num_sentences, num_sentences_train,
-                                num_sentences_dev, iter, sentences_seen, corpus,
-                                &parser, best_f1, model_fname);
+      best_f1 = DoDevEvaluation(corpus, selections, &parser,
+                                num_sentences_train, iter, sentences_seen,
+                                best_f1, model_fname);
     }
   }
 }
 
 
 double LSTMCausalityTagger::DoDevEvaluation(
-    unsigned num_sentences, unsigned num_sentences_train,
-    unsigned num_sentences_dev, unsigned iter, unsigned sentences_seen,
-    const TrainingCorpus& corpus, LSTMParser* parser, double best_f1,
-    const string& model_fname) {
+    const TrainingCorpus& corpus, const vector<unsigned>& selections,
+    LSTMParser* parser, unsigned num_sentences_train, unsigned iteration,
+    unsigned sentences_seen, double best_f1, const string& model_fname) {
   // report on dev set
+  const unsigned num_sentences = selections.size();
   double llh_dev = 0;
   double num_actions = 0;
   double correct_dev = 0;
   CausalityMetrics evaluation;
   const auto t_start = chrono::high_resolution_clock::now();
   for (unsigned sii = num_sentences_train; sii < num_sentences; ++sii) {
-    const Sentence& sentence = corpus.sentences[sii];
+    const Sentence& sentence = corpus.sentences[selections[sii]];
 
     ComputationGraph cg;
     Expression parser_state;
@@ -175,24 +181,23 @@ double LSTMCausalityTagger::DoDevEvaluation(
     vector<unsigned> actions = LogProbTagger(sentence, *corpus.vocab, &cg,
                                              false);
     llh_dev += as_scalar(cg.incremental_forward());
-    vector<CausalityRelation> predicted = Decode(sentence, actions,
-                                                 *corpus.vocab);
+    vector<CausalityRelation> predicted = Decode(sentence, actions);
 
-    const vector<unsigned>& gold_actions = corpus.correct_act_sent[sii];
-    vector<CausalityRelation> gold = Decode(sentence, gold_actions,
-                                            *corpus.vocab);
+    const vector<unsigned>& gold_actions =
+        corpus.correct_act_sent[selections[sii]];
+    vector<CausalityRelation> gold = Decode(sentence, gold_actions);
 
     num_actions += actions.size();
     evaluation += CausalityMetrics(gold, predicted);
   }
 
   auto t_end = chrono::high_resolution_clock::now();
-  cerr << "  **dev (iter=" << iter << " epoch="
-       << (sentences_seen / num_sentences)
+  cerr << "  **dev (iter=" << iteration << " epoch="
+       << (sentences_seen / selections.size())
        << ")llh=" << llh_dev << " ppl: " << exp(llh_dev / num_actions)
        << "\terr: " << (num_actions - correct_dev) / num_actions
        << " evaluation: \n" << evaluation
-       << "\n[" << num_sentences_dev << " sentences in "
+       << "\n[" << num_sentences - num_sentences_train << " sentences in "
        << chrono::duration<double, milli>(t_end - t_start).count() << " ms]"
        << endl;
 
@@ -206,8 +211,7 @@ double LSTMCausalityTagger::DoDevEvaluation(
 
 
 vector<CausalityRelation> LSTMCausalityTagger::Decode(
-    const Sentence& sentence, const vector<unsigned> actions,
-    const lstm_parser::CorpusVocabulary& vocab) {
+    const Sentence& sentence, const vector<unsigned> actions) {
   // cerr << "Decoding sentence " << sentence << endl;
 
   vector<CausalityRelation> relations;
@@ -277,7 +281,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       } else {
         // If we have no more tokens to pull in, we'd better be on the last
         // action.
-        assert(iter == end - 1);
+        assert(iter + 1 == end);
       }
     } else if (action_name == "NO-ARC-LEFT") {
       EnsureCurrentRelation();
@@ -362,6 +366,22 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
   }
 
   return relations;
+}
+
+
+CausalityMetrics LSTMCausalityTagger::Evaluate(
+    const BecauseOracleTransitionCorpus& corpus,
+    const vector<unsigned>& selections) {
+  CausalityMetrics evaluation;
+  for (unsigned sentence_index : selections) {
+    const Sentence& sentence = corpus.sentences[sentence_index];
+    const vector<unsigned>& gold_actions =
+        corpus.correct_act_sent[sentence_index];
+    vector<CausalityRelation> gold = Decode(sentence, gold_actions);
+    vector<CausalityRelation> predicted = Tag(sentence);
+    evaluation += CausalityMetrics(gold, predicted);
+  }
+  return evaluation;
 }
 
 

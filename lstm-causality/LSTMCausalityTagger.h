@@ -13,6 +13,7 @@
 #include "cnn/model.h"
 #include "parser/corpus.h"
 #include "parser/lstm-parser.h"
+#include "Metrics.h"
 
 class LSTMCausalityTagger : public lstm_parser::NeuralTransitionTagger {
 public:
@@ -53,20 +54,22 @@ public:
   virtual ~LSTMCausalityTagger() {}
 
   void Train(const BecauseOracleTransitionCorpus& corpus,
-             double dev_pct, const std::string& model_fname,
+             std::vector<unsigned> selectetions, double dev_pct,
+             const std::string& model_fname,
              const volatile sig_atomic_t* requested_stop = nullptr);
 
-  std::vector<CausalityRelation> Tag(const lstm_parser::Sentence& sentence,
-                                     const lstm_parser::CorpusVocabulary& vocab,
-                                     double* correct = nullptr) {
+  std::vector<CausalityRelation> Tag(const lstm_parser::Sentence& sentence) {
     cnn::ComputationGraph cg;
     cnn::expr::Expression parser_state;
     parser.LogProbTagger(sentence, *parser.GetVocab(), &cg, true,
                          &parser_state);
     std::vector<unsigned> actions = LogProbTagger(sentence, vocab, &cg,
                                                   false, &parser_state);
-    return Decode(sentence, actions, vocab);
+    return Decode(sentence, actions);
   }
+
+  CausalityMetrics Evaluate(const BecauseOracleTransitionCorpus& corpus,
+                            const std::vector<unsigned>& selections);
 
 protected:
   lstm_parser::LSTMParser parser;
@@ -197,17 +200,16 @@ protected:
     archive << *this;
   }
 
-  double DoDevEvaluation(unsigned num_sentences, unsigned num_sentences_train,
-                         unsigned num_sentences_dev, unsigned iter,
-                         unsigned sentences_seen,
-                         const lstm_parser::TrainingCorpus& corpus,
-                         lstm_parser::LSTMParser* parser, double best_f1,
+  double DoDevEvaluation(const lstm_parser::TrainingCorpus& corpus,
+                         const std::vector<unsigned>& selections,
+                         lstm_parser::LSTMParser* parser,
+                         unsigned num_sentences_train, unsigned iteration,
+                         unsigned sentences_seen, double best_f1,
                          const std::string& model_fname);
 
   std::vector<CausalityRelation> Decode(
       const lstm_parser::Sentence& sentence,
-      const std::vector<unsigned> actions,
-      const lstm_parser::CorpusVocabulary& vocab);
+      const std::vector<unsigned> actions);
 
 private:
   friend class boost::serialization::access;
