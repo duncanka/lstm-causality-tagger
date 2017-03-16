@@ -147,7 +147,7 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
     sgd.status();
     time_t time_now = chrono::system_clock::to_time_t(
         chrono::system_clock::now());
-    double epoch = sentences_seen / num_sentences;
+    double epoch = sentences_seen / num_sentences_train;
     cerr << "update #" << iteration << " (epoch " << epoch
          << " |time=" << put_time(localtime(&time_now), "%c %Z") << ")\tllh: "
          << llh << " ppl: " << exp(llh / actions_seen) << " err: "
@@ -203,7 +203,7 @@ double LSTMCausalityTagger::DoDevEvaluation(
   }
 
   auto t_end = chrono::high_resolution_clock::now();
-  double epoch = sentences_seen / static_cast<double>(selections.size());
+  double epoch = sentences_seen / static_cast<double>(num_sentences_train);
   cerr << "  **dev (iter=" << iteration << " epoch=" << epoch
        << ")llh=" << llh_dev << " ppl: " << exp(llh_dev / num_actions)
        << "\terr: " << (num_actions - correct_dev) / num_actions
