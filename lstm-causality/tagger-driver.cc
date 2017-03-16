@@ -58,7 +58,7 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Dimension of each connective/argument span LSTM's hidden state")
     ("lstm-layers,l", po::value<unsigned>()->default_value(2),
      "Number of layers for each stack LSTM")
-    ("epochs-cutoff,e", po::value<double>()->default_value(10.0),
+    ("epochs-cutoff,e", po::value<double>()->default_value(1.5),
      "Number of training epochs without an improvement in the best F1 to allow"
      " before stopping training on that fold (SIGINT always works to stop)");
 
@@ -183,7 +183,8 @@ int main(int argc, char** argv) {
           all_sentence_indices.begin() + current_cutoff);
       CausalityMetrics evaluation = tagger.Evaluate(full_corpus,
                                                     fold_test_order);
-      cerr << "Evaluation for fold " << fold + 1 << ':' << endl;
+      cerr << "Evaluation for fold " << fold + 1 << " ("
+           << fold_test_order.size() << " test sentences)" << endl;
       IndentingOStreambuf indent(cerr);
       cerr << evaluation << endl << endl;
       evaluation_results.push_back(evaluation);

@@ -94,7 +94,6 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
   unsigned actions_seen = 0;
   double correct = 0;
   double llh = 0;
-  bool first = true;
   double last_epoch_saved = nan("");
 
   unsigned num_sentences_dev = round(dev_pct * num_sentences);
@@ -106,9 +105,7 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
     for (unsigned iter_i = 0; iter_i < status_every_i_iterations; ++iter_i) {
       if (sentence_i == num_sentences_train) {
         sentence_i = 0;
-        if (first) {
-          first = false;
-        } else {
+        if (sentences_seen > 0) {
           sgd.update_epoch();
         }
         cerr << "**SHUFFLE\n";
@@ -149,7 +146,7 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
         chrono::system_clock::now());
     double epoch = sentences_seen / num_sentences_train;
     cerr << "update #" << iteration << " (epoch " << epoch
-         << " |time=" << put_time(localtime(&time_now), "%c %Z") << ")\tllh: "
+         << " | time=" << put_time(localtime(&time_now), "%c %Z") << ")\tllh: "
          << llh << " ppl: " << exp(llh / actions_seen) << " err: "
          << (actions_seen - correct) / actions_seen << endl;
     // TODO: move declaration to make this unnecessary.
@@ -212,6 +209,7 @@ double LSTMCausalityTagger::DoDevEvaluation(
        << chrono::duration<double, milli>(t_end - t_start).count() << " ms]"
        << endl;
 
+  // TODO: should we take into account action-level error, too?
   if (evaluation.connective_metrics->GetF1() > best_f1) {
     best_f1 = evaluation.connective_metrics->GetF1();
     SaveModel(model_fname, !isnan(*last_epoch_saved));
