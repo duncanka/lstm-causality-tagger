@@ -160,6 +160,8 @@ int main(int argc, char** argv) {
     assert(fold_cutoffs.back() == all_sentence_indices.size());
 
     unsigned previous_cutoff = 0;
+    vector<CausalityMetrics> evaluation_results;
+    evaluation_results.reserve(folds);
     for (unsigned fold = 0; fold < folds; ++fold) {
       cerr << "Starting fold " << fold + 1 << " of " << folds << endl;
       unsigned current_cutoff = fold_cutoffs[fold];
@@ -182,15 +184,18 @@ int main(int argc, char** argv) {
       CausalityMetrics evaluation = tagger.Evaluate(full_corpus,
                                                     fold_test_order);
       cerr << "Evaluation for fold " << fold << ':' << endl;
-      {
-        IndentingOStreambuf indent(cerr);
-        cerr << evaluation << endl << endl;
-      }
+      IndentingOStreambuf indent(cerr);
+      cerr << evaluation << endl << endl;
+      evaluation_results.push_back(evaluation);
 
       requested_stop = false;
       previous_cutoff = current_cutoff;
     }
 
+    cerr << "Average evaluation:" << endl;
+    IndentingOStreambuf indent(cerr);
+    auto evals_range = boost::make_iterator_range(evaluation_results);
+    cerr << AveragedCausalityMetrics(evals_range) << endl;
   }
 
 

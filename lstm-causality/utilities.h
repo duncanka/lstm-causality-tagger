@@ -2,6 +2,7 @@
 #define LSTM_CAUSALITY_UTILITIES_H_
 
 #include <algorithm>
+#include <boost/range/adaptor/transformed.hpp>
 #include <ostream>
 
 
@@ -58,6 +59,13 @@ protected:
     return dest->sputc(ch);
   }
 };
+
+
+#define BOOST_TRANSFORMED_RANGE(range_or_container, elt_name, elt_fn) \
+  range_or_container | boost::adaptors::transformed( \
+      [&](const typename decltype(range_or_container)::value_type& elt_name) { \
+        return elt_fn; \
+      })
 
 
 #endif /* LSTM_CAUSALITY_UTILITIES_H_ */

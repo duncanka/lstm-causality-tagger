@@ -212,8 +212,8 @@ double LSTMCausalityTagger::DoDevEvaluation(
        << chrono::duration<double, milli>(t_end - t_start).count() << " ms]"
        << endl;
 
-  if (evaluation.connective_metrics.GetF1() > best_f1) {
-    best_f1 = evaluation.connective_metrics.GetF1();
+  if (evaluation.connective_metrics->GetF1() > best_f1) {
+    best_f1 = evaluation.connective_metrics->GetF1();
     SaveModel(model_fname, !isnan(*last_epoch_saved));
     *last_epoch_saved = epoch;
   }
