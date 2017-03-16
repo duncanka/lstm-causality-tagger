@@ -124,12 +124,8 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
       vector<unsigned> parse_actions = parser.LogProbTagger(
           sentence, &cg, true, &parser_state);
       // Cache parse if we haven't yet.
-      if (!corpus->sentence_parses[sentence_index]) {
-        double parser_lp = as_scalar(cg.incremental_forward());
-        auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp);
-        corpus->sentence_parses[sentence_index].reset(
-            new ParseTree(move(tree)));
-      }
+      double parser_lp = as_scalar(cg.incremental_forward());
+      CacheParse(sentence, parse_actions, parser_lp, corpus, sentence_index);
       // TODO: simplify LogProbTager to use its own vocab?
       LogProbTagger(&cg, sentence, sentence.words, correct_actions, &correct,
                     &parser_state);
@@ -160,9 +156,9 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
     llh = actions_seen = correct = 0;
 
     if (iteration % 25 == 0) {
-      best_f1 = DoDevEvaluation(*corpus, selections, &parser,
-                                num_sentences_train, iteration, sentences_seen,
-                                best_f1, model_fname, &last_epoch_saved);
+      best_f1 = DoDevEvaluation(corpus, selections, num_sentences_train,
+                                iteration, sentences_seen, best_f1, model_fname,
+                                &last_epoch_saved);
       if (epoch - last_epoch_saved > epochs_cutoff) {
         cerr << "Reached cutoff for epochs with no increase in max dev F1: "
              << epoch - last_epoch_saved << " > " << epochs_cutoff
@@ -175,10 +171,10 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
 
 
 double LSTMCausalityTagger::DoDevEvaluation(
-    const BecauseOracleTransitionCorpus& corpus,
-    const vector<unsigned>& selections, LSTMParser* parser,
-    unsigned num_sentences_train, unsigned iteration, unsigned sentences_seen,
-    double best_f1, const string& model_fname, double* last_epoch_saved) {
+    BecauseOracleTransitionCorpus* corpus,
+    const vector<unsigned>& selections, unsigned num_sentences_train,
+    unsigned iteration, unsigned sentences_seen, double best_f1,
+    const string& model_fname, double* last_epoch_saved) {
   // report on dev set
   const unsigned num_sentences = selections.size();
   double llh_dev = 0;
@@ -188,22 +184,24 @@ double LSTMCausalityTagger::DoDevEvaluation(
   const auto t_start = chrono::high_resolution_clock::now();
   for (unsigned sii = num_sentences_train; sii < num_sentences; ++sii) {
     unsigned sentence_index = selections[sii];
-    const Sentence& sentence = corpus.sentences[sentence_index];
+    const Sentence& sentence = corpus->sentences[sentence_index];
 
     ComputationGraph cg;
     Expression parser_state;
-    parser->LogProbTagger(sentence, &cg, true, &parser_state);
-    cg.incremental_forward();
+    vector<unsigned> parse_actions = parser.LogProbTagger(sentence, &cg, true,
+                                                          &parser_state);
+    double parse_lp = as_scalar(cg.incremental_forward());
+    CacheParse(sentence, parse_actions, parse_lp, corpus, sentence_index);
     vector<unsigned> actions = LogProbTagger(sentence, &cg, false);
     llh_dev += as_scalar(cg.incremental_forward());
     vector<CausalityRelation> predicted = Decode(sentence, actions);
 
     const vector<unsigned>& gold_actions =
-        corpus.correct_act_sent[sentence_index];
+        corpus->correct_act_sent[sentence_index];
     vector<CausalityRelation> gold = Decode(sentence, gold_actions);
 
     num_actions += actions.size();
-    const ParseTree& parse = *corpus.sentence_parses[sentence_index];
+    const ParseTree& parse = *corpus->sentence_parses[sentence_index];
     evaluation += CausalityMetrics(gold, predicted, parse);
   }
 

@@ -80,6 +80,10 @@ public:
   CausalityMetrics Evaluate(const BecauseOracleTransitionCorpus& corpus,
                             const std::vector<unsigned>& selections);
 
+  std::vector<CausalityRelation> Decode(
+      const lstm_parser::Sentence& sentence,
+      const std::vector<unsigned> actions);
+
 protected:
   lstm_parser::LSTMParser parser;
 
@@ -206,17 +210,23 @@ protected:
     archive << *this;
   }
 
-  double DoDevEvaluation(const BecauseOracleTransitionCorpus& corpus,
+  double DoDevEvaluation(BecauseOracleTransitionCorpus* corpus,
                          const std::vector<unsigned>& selections,
-                         lstm_parser::LSTMParser* parser,
                          unsigned num_sentences_train, unsigned iteration,
                          unsigned sentences_seen, double best_f1,
                          const std::string& model_fname,
                          double* last_epoch_saved);
 
-  std::vector<CausalityRelation> Decode(
-      const lstm_parser::Sentence& sentence,
-      const std::vector<unsigned> actions);
+  void CacheParse(const lstm_parser::Sentence& sentence,
+                  const std::vector<unsigned>& parse_actions, double parser_lp,
+                  BecauseOracleTransitionCorpus* corpus,
+                  unsigned sentence_index) const {
+    if (!corpus->sentence_parses[sentence_index]) {
+      auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp);
+      corpus->sentence_parses[sentence_index].reset(
+          new lstm_parser::ParseTree(std::move(tree)));
+    }
+  }
 
 private:
   friend class boost::serialization::access;
