@@ -52,10 +52,14 @@ struct ClassificationMetrics {
   }
 
   double GetPrecision() const {
+    if (tp + fp == 0)
+      return 0;
     return static_cast<double>(tp) / (tp + fp);
   }
 
   double GetRecall() const {
+    if (tp + fn == 0)
+      return 0;
     return static_cast<double>(tp) / (tp + fn);
   }
 
@@ -64,6 +68,8 @@ struct ClassificationMetrics {
   }
 
   static double CalculateF1(double precision, double recall) {
+    if (precision + recall == 0)
+      return 0;
     return (2 * precision * recall) / (precision + recall);
   }
 };
