@@ -2,12 +2,17 @@
 #include <boost/range/adaptors.hpp>
 #include <boost/range/join.hpp>
 #include <boost/program_options.hpp>
-#include <iostream>
+#include <cassert>
 #include <csignal>
+#include <iostream>
+#include <map>
 #include <numeric>
 #include <string>
 #include <sstream>
+#include <unistd.h>
+#include <vector>
 
+#include "cnn/cnn/init.h"
 #include "BecauseOracleTransitionCorpus.h"
 #include "LSTMCausalityTagger.h"
 #include "Metrics.h"

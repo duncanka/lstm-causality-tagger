@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "../lstm-parser/parser/neural-transition-tagger.h"
+#include "parser/neural-transition-tagger.h"
 #include "BecauseData.h"
 #include "BecauseOracleTransitionCorpus.h"
 #include "cnn/model.h"

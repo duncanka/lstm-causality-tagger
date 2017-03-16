@@ -1,11 +1,15 @@
 #ifndef LSTM_CAUSALITY_METRICS_H_
 #define LSTM_CAUSALITY_METRICS_H_
 
+#include <cassert>
 #include <cmath>
-#include <ostream>
+#include <cstddef>
+#include <iostream>
+#include <vector>
 
-#include "BecauseOracleTransitionCorpus.h"
+#include "BecauseData.h"
 #include "diff-cpp/lcs.h"
+#include "diff-cpp/RandomAccessSequence.h"
 #include "utilities.h"
 
 

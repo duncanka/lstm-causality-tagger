@@ -1,6 +1,11 @@
-#include <boost/filesystem.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
+#include <cstddef>
+#include <cassert>
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <vector>
 #include <sstream>
 #include <string>
 
