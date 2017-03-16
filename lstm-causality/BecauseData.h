@@ -1,12 +1,14 @@
 #ifndef LSTM_CAUSALITY_BECAUSEDATA_H_
 #define LSTM_CAUSALITY_BECAUSEDATA_H_
 
+#include <cassert>
+#include <functional>
+#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
 
 #include "parser/corpus.h"
-
 
 class BecauseRelation {
 public:
@@ -25,7 +27,7 @@ public:
   }
 
   void AddToArgument(const unsigned arg_num, const unsigned index) {
-    assert(index < sentence.Size());
+    assert(index <= sentence.words.rbegin()->first);  // index < max token ID
     arguments[arg_num].push_back(index);
   }
 
