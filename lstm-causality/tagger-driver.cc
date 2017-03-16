@@ -182,7 +182,10 @@ int main(int argc, char** argv) {
       CausalityMetrics evaluation = tagger.Evaluate(full_corpus,
                                                     fold_test_order);
       cerr << "Evaluation for fold " << fold << ':' << endl;
-      cerr << evaluation << endl << endl;
+      {
+        IndentingOStreambuf indent(cerr);
+        cerr << evaluation << endl << endl;
+      }
 
       requested_stop = false;
       previous_cutoff = current_cutoff;
