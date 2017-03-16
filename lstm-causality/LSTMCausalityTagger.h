@@ -65,15 +65,15 @@ public:
     cnn::ComputationGraph cg;
     cnn::expr::Expression parser_state;
     vector<unsigned> parse_actions = parser.LogProbTagger(
-        sentence, *parser.GetVocab(), &cg, true, &parser_state);
+        sentence, &cg, true, &parser_state);
     if (parse) {
       double parser_lp = as_scalar(cg.incremental_forward());
       auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp,
                                           parse->IsLabeled());
       *parse = std::move(tree);
     }
-    std::vector<unsigned> actions = LogProbTagger(sentence, vocab, &cg,
-                                                  false, &parser_state);
+    std::vector<unsigned> actions = LogProbTagger(sentence, &cg, false,
+                                                  &parser_state);
     return Decode(sentence, actions);
   }
 
@@ -178,8 +178,7 @@ protected:
   virtual TaggerState* InitializeParserState(
       cnn::ComputationGraph* cg, const lstm_parser::Sentence& raw_sent,
       const lstm_parser::Sentence::SentenceMap& sentence,
-      const std::vector<unsigned>& correct_actions,
-      const std::vector<std::string>& action_names) override;
+      const std::vector<unsigned>& correct_actions) override;
 
   virtual void InitializeNetworkParameters() override;
 
@@ -195,14 +194,12 @@ protected:
   }
 
   virtual bool IsActionForbidden(const unsigned action,
-                                 const std::vector<std::string>& action_names,
                                  const TaggerState& state) const override;
 
   virtual cnn::expr::Expression GetActionProbabilities(const TaggerState& state)
       override;
 
   virtual void DoAction(unsigned action,
-                        const std::vector<std::string>& action_names,
                         TaggerState* state, cnn::ComputationGraph* cg) override;
 
   virtual void DoSave(eos::portable_oarchive& archive) {

@@ -32,7 +32,7 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadSentences(
 
   cerr << "done." << "\n";
   if (is_training) {
-    for (auto a : training_corpus->vocab->actions) {
+    for (auto a : training_corpus->vocab->action_names) {
       cerr << a << "\n";
     }
     cerr << "# of actions: " << training_corpus->vocab->CountActions() << "\n";

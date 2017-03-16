@@ -58,7 +58,7 @@ LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
               options.span_hidden_dim, &model) {
   vocab = *parser.GetVocab();  // now that parser is initialized, copy vocab
   // Reset actions
-  vocab.actions.clear();
+  vocab.action_names.clear();
   vocab.actions_to_arc_labels.clear();
   // We don't care about characters
   vocab.chars_to_int.clear();
@@ -122,7 +122,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
       ComputationGraph cg;
       Expression parser_state;
       vector<unsigned> parse_actions = parser.LogProbTagger(
-          sentence, *parser.GetVocab(), &cg, true, &parser_state);
+          sentence, &cg, true, &parser_state);
       // Cache parse if we haven't yet.
       if (!corpus->sentence_parses[sentence_index]) {
         double parser_lp = as_scalar(cg.incremental_forward());
@@ -131,9 +131,8 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
             new ParseTree(move(tree)));
       }
       // TODO: simplify LogProbTager to use its own vocab?
-      LogProbTagger(&cg, sentence, sentence.words, correct_actions,
-                    corpus->vocab->actions, corpus->vocab->int_to_words,
-                    &correct, &parser_state);
+      LogProbTagger(&cg, sentence, sentence.words, correct_actions, &correct,
+                    &parser_state);
       double lp = as_scalar(cg.incremental_forward());
       if (lp < 0) {
         cerr << "Log prob " << lp << " < 0 on sentence "
@@ -193,11 +192,9 @@ double LSTMCausalityTagger::DoDevEvaluation(
 
     ComputationGraph cg;
     Expression parser_state;
-    parser->LogProbTagger(sentence, *parser->GetVocab(), &cg, true,
-                          &parser_state);
+    parser->LogProbTagger(sentence, &cg, true, &parser_state);
     cg.incremental_forward();
-    vector<unsigned> actions = LogProbTagger(sentence, *corpus.vocab, &cg,
-                                             false);
+    vector<unsigned> actions = LogProbTagger(sentence, &cg, false);
     llh_dev += as_scalar(cg.incremental_forward());
     vector<CausalityRelation> predicted = Decode(sentence, actions);
 
@@ -284,7 +281,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
 
   for (auto iter = actions.begin(), end = actions.end(); iter != end; ++iter) {
     unsigned action = *iter;
-    const string& action_name = vocab.actions[action];
+    const string& action_name = vocab.action_names[action];
     /*
     cerr << "Decoding action " << action_name << " on connective word \""
          << vocab.int_to_words.at(sentence.words.at(current_conn_token))
@@ -475,8 +472,7 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     ComputationGraph* cg,
     const Sentence& raw_sent,
     const Sentence::SentenceMap& sentence,  // w/ OOVs replaced
-    const vector<unsigned>& correct_actions,
-    const vector<string>& action_names) {
+    const vector<unsigned>& correct_actions) {
   CausalityTaggerState* state = new CausalityTaggerState(raw_sent, sentence);
 
   vector<reference_wrapper<LSTMBuilder>> all_lstms = {
@@ -539,11 +535,10 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
 
 
 bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
-                                            const vector<string>& action_names,
                                             const TaggerState& state) const {
   const CausalityTaggerState& real_state =
       static_cast<const CausalityTaggerState&>(state);
-  const string& action_name = action_names[action];
+  const string& action_name = vocab.action_names[action];
   bool next_arg_token_is_left = real_state.L1.size() > 1;
 
   if (real_state.currently_processing_rel) {
@@ -566,7 +561,8 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
       // We should never end up processing a relation after 0 actions.
       assert(real_state.prev_action != static_cast<unsigned>(-1));
       // If there was a last action, check that this one is compatible.
-      const string& last_action_name = action_names[real_state.prev_action];
+      const string& last_action_name =
+          vocab.action_names[real_state.prev_action];
       // SPLIT has unique requirements: can't come after a SPLIT or a
       // CONN-FRAG. Also, we can't have less than two connective words.
       if (action_name[0] == 'S' && action_name[1] == 'P') {
@@ -643,11 +639,10 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
     DO_LIST_PUSH(to_list, tmp_var); \
     DO_LIST_POP(from_list);
 
-void LSTMCausalityTagger::DoAction(unsigned action,
-                                   const vector<string>& action_names,
-                                   TaggerState* state, ComputationGraph* cg) {
+void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
+                                   ComputationGraph* cg) {
   CausalityTaggerState* cst = static_cast<CausalityTaggerState*>(state);
-  const string& action_name = action_names[action];
+  const string& action_name = vocab.action_names[action];
 
   // Alias key state variables for ease of reference
   auto& L1 = cst->L1;
