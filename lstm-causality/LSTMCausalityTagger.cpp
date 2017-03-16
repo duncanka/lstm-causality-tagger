@@ -103,14 +103,6 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
   unsigned sentence_i = num_sentences_train;
   for (unsigned iteration = 0; !requested_stop || !(*requested_stop);
        ++iteration) {
-    double epoch = sentences_seen / num_sentences;
-    if (epoch - last_epoch_saved > epochs_cutoff) {
-      cerr << "Reached cutoff for epochs with no increase in max dev F1: "
-           << epoch - last_epoch_saved << " > " << epochs_cutoff
-           << "; terminating training" << endl;
-      break;
-    }
-
     for (unsigned iter_i = 0; iter_i < status_every_i_iterations; ++iter_i) {
       if (sentence_i == num_sentences_train) {
         sentence_i = 0;
@@ -155,6 +147,7 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
     sgd.status();
     time_t time_now = chrono::system_clock::to_time_t(
         chrono::system_clock::now());
+    double epoch = sentences_seen / num_sentences;
     cerr << "update #" << iteration << " (epoch " << epoch
          << " |time=" << put_time(localtime(&time_now), "%c %Z") << ")\tllh: "
          << llh << " ppl: " << exp(llh / actions_seen) << " err: "
@@ -166,6 +159,12 @@ void LSTMCausalityTagger::Train(const BecauseOracleTransitionCorpus& corpus,
       best_f1 = DoDevEvaluation(corpus, selections, &parser,
                                 num_sentences_train, iteration, sentences_seen,
                                 best_f1, model_fname, &last_epoch_saved);
+      if (epoch - last_epoch_saved > epochs_cutoff) {
+        cerr << "Reached cutoff for epochs with no increase in max dev F1: "
+             << epoch - last_epoch_saved << " > " << epochs_cutoff
+             << "; terminating training" << endl;
+        break;
+      }
     }
   }
 }
