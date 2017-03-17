@@ -1,3 +1,8 @@
+#include <boost/algorithm/cxx11/any_of.hpp>
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/breadth_first_search.hpp>
+#include <boost/graph/reverse_graph.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <cstddef>
@@ -12,12 +17,50 @@
 #include "BecauseOracleTransitionCorpus.h"
 
 namespace fs = boost::filesystem;
-
 using namespace std;
+using namespace lstm_parser;
+
+const vector<string> BecauseOracleTransitionCorpus::PTB_PUNCT_TAGS = {
+    ".", ",", ":", "``", "''", "-LRB-", "-RRB-", "-LCB-", "-RCB-", "-LSB-",
+    "-RSB-"
+};
+
+
+class DepthRecorder : public boost::default_bfs_visitor {
+public:
+  DepthRecorder(map<unsigned, unsigned>* depths) : depths(depths) {}
+
+  template<typename Edge, typename Graph>
+  void tree_edge(const Edge& e, const Graph& g) const {
+    unsigned parent = boost::source(e, g);
+    unsigned child = boost::target(e, g);
+    // On the first access of the source, the map access should initialize its
+    // distance to be 0.
+    (*depths)[child] = (*depths)[parent] + 1;
+  }
+
+  map<unsigned, unsigned>* depths;
+};
+
+
+void GraphEnhancedParseTree::CalculateDepths() {
+  using namespace boost;
+  typedef adjacency_list<vecS, vecS, bidirectionalS> Graph;
+  // For simplicity, # of nodes in the graph is determined by max token index.
+  unsigned node_count = GetSentence().words.rbegin()->first + 1;
+  Graph upward_graph(parents.begin(), parents.end(), node_count);
+  auto sentence_graph = make_reverse_graph(upward_graph);
+  DepthRecorder depths_visitor(&token_depths);
+  breadth_first_search(sentence_graph,
+                       vertex(Corpus::ROOT_TOKEN_ID, sentence_graph),
+                       visitor(depths_visitor));
+}
+
 
 void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadSentences(
     const std::string& directory_path, Corpus* corpus) const {
-  TrainingCorpus* training_corpus = static_cast<TrainingCorpus*>(corpus);
+  BecauseOracleTransitionCorpus* training_corpus =
+      static_cast<BecauseOracleTransitionCorpus*>(corpus);
 
   cerr << "Loading " << (is_training ? "training" : "dev")
        << " corpus from " << directory_path << "..." << flush;
@@ -40,6 +83,11 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadSentences(
 
   training_corpus->sentences.shrink_to_fit();
   training_corpus->correct_act_sent.shrink_to_fit();
+
+  for (const auto& pos_entry : training_corpus->vocab->pos_to_int) {
+    training_corpus->pos_is_punct[pos_entry.second] =
+        boost::algorithm::any_of_equal(PTB_PUNCT_TAGS, pos_entry.first);
+  }
 }
 
 void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(

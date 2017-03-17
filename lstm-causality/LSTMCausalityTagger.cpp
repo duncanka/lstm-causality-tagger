@@ -1,5 +1,5 @@
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/range/adaptors.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <boost/range/combine.hpp>
 #include <chrono>
 #include <cmath>
@@ -201,7 +201,7 @@ double LSTMCausalityTagger::DoDevEvaluation(
     vector<CausalityRelation> gold = Decode(sentence, gold_actions);
 
     num_actions += actions.size();
-    const ParseTree& parse = *corpus->sentence_parses[sentence_index];
+    const GraphEnhancedParseTree& parse = *corpus->sentence_parses[sentence_index];
     evaluation += CausalityMetrics(gold, predicted, parse);
   }
 
@@ -396,7 +396,8 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
     vector<CausalityRelation> gold = Decode(sentence, gold_actions);
     ParseTree parse(sentence);
     vector<CausalityRelation> predicted = Tag(sentence, &parse);
-    evaluation += CausalityMetrics(gold, predicted, parse);
+    GraphEnhancedParseTree parse_with_depths(move(parse));
+    evaluation += CausalityMetrics(gold, predicted, parse_with_depths);
   }
   return evaluation;
 }

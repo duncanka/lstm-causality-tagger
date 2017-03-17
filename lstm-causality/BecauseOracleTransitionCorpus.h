@@ -1,14 +1,39 @@
 #ifndef BECAUSEORACLETRANSITIONCORPUS_H_
 #define BECAUSEORACLETRANSITIONCORPUS_H_
 
+#include <map>
 #include <memory>
 #include <string>
 
 #include "parser/corpus.h"
 #include "parser/lstm-parser.h"
 
+
+class GraphEnhancedParseTree : public lstm_parser::ParseTree {
+public:
+  GraphEnhancedParseTree(ParseTree&& tree) : ParseTree(std::move(tree)) {
+    CalculateDepths();
+  }
+
+  GraphEnhancedParseTree(const ParseTree& tree) : ParseTree(tree) {
+    CalculateDepths();
+  }
+
+  unsigned GetTokenDepth(unsigned token_id) {
+    return token_depths.at(token_id);
+  }
+
+protected:
+  std::map<unsigned, unsigned> token_depths;
+
+  void CalculateDepths();
+};
+
 class BecauseOracleTransitionCorpus: public lstm_parser::TrainingCorpus {
 public:
+  friend class LSTMCausalityTagger;
+  const static std::vector<std::string> PTB_PUNCT_TAGS;
+
   BecauseOracleTransitionCorpus(lstm_parser::CorpusVocabulary* vocab,
                                 const std::string& file, bool is_training)
       : TrainingCorpus(vocab) {
@@ -17,7 +42,7 @@ public:
   }
 
   // Cache of sentence parses for evaluation purposes
-  std::vector<std::unique_ptr<lstm_parser::ParseTree>> sentence_parses;
+  std::vector<std::unique_ptr<GraphEnhancedParseTree>> sentence_parses;
 
 private:
   class BecauseTransitionsReader: public OracleTransitionsCorpusReader {
@@ -35,6 +60,8 @@ private:
     inline void ReadFile(const std::string& file_name,
                          TrainingCorpus* corpus) const;
   };
+
+  std::vector<bool> pos_is_punct;
 };
 
 #endif /* BECAUSEORACLETRANSITIONCORPUS_H_ */

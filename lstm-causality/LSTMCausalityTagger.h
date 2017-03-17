@@ -224,7 +224,7 @@ protected:
     if (!corpus->sentence_parses[sentence_index]) {
       auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp);
       corpus->sentence_parses[sentence_index].reset(
-          new lstm_parser::ParseTree(std::move(tree)));
+          new GraphEnhancedParseTree(std::move(tree)));
     }
   }
 
