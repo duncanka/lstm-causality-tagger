@@ -19,7 +19,7 @@ public:
     CalculateDepths();
   }
 
-  unsigned GetTokenDepth(unsigned token_id) {
+  unsigned GetTokenDepth(unsigned token_id) const {
     return token_depths.at(token_id);
   }
 
