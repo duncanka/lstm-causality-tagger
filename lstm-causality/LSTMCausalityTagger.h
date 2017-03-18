@@ -85,6 +85,11 @@ public:
       const lstm_parser::Sentence& sentence,
       const std::vector<unsigned> actions);
 
+  void Reset() {
+    model = cnn::Model();
+    InitializeNetworkParameters();
+  }
+
 protected:
   lstm_parser::LSTMParser parser;
 
