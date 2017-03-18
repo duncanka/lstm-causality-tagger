@@ -77,7 +77,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
   // sentences, so we track the order imposed by that shuffle.
   vector<unsigned> sub_order(num_sentences);
   iota(sub_order.begin(), sub_order.end(), 0);
-  const unsigned status_every_i_iterations = min(100, num_sentences);
+  const unsigned status_every_i_iterations = min(100u, num_sentences);
   cerr << "NUMBER OF TRAINING SENTENCES: " << num_sentences << endl;
   time_t time_start = chrono::system_clock::to_time_t(
       chrono::system_clock::now());
