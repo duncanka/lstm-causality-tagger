@@ -44,16 +44,26 @@ public:
 
 
 void GraphEnhancedParseTree::CalculateDepths() {
+  // ROOT is (unsigned)-1, so it shows up last. We definitely don't want such a
+  // big graph, though, so we just represent it as 0 in the graph, CoNLL-style.
+  auto root_iter = parents.find(root_child);
+  assert(root_iter != parents.end());
+  parents.erase(root_iter);
+
   using namespace boost;
   typedef adjacency_list<vecS, vecS, bidirectionalS> Graph;
-  // For simplicity, # of nodes in the graph is determined by max token index.
+  // # of nodes in the graph is determined by max token index.
   unsigned node_count = GetSentence().words.rbegin()->first + 1;
   Graph upward_graph(parents.begin(), parents.end(), node_count);
+  add_edge(root_child, 0, upward_graph);  // child to parent
   auto sentence_graph = make_reverse_graph(upward_graph);
   DepthRecorder depths_visitor(&token_depths);
   breadth_first_search(sentence_graph,
-                       vertex(Corpus::ROOT_TOKEN_ID, sentence_graph),
+                       vertex(0, sentence_graph),
                        visitor(depths_visitor));
+
+  // Restore ROOT (just for good measure)
+  parents[root_child] = Corpus::ROOT_TOKEN_ID;
 }
 
 
@@ -109,9 +119,16 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
   map<unsigned, string> sentence_unk_surface_forms;
   vector<unsigned> correct_actions;
 
+  unsigned unk_word_symbol = corpus->vocab->GetWord(CorpusVocabulary::UNK);
+  unsigned root_symbol = corpus->vocab->GetWord(CorpusVocabulary::ROOT);
+  unsigned root_pos_symbol = corpus->vocab->GetPOS(CorpusVocabulary::ROOT);
+
   while (getline(actions_file, line)) {
     if (line.empty()) { // An empty line marks the end of a sentence.
       if (!first) { // if first, first line is blank, but no sentence yet
+        sentence[Corpus::ROOT_TOKEN_ID] = root_symbol;
+        sentence_pos[Corpus::ROOT_TOKEN_ID] = root_pos_symbol;
+        sentence_unk_surface_forms[Corpus::ROOT_TOKEN_ID] = "";
         RecordSentence(training_corpus, &sentence, &sentence_pos,
                        &sentence_unk_surface_forms, &correct_actions);
       }
@@ -159,6 +176,9 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
   }
 
   if (!sentence.empty()) {
+    sentence[Corpus::ROOT_TOKEN_ID] = root_symbol;
+    sentence_pos[Corpus::ROOT_TOKEN_ID] = root_pos_symbol;
+    sentence_unk_surface_forms[Corpus::ROOT_TOKEN_ID] = "";
     RecordSentence(training_corpus, &sentence, &sentence_pos,
                    &sentence_unk_surface_forms, &correct_actions);
   }

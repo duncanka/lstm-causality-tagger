@@ -164,9 +164,9 @@ int main(int argc, char** argv) {
     evaluation_results.reserve(folds);
     for (unsigned fold = 0; fold < folds; ++fold) {
       cerr << "Starting fold " << fold + 1 << " of " << folds << endl;
-      unsigned current_cutoff = fold_cutoffs[fold];
+      size_t current_cutoff = fold_cutoffs[fold];
       auto training_range = join(
-          all_sentence_indices | ad::sliced(0, previous_cutoff),
+          all_sentence_indices | ad::sliced(0u, previous_cutoff),
           all_sentence_indices | ad::sliced(current_cutoff,
                                             all_sentence_indices.size()));
       vector<unsigned> fold_train_order(training_range.begin(),

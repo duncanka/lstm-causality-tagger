@@ -236,8 +236,9 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
   vector<unsigned> lambda_3;
   // We'll be moving stuff off of the left end of lambda_4.
   deque<unsigned> lambda_4;
-  for (auto& token_index_and_id : sentence.words) {
-    lambda_4.push_back(token_index_and_id.first);
+  auto end = --sentence.words.end();  // Skip ROOT
+  for (auto tok_iter = sentence.words.begin(); tok_iter != end; ++tok_iter) {
+    lambda_4.push_back(tok_iter->first);
   }
   unsigned current_conn_token = sentence.words.begin()->first;
   unsigned current_arg_token = sentence.words.begin()->first;
@@ -508,10 +509,12 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
   // Add words to L4 in reversed order: other than the initial guard entry,
   // the back of the L4 vector is conceptually the front, contiguous with the
   // back of L3.
-  for (const auto& index_and_word_id : sentence | boost::adaptors::reversed) {
+  auto reversed_sentence = sentence | boost::adaptors::reversed;
+  ++reversed_sentence.begin();  // Skip ROOT
+  for (const auto& index_and_word_id : reversed_sentence) {
     const unsigned token_index = index_and_word_id.first;
     const unsigned word_id = index_and_word_id.second;
-    unsigned pos_id = raw_sent.poses.at(token_index);
+    const unsigned pos_id = raw_sent.poses.at(token_index);
 
     Expression word = lookup(*cg, p_w, word_id);
     Expression pretrained = const_lookup(*cg, p_t, word_id);
@@ -533,6 +536,7 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
 }
 
 
+// TODO: forbid punctuation tokens as part of connectives?
 bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
                                             const TaggerState& state) const {
   const CausalityTaggerState& real_state =
