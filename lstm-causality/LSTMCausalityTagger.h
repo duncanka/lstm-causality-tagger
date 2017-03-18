@@ -55,8 +55,8 @@ public:
   virtual ~LSTMCausalityTagger() {}
 
   void Train(BecauseOracleTransitionCorpus* corpus,
-             std::vector<unsigned> selectetions, double dev_pct,
-             const std::string& model_fname,
+             std::vector<unsigned> selections, double dev_pct,
+             bool compare_punct, const std::string& model_fname,
              double epochs_cutoff = std::numeric_limits<double>::infinity(),
              const volatile sig_atomic_t* requested_stop = nullptr);
 
@@ -78,7 +78,8 @@ public:
   }
 
   CausalityMetrics Evaluate(const BecauseOracleTransitionCorpus& corpus,
-                            const std::vector<unsigned>& selections);
+                            const std::vector<unsigned>& selections,
+                            bool compare_punct = false);
 
   std::vector<CausalityRelation> Decode(
       const lstm_parser::Sentence& sentence,
@@ -212,9 +213,9 @@ protected:
 
   double DoDevEvaluation(BecauseOracleTransitionCorpus* corpus,
                          const std::vector<unsigned>& selections,
-                         unsigned num_sentences_train, unsigned iteration,
-                         unsigned sentences_seen, double best_f1,
-                         const std::string& model_fname,
+                         bool compare_punct, unsigned num_sentences_train,
+                         unsigned iteration, unsigned sentences_seen,
+                         double best_f1, const std::string& model_fname,
                          double* last_epoch_saved);
 
   void CacheParse(const lstm_parser::Sentence& sentence,
@@ -222,7 +223,8 @@ protected:
                   BecauseOracleTransitionCorpus* corpus,
                   unsigned sentence_index) const {
     if (!corpus->sentence_parses[sentence_index]) {
-      auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp);
+      auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp,
+                                          true);
       corpus->sentence_parses[sentence_index].reset(
           new GraphEnhancedParseTree(std::move(tree)));
     }

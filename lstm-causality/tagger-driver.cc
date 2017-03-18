@@ -60,7 +60,9 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Number of layers for each stack LSTM")
     ("epochs-cutoff,e", po::value<double>()->default_value(1.5),
      "Number of training epochs without an improvement in the best F1 to allow"
-     " before stopping training on that fold (SIGINT always works to stop)");
+     " before stopping training on that fold (SIGINT always works to stop)")
+    ("compare-punct,c",
+     "Whether to count punctuation when comparing argument spans");
 
   po::options_description dcmdline_options;
   dcmdline_options.add(opts);
@@ -117,6 +119,7 @@ int main(int argc, char** argv) {
       abort();
     }
     double epochs_cutoff = conf["epochs-cutoff"].as<double>();
+    bool compare_punct = conf.count("compare-punct");
 
     ostringstream os;
     os << "tagger_" << tagger.options.word_dim
@@ -175,14 +178,15 @@ int main(int argc, char** argv) {
       assert(fold_train_order.size()
              == num_sentences - (current_cutoff - previous_cutoff));
 
-      tagger.Train(&full_corpus, fold_train_order, dev_pct, fname,
-                   epochs_cutoff, &requested_stop);
+      tagger.Train(&full_corpus, fold_train_order, dev_pct, compare_punct,
+                   fname, epochs_cutoff, &requested_stop);
 
+      cerr << "Evaluating..." << endl;
       vector<unsigned> fold_test_order(
           all_sentence_indices.begin() + previous_cutoff,
           all_sentence_indices.begin() + current_cutoff);
-      CausalityMetrics evaluation = tagger.Evaluate(full_corpus,
-                                                    fold_test_order);
+      CausalityMetrics evaluation = tagger.Evaluate(
+          full_corpus, fold_test_order, compare_punct);
       cerr << "Evaluation for fold " << fold + 1 << " ("
            << fold_test_order.size() << " test sentences)" << endl;
       IndentingOStreambuf indent(cerr);

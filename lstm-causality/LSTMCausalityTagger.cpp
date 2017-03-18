@@ -68,7 +68,7 @@ LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
 
 void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
                                 vector<unsigned> selections, double dev_pct,
-                                const string& model_fname,
+                                bool compare_punct, const string& model_fname,
                                 double epochs_cutoff,
                                 const volatile sig_atomic_t* requested_stop) {
   const unsigned num_sentences = selections.size();
@@ -156,9 +156,9 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
     llh = actions_seen = correct = 0;
 
     if (iteration % 25 == 0) {
-      best_f1 = DoDevEvaluation(corpus, selections, num_sentences_train,
-                                iteration, sentences_seen, best_f1, model_fname,
-                                &last_epoch_saved);
+      best_f1 = DoDevEvaluation(corpus, selections, compare_punct,
+                                num_sentences_train, iteration, sentences_seen,
+                                best_f1, model_fname, &last_epoch_saved);
       if (epoch - last_epoch_saved > epochs_cutoff) {
         cerr << "Reached cutoff for epochs with no increase in max dev F1: "
              << epoch - last_epoch_saved << " > " << epochs_cutoff
@@ -172,9 +172,9 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
 
 double LSTMCausalityTagger::DoDevEvaluation(
     BecauseOracleTransitionCorpus* corpus,
-    const vector<unsigned>& selections, unsigned num_sentences_train,
-    unsigned iteration, unsigned sentences_seen, double best_f1,
-    const string& model_fname, double* last_epoch_saved) {
+    const vector<unsigned>& selections, bool compare_punct,
+    unsigned num_sentences_train, unsigned iteration, unsigned sentences_seen,
+    double best_f1, const string& model_fname, double* last_epoch_saved) {
   // report on dev set
   const unsigned num_sentences = selections.size();
   double llh_dev = 0;
@@ -201,8 +201,11 @@ double LSTMCausalityTagger::DoDevEvaluation(
     vector<CausalityRelation> gold = Decode(sentence, gold_actions);
 
     num_actions += actions.size();
-    const GraphEnhancedParseTree& parse = *corpus->sentence_parses[sentence_index];
-    evaluation += CausalityMetrics(gold, predicted, parse);
+    const GraphEnhancedParseTree& parse =
+        *corpus->sentence_parses[sentence_index];
+    evaluation += CausalityMetrics(
+        gold, predicted, parse,
+        SpanTokenFilter{compare_punct, sentence, corpus->pos_is_punct});
   }
 
   auto t_end = chrono::high_resolution_clock::now();
@@ -388,7 +391,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
 
 CausalityMetrics LSTMCausalityTagger::Evaluate(
     const BecauseOracleTransitionCorpus& corpus,
-    const vector<unsigned>& selections) {
+    const vector<unsigned>& selections, bool compare_punct) {
   CausalityMetrics evaluation;
   for (unsigned sentence_index : selections) {
     const Sentence& sentence = corpus.sentences[sentence_index];
@@ -398,7 +401,9 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
     ParseTree parse(sentence);
     vector<CausalityRelation> predicted = Tag(sentence, &parse);
     GraphEnhancedParseTree parse_with_depths(move(parse));
-    evaluation += CausalityMetrics(gold, predicted, parse_with_depths);
+    evaluation += CausalityMetrics(gold, predicted, parse_with_depths,
+                                   SpanTokenFilter {compare_punct, sentence,
+                                       corpus.pos_is_punct});
   }
   return evaluation;
 }

@@ -1,8 +1,11 @@
 #ifndef LSTM_CAUSALITY_METRICS_H_
 #define LSTM_CAUSALITY_METRICS_H_
 
-#include <boost/range/iterator_range.hpp>
 #include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/algorithm/equal.hpp>
+#include <boost/range/combine.hpp>
+#include <boost/range/irange.hpp>
+#include <boost/range/iterator_range.hpp>
 #include <boost/range/numeric.hpp>
 #include <cassert>
 #include <cmath>
@@ -12,6 +15,7 @@
 #include <vector>
 
 #include "BecauseData.h"
+#include "BecauseOracleTransitionCorpus.h"
 #include "diff-cpp/lcs.h"
 #include "diff-cpp/RandomAccessSequence.h"
 #include "utilities.h"
@@ -198,23 +202,30 @@ struct ArgumentMetrics {
   std::unique_ptr<AccuracyMetrics> spans;
   std::unique_ptr<AccuracyMetrics> heads;
   double jaccard_index;
+  unsigned instance_count;
 
-  ArgumentMetrics(unsigned correct = 0, unsigned incorrect = 0,
+  ArgumentMetrics(unsigned correct_spans = 0, unsigned incorrect_spans = 0,
                   unsigned heads_correct = 0, unsigned heads_incorrect = 0,
-                  double jaccard_index = 0)
-      : spans(new AccuracyMetrics(correct, incorrect)),
+                  double jaccard_index = 0, unsigned instance_count = 0)
+      : spans(new AccuracyMetrics(correct_spans, incorrect_spans)),
         heads(new AccuracyMetrics(heads_correct, heads_incorrect)),
-        jaccard_index(jaccard_index) {}
+        jaccard_index(jaccard_index), instance_count(instance_count) {}
 
   ArgumentMetrics(const ArgumentMetrics& other)
       : spans(new AccuracyMetrics(*other.spans)),
         heads(new AccuracyMetrics(*other.heads)),
-        jaccard_index(other.jaccard_index) {}
+        jaccard_index(other.jaccard_index),
+        instance_count(other.instance_count) {}
 
   void operator+=(const ArgumentMetrics& other) {
     *spans += *other.spans;
     *heads += *other.heads;
-    jaccard_index += other.jaccard_index;
+    // Jaccard indices were already probably averages. So we have to preserve
+    // the weighting for the new average.
+    unsigned combined_instance_count = instance_count + other.instance_count;
+    jaccard_index = (jaccard_index * instance_count
+        + other.jaccard_index * other.instance_count) / combined_instance_count;
+    instance_count = combined_instance_count;
   }
 
   ArgumentMetrics operator+(const ArgumentMetrics& other) const {
@@ -232,10 +243,14 @@ public:
     auto all_heads = BOOST_TRANSFORMED_RANGE(all_metrics, m, *m.heads);
     auto all_jaccards = BOOST_TRANSFORMED_RANGE(all_metrics, m,
                                                 m.jaccard_index);
+    auto all_instance_counts = BOOST_TRANSFORMED_RANGE(all_metrics, m,
+                                                       m.instance_count);
     spans.reset(new AveragedAccuracyMetrics(all_spans));
     heads.reset(new AveragedAccuracyMetrics(all_heads));
-    double count = all_metrics.size();
-    jaccard_index = boost::accumulate(all_jaccards, 0.0) / count;
+    double weighted_jaccard_sum = boost::inner_product(
+        all_instance_counts, all_jaccards, 0);
+    jaccard_index = weighted_jaccard_sum / all_jaccards.size();
+    instance_count = boost::accumulate(all_instance_counts, 0);
   }
 };
 
@@ -256,6 +271,22 @@ inline std::ostream& operator<<(std::ostream& s,
 }
 
 
+// Represents a filter that returns true for span tokens that should be filtered
+// out of comparisons.
+struct SpanTokenFilter {
+  bool operator()(unsigned token_id) const {
+    if (compare_punct) {
+      return false;
+    } else {
+      return pos_is_punct[sentence.poses.at(token_id)];
+    }
+  }
+
+  bool compare_punct;
+  const lstm_parser::Sentence& sentence;
+  const std::vector<bool>& pos_is_punct;
+};
+
 // TODO: add partial matching?
 template <class RelationType>
 class BecauseRelationMetrics {
@@ -269,8 +300,10 @@ public:
   std::unique_ptr<ClassificationMetrics> connective_metrics;
   std::vector<std::unique_ptr<ArgumentMetrics>> argument_metrics;
   typedef Diff<RandomAccessSequence<
-                   typename std::vector<RelationType>::const_iterator>,
-               ConnectivesEqual> ConnectiveDiff;
+      typename std::vector<RelationType>::const_iterator>, ConnectivesEqual>
+      ConnectiveDiff;
+  typedef Diff<RandomAccessSequence<
+      typename BecauseRelation::IndexList::const_iterator>> IndexDiff;
 
   // Default constructor: initialize metrics with zero instances, and prepare
   // argument metrics to contain the correct number of entries for the relation
@@ -293,14 +326,11 @@ public:
     }
   }
 
-  BecauseRelationMetrics(const std::vector<RelationType>& sentence_gold,
-                         const std::vector<RelationType>& sentence_predicted,
-                         const lstm_parser::ParseTree& parse)
-      : argument_metrics(RelationType::ARG_NAMES.size()) {
-    for (unsigned i = 0; i < argument_metrics.size(); ++i) {
-      argument_metrics[i].reset(new ArgumentMetrics);
-    }
-
+  BecauseRelationMetrics(
+      const std::vector<RelationType>& sentence_gold,
+      const std::vector<RelationType>& sentence_predicted,
+      const GraphEnhancedParseTree& parse, const SpanTokenFilter& filter)
+      : argument_metrics(NumArgs()) {
     unsigned tp = 0;
     unsigned fp = 0;
     unsigned fn = 0;
@@ -316,11 +346,41 @@ public:
     const typename ConnectiveDiff::IndexList matching_pred =
         diff.NewLCSIndices();
     assert(matching_pred.size() == matching_gold.size());
+    unsigned num_matching_connectives = matching_gold.size();
 
     connective_metrics.reset(new ClassificationMetrics(tp, fp, fn));
 
-    // TODO: implement calculating argument metrics
-    // TODO: implement head matching
+    for (unsigned arg_num : boost::irange(0u, NumArgs())) {
+      unsigned spans_correct = 0;
+      unsigned heads_correct = 0;
+      unsigned gold_index;
+      unsigned pred_index;
+      double jaccard_sum = 0.0;
+      for (auto both_indices : boost::combine(matching_gold, matching_pred)) {
+        boost::tie(gold_index, pred_index) = both_indices;
+        const auto& gold_span = sentence_gold[gold_index].GetArgument(arg_num);
+        const auto& pred_span =
+            sentence_predicted[pred_index].GetArgument(arg_num);
+        // We're going to need to copy over the spans anyway for Jaccard index
+        // calculations (diff requires random access). So we'll just copy and
+        // filter the copy.
+        BecauseRelation::IndexList filtered_gold(gold_span);
+        ReallyDeleteIf(&filtered_gold, filter);
+        BecauseRelation::IndexList filtered_pred(pred_span);
+        ReallyDeleteIf(&filtered_pred, filter);
+
+        if (boost::equal(filtered_gold, filtered_pred))
+          ++spans_correct;
+        if (GetHead(gold_span, parse) == GetHead(pred_span, parse))
+          ++heads_correct;
+        jaccard_sum += CalculateJaccard(filtered_gold, filtered_pred);
+      }
+      auto current_arg_metrics = new ArgumentMetrics(
+          spans_correct, num_matching_connectives - spans_correct,
+          heads_correct, num_matching_connectives - heads_correct,
+          jaccard_sum / num_matching_connectives, num_matching_connectives);
+      argument_metrics[arg_num].reset(current_arg_metrics);
+    }
   }
 
   void operator+=(const BecauseRelationMetrics<RelationType>& other) {
@@ -336,6 +396,34 @@ public:
     sum += other;
     return sum;
   }
+
+  unsigned GetHead(const typename RelationType::IndexList& span,
+                   const GraphEnhancedParseTree& parse) {
+    unsigned highest_token = -1;
+    unsigned highest_token_depth = std::numeric_limits<unsigned>::max();
+    for (unsigned token_id : span) {
+      unsigned depth = parse.GetTokenDepth(token_id);
+      if (depth < highest_token_depth) {
+        highest_token = token_id;
+        highest_token_depth = depth;
+      }
+    }
+    // TODO: make this prefer certain heads over others of equal depth
+    return highest_token;
+  }
+
+  double CalculateJaccard(const typename RelationType::IndexList& gold,
+                          const typename RelationType::IndexList& predicted) {
+    if (gold.empty() && predicted.empty()) {
+      return 1.0;
+    }
+    IndexDiff diff(gold, predicted);
+    unsigned num_matching = diff.LCS().size();
+    return num_matching / static_cast<double>(gold.size() + predicted.size()
+                                              - num_matching);
+  }
+
+  static unsigned NumArgs() { return RelationType::ARG_NAMES.size(); }
 };
 
 template <class RelationType>
@@ -349,7 +437,8 @@ public:
                                                      *m.connective_metrics);
     this->connective_metrics.reset(
         new AveragedClassificationMetrics(connectives_range));
-    for (unsigned i = 0; i < RelationType::ARG_NAMES.size(); ++i) {
+    for (unsigned i :
+         boost::irange(0u, BecauseRelationMetrics<RelationType>::NumArgs())) {
       auto all_args_i = BOOST_TRANSFORMED_RANGE(all_metrics, m,
                                                 *m.argument_metrics[i]);
       this->argument_metrics[i].reset(new AveragedArgumentMetrics(all_args_i));
@@ -368,7 +457,8 @@ inline std::ostream& operator<<(
   s << "\nArguments:";
   {
     IndentingOStreambuf indent(s);
-    for (unsigned argi = 0; argi < RelationType::ARG_NAMES.size(); ++argi) {
+    for (unsigned argi :
+         boost::irange(0u, BecauseRelationMetrics<RelationType>::NumArgs())) {
       s << '\n' << RelationType::ARG_NAMES[argi] << ':';
       IndentingOStreambuf indent2(s);
       s << '\n' << *metrics.argument_metrics[argi];
