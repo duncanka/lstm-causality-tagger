@@ -84,6 +84,7 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadSentences(
   training_corpus->sentences.shrink_to_fit();
   training_corpus->correct_act_sent.shrink_to_fit();
 
+  training_corpus->pos_is_punct.resize(training_corpus->vocab->CountPOS());
   for (const auto& pos_entry : training_corpus->vocab->pos_to_int) {
     training_corpus->pos_is_punct[pos_entry.second] =
         boost::algorithm::any_of_equal(PTB_PUNCT_TAGS, pos_entry.first);
