@@ -87,7 +87,7 @@ public:
       const std::vector<unsigned> actions);
 
   void Reset() {
-    model = cnn::Model();
+    model.reset(new cnn::Model);
     InitializeNetworkParameters();
   }
 
@@ -243,7 +243,7 @@ private:
   void save(Archive& ar, const unsigned int version) const {
     ar & options;
     ar & vocab;
-    ar & model;
+    ar & *model;
   }
 
   template<class Archive>
@@ -254,14 +254,14 @@ private:
     ar & vocab;
     // Don't finalize yet...we want to finalize once our model is initialized.
 
-    model = cnn::Model();
+    model.reset(new cnn::Model);
     // Reset the LSTMs *before* reading in the network model, to make sure the
     // model knows how big it's supposed to be.
     // TODO: initialize LSTM builders.
 
     FinalizeVocab(); // OK, now finalize. :)
 
-    ar & model;
+    ar & *model;
   }
   BOOST_SERIALIZATION_SPLIT_MEMBER();
 };
