@@ -123,6 +123,7 @@ int main(int argc, char** argv) {
     double epochs_cutoff = conf["epochs-cutoff"].as<double>();
     bool compare_punct = conf.count("compare-punct");
     unsigned dev_eval_period = conf["dev-eval-period"].as<unsigned>();
+    unsigned folds = conf["folds"].as<unsigned>();
 
     ostringstream os;
     os << "tagger_" << tagger.options.word_dim
@@ -150,61 +151,66 @@ int main(int argc, char** argv) {
     vector<unsigned> all_sentence_indices(num_sentences);
     iota(all_sentence_indices.begin(), all_sentence_indices.end(), 0);
     random_shuffle(all_sentence_indices.begin(), all_sentence_indices.end());
-    unsigned folds = conf["folds"].as<unsigned>();
-    // For cutoffs, we use one *past* the index where the fold should stop.
-    vector<unsigned> fold_cutoffs(folds);
-    unsigned uneven_sentences_to_distribute = num_sentences % folds;
-    unsigned next_cutoff = num_sentences / folds;
-    // TODO: merge this loop with the one below?
-    for (unsigned i = 0; i < folds; ++i, next_cutoff += num_sentences / folds) {
-      if (uneven_sentences_to_distribute > 0) {
-        ++next_cutoff;
-        --uneven_sentences_to_distribute;
+    if (folds <= 1) {
+       tagger.Train(&full_corpus, all_sentence_indices, dev_pct, compare_punct,
+                    fname, dev_eval_period, epochs_cutoff, &requested_stop);
+     } else {
+      // For cutoffs, we use one *past* the index where the fold should stop.
+      vector<unsigned> fold_cutoffs(folds);
+      unsigned uneven_sentences_to_distribute = num_sentences % folds;
+      unsigned next_cutoff = num_sentences / folds;
+      // TODO: merge this loop with the one below?
+      for (unsigned i = 0; i < folds;
+           ++i, next_cutoff += num_sentences / folds) {
+        if (uneven_sentences_to_distribute > 0) {
+          ++next_cutoff;
+          --uneven_sentences_to_distribute;
+        }
+        fold_cutoffs[i] = next_cutoff;
       }
-      fold_cutoffs[i] = next_cutoff;
-    }
-    assert(fold_cutoffs.back() == all_sentence_indices.size());
+      assert(fold_cutoffs.back() == all_sentence_indices.size());
 
-    unsigned previous_cutoff = 0;
-    vector<CausalityMetrics> evaluation_results;
-    evaluation_results.reserve(folds);
-    for (unsigned fold = 0; fold < folds; ++fold) {
-      cerr << "Starting fold " << fold + 1 << " of " << folds << endl;
-      size_t current_cutoff = fold_cutoffs[fold];
-      auto training_range = join(
-          all_sentence_indices | ad::sliced(0u, previous_cutoff),
-          all_sentence_indices | ad::sliced(current_cutoff,
-                                            all_sentence_indices.size()));
-      vector<unsigned> fold_train_order(training_range.begin(),
-                                        training_range.end());
+      unsigned previous_cutoff = 0;
+      vector<CausalityMetrics> evaluation_results;
+      evaluation_results.reserve(folds);
+      for (unsigned fold = 0; fold < folds; ++fold) {
+        cerr << "Starting fold " << fold + 1 << " of " << folds << endl;
+        size_t current_cutoff = fold_cutoffs[fold];
+        auto training_range = join(
+            all_sentence_indices | ad::sliced(0u, previous_cutoff),
+            all_sentence_indices | ad::sliced(current_cutoff,
+                                              all_sentence_indices.size()));
+        vector<unsigned> fold_train_order(training_range.begin(),
+                                          training_range.end());
 
-      assert(fold_train_order.size()
-             == num_sentences - (current_cutoff - previous_cutoff));
+        assert(fold_train_order.size()
+               == num_sentences - (current_cutoff - previous_cutoff));
 
-      tagger.Train(&full_corpus, fold_train_order, dev_pct, compare_punct,
-                   fname, dev_eval_period, epochs_cutoff, &requested_stop);
+        tagger.Train(&full_corpus, fold_train_order, dev_pct, compare_punct,
+                     fname, dev_eval_period, epochs_cutoff, &requested_stop);
 
-      cerr << "Evaluating..." << endl;
-      vector<unsigned> fold_test_order(
-          all_sentence_indices.begin() + previous_cutoff,
-          all_sentence_indices.begin() + current_cutoff);
-      CausalityMetrics evaluation = tagger.Evaluate(
-          full_corpus, fold_test_order, compare_punct);
-      cerr << "Evaluation for fold " << fold + 1 << " ("
-           << fold_test_order.size() << " test sentences)" << endl;
+        cerr << "Evaluating..." << endl;
+        vector<unsigned> fold_test_order(
+            all_sentence_indices.begin() + previous_cutoff,
+            all_sentence_indices.begin() + current_cutoff);
+        CausalityMetrics evaluation = tagger.Evaluate(
+            full_corpus, fold_test_order, compare_punct);
+        cerr << "Evaluation for fold " << fold + 1 << " ("
+             << fold_test_order.size() << " test sentences)" << endl;
+        IndentingOStreambuf indent(cerr);
+        cerr << evaluation << endl << endl;
+        evaluation_results.push_back(evaluation);
+
+        requested_stop = false;
+        previous_cutoff = current_cutoff;
+        //tagger.Reset();
+      }
+
+      cerr << "Average evaluation:" << endl;
       IndentingOStreambuf indent(cerr);
-      cerr << evaluation << endl << endl;
-      evaluation_results.push_back(evaluation);
-
-      requested_stop = false;
-      previous_cutoff = current_cutoff;
-      tagger.Reset();
+      auto evals_range = boost::make_iterator_range(evaluation_results);
+      cerr << AveragedCausalityMetrics(evals_range) << endl;
     }
-
-    cerr << "Average evaluation:" << endl;
-    IndentingOStreambuf indent(cerr);
-    auto evals_range = boost::make_iterator_range(evaluation_results);
-    cerr << AveragedCausalityMetrics(evals_range) << endl;
   }
 
 
