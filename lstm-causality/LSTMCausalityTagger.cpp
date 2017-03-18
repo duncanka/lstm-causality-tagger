@@ -69,6 +69,7 @@ LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
 void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
                                 vector<unsigned> selections, double dev_pct,
                                 bool compare_punct, const string& model_fname,
+                                unsigned periods_between_evals,
                                 double epochs_cutoff,
                                 const volatile sig_atomic_t* requested_stop) {
   const unsigned num_sentences = selections.size();
@@ -155,7 +156,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
     // TODO: move declaration to make this unnecessary.
     llh = actions_seen = correct = 0;
 
-    if (iteration % 25 == 0) {
+    if (iteration % periods_between_evals == 0) {
       best_f1 = DoDevEvaluation(corpus, selections, compare_punct,
                                 num_sentences_train, iteration, sentences_seen,
                                 best_f1, model_fname, &last_epoch_saved);

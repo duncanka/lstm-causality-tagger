@@ -58,11 +58,13 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Dimension of each connective/argument span LSTM's hidden state")
     ("lstm-layers,l", po::value<unsigned>()->default_value(2),
      "Number of layers for each stack LSTM")
-    ("epochs-cutoff,e", po::value<double>()->default_value(1.5),
+    ("epochs-cutoff,e", po::value<double>()->default_value(5),
      "Number of training epochs without an improvement in the best F1 to allow"
      " before stopping training on that fold (SIGINT always works to stop)")
     ("compare-punct,c",
-     "Whether to count punctuation when comparing argument spans");
+     "Whether to count punctuation when comparing argument spans")
+    ("dev-eval-period,D", po::value<unsigned>()->default_value(25),
+     "How many training iterations to go between dev evaluations");
 
   po::options_description dcmdline_options;
   dcmdline_options.add(opts);
@@ -120,6 +122,7 @@ int main(int argc, char** argv) {
     }
     double epochs_cutoff = conf["epochs-cutoff"].as<double>();
     bool compare_punct = conf.count("compare-punct");
+    unsigned dev_eval_period = conf["dev-eval-period"].as<unsigned>();
 
     ostringstream os;
     os << "tagger_" << tagger.options.word_dim
@@ -179,7 +182,7 @@ int main(int argc, char** argv) {
              == num_sentences - (current_cutoff - previous_cutoff));
 
       tagger.Train(&full_corpus, fold_train_order, dev_pct, compare_punct,
-                   fname, epochs_cutoff, &requested_stop);
+                   fname, dev_eval_period, epochs_cutoff, &requested_stop);
 
       cerr << "Evaluating..." << endl;
       vector<unsigned> fold_test_order(

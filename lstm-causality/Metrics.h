@@ -249,8 +249,8 @@ public:
     heads.reset(new AveragedAccuracyMetrics(all_heads));
     double weighted_jaccard_sum = boost::inner_product(
         all_instance_counts, all_jaccards, 0);
-    jaccard_index = weighted_jaccard_sum / all_jaccards.size();
     instance_count = boost::accumulate(all_instance_counts, 0);
+    jaccard_index = weighted_jaccard_sum / instance_count;
   }
 };
 

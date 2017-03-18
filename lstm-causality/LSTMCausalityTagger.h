@@ -57,6 +57,7 @@ public:
   void Train(BecauseOracleTransitionCorpus* corpus,
              std::vector<unsigned> selections, double dev_pct,
              bool compare_punct, const std::string& model_fname,
+             unsigned periods_between_evals = 25,
              double epochs_cutoff = std::numeric_limits<double>::infinity(),
              const volatile sig_atomic_t* requested_stop = nullptr);
 
