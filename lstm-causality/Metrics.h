@@ -54,11 +54,10 @@ public:
   bool operator==(const ClassificationMetrics& other) const {
     return tp == other.tp && fp == other.fp && fn == other.fn && tn == other.tn
         // In case this is an averaged metrics, check the derived values, too.
-        && (AlmostEqual(GetAccuracy(), other.GetAccuracy())
-            || (isnan(GetAccuracy()) && isnan(other.GetAccuracy())))
-        && AlmostEqual(GetPrecision(), other.GetPrecision())
-        && AlmostEqual(GetRecall(), other.GetRecall())
-        && AlmostEqual(GetF1(), other.GetF1());
+        && AlmostSame(GetAccuracy(), other.GetAccuracy())
+        && AlmostSame(GetPrecision(), other.GetPrecision())
+        && AlmostSame(GetRecall(), other.GetRecall())
+        && AlmostSame(GetF1(), other.GetF1());
   }
 
   virtual double GetAccuracy() const {
@@ -162,7 +161,7 @@ public:
 
   bool operator==(const AccuracyMetrics& other) const {
     return correct == other.correct && incorrect == other.incorrect
-        && AlmostEqual(GetAccuracy(), other.GetAccuracy());
+        && AlmostSame(GetAccuracy(), other.GetAccuracy());
   }
 
   void operator+=(const AccuracyMetrics& other) {
@@ -246,7 +245,7 @@ struct ArgumentMetrics {
     // instance_count is irrelevant; we only care about it for tracking future
     // changes.
     return *spans == *other.spans && *heads == *other.heads
-        && AlmostEqual(jaccard_index, other.jaccard_index);
+        && AlmostSame(jaccard_index, other.jaccard_index);
   }
 };
 

@@ -61,6 +61,8 @@ TEST_F(MetricsTest, SameAnnotationsTest) {
     GraphEnhancedParseTree pseudo_parse(sentence);
     CausalityMetrics metrics(relations, relations, *corpus, pseudo_parse,
                              filter);
+    ASSERT_EQ(correct_connective_metrics, correct_connective_metrics);
+    ASSERT_EQ(correct_arg_metrics, correct_arg_metrics);
     TEST_METRICS(metrics, correct_connective_metrics, correct_arg_metrics,
                  correct_arg_metrics);
   }
