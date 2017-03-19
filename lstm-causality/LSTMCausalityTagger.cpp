@@ -92,9 +92,6 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
 
   double sentences_seen = 0;
   double best_f1 = -numeric_limits<double>::infinity();
-  unsigned actions_seen = 0;
-  double correct = 0;
-  double llh = 0;
   double last_epoch_saved = nan("");
 
   unsigned num_sentences_dev = round(dev_pct * num_sentences);
@@ -103,6 +100,10 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
   unsigned sentence_i = num_sentences_train;
   for (unsigned iteration = 0; !requested_stop || !(*requested_stop);
        ++iteration) {
+    unsigned actions_seen = 0;
+    double correct = 0;
+    double llh = 0;
+
     for (unsigned iter_i = 0; iter_i < status_every_i_iterations; ++iter_i) {
       if (sentence_i == num_sentences_train) {
         sentence_i = 0;
@@ -153,8 +154,6 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
          << " | time=" << put_time(localtime(&time_now), "%c %Z") << ")\tllh: "
          << llh << " ppl: " << exp(llh / actions_seen) << " err: "
          << (actions_seen - correct) / actions_seen << endl;
-    // TODO: move declaration to make this unnecessary.
-    llh = actions_seen = correct = 0;
 
     if (iteration % periods_between_evals == 0) {
       best_f1 = DoDevEvaluation(corpus, selections, compare_punct,
@@ -212,7 +211,7 @@ double LSTMCausalityTagger::DoDevEvaluation(
   auto t_end = chrono::high_resolution_clock::now();
   double epoch = sentences_seen / static_cast<double>(num_sentences_train);
   cerr << "  **dev (iter=" << iteration << " epoch=" << epoch
-       << ")llh=" << llh_dev << " ppl: " << exp(llh_dev / num_actions)
+       << ") llh=" << llh_dev << " ppl: " << exp(llh_dev / num_actions)
        << "\terr: " << (num_actions - correct_dev) / num_actions
        << " evaluation: \n" << evaluation
        << "\n[" << num_sentences - num_sentences_train << " sentences in "

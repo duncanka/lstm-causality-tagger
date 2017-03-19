@@ -411,12 +411,14 @@ public:
           || (depth == highest_token_depth
               && TokenPreferredForHead(token_id, highest_token, parse,
                                        source_corpus))) {
+        /*
         if (depth >= highest_token_depth) {
           std::cerr << "Preferring "
                     << parse.GetSentence().WordForToken(token_id)
                     << " to " << parse.GetSentence().WordForToken(highest_token)
                     << " in sentence " << parse.GetSentence() << std::endl;
         }
+        //*/
         highest_token = token_id;
         highest_token_depth = depth;
       }
