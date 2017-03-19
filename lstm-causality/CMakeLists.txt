@@ -8,7 +8,5 @@ ADD_EXECUTABLE(lstm-causality-tagger tagger-driver.cc LSTMCausalityTagger.cpp
 target_link_libraries(lstm-causality-tagger lstm-parser-core ${Boost_LIBRARIES})
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    ADD_EXECUTABLE(metrics-test tests/metrics-test.cpp LSTMCausalityTagger.cpp
-               BecauseOracleTransitionCorpus.cpp BecauseData.cpp)
-    target_link_libraries(metrics-test gtest gtest_main pthread lstm-parser-core ${Boost_LIBRARIES})
+  add_subdirectory(tests)
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
