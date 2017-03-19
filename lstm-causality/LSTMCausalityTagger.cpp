@@ -515,7 +515,7 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
   // the back of the L4 vector is conceptually the front, contiguous with the
   // back of L3.
   auto reversed_sentence = sentence | boost::adaptors::reversed;
-  ++reversed_sentence.begin();  // Skip ROOT
+  reversed_sentence.advance_begin(1);  // Skip ROOT
   for (const auto& index_and_word_id : reversed_sentence) {
     const unsigned token_index = index_and_word_id.first;
     const unsigned word_id = index_and_word_id.second;
