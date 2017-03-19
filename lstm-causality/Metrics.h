@@ -157,7 +157,7 @@ public:
   virtual ~AccuracyMetrics() {}
 
   virtual double GetAccuracy() const {
-    return static_cast<double>(correct) / incorrect;
+    return static_cast<double>(correct) / (correct + incorrect);
   }
 
   bool operator==(const AccuracyMetrics& other) const {
