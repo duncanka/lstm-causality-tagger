@@ -365,7 +365,6 @@ public:
         diff.NewLCSIndices();
     assert(matching_pred.size() == matching_gold.size());
     unsigned num_matching_connectives = matching_gold.size();
-
     connective_metrics.reset(new ClassificationMetrics(tp, fp, fn));
 
     for (unsigned arg_num : boost::irange(0u, NumArgs())) {
@@ -376,9 +375,10 @@ public:
       double jaccard_sum = 0.0;
       for (auto both_indices : boost::combine(matching_gold, matching_pred)) {
         boost::tie(gold_index, pred_index) = both_indices;
-        const auto& gold_span = sentence_gold[gold_index].GetArgument(arg_num);
+        const auto& gold_span =
+            sentence_gold.at(gold_index).GetArgument(arg_num);
         const auto& pred_span =
-            sentence_predicted[pred_index].GetArgument(arg_num);
+            sentence_predicted.at(pred_index).GetArgument(arg_num);
         // We're going to need to copy over the spans anyway for Jaccard index
         // calculations (diff requires random access). So we'll just copy and
         // filter the copy.

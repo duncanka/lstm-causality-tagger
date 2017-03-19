@@ -37,13 +37,11 @@ public:
   const unsigned GetRelationType() const { return relation_type; }
 
   const IndexList& GetArgument(unsigned index) const {
-    assert(index < arguments.size());
-    return arguments[index];
+    return arguments.at(index);
   }
 
   IndexList* GetArgument(unsigned index) {
-    assert(index < arguments.size());
-    return &arguments[index];
+    return &arguments.at(index);
   }
 
   template <typename IndexListType>
