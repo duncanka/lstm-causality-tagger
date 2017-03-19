@@ -1,0 +1,869 @@
+A/DT, very/RB, large/JJ, part/NN, of/IN, our/PRP$, problem/NN, is/VBZ, that/IN, we/PRP, have/VBP, not/RB, yet/RB, found/VBN, sufficient/JJ, replacement/NN, for/IN, the/DT, discipline/NN, of/IN, a/DT, lender/NN, not/RB, lending/VBG, to/TO, a/DT, borrower/NN, unless/IN, the/DT, lender/NN, is/VBZ, sure/JJ, that/IN, the/DT, borrower/NN, will/MD, be/VB, able/JJ, to/TO, repay/VB, ./.
+[] [] A-1 [] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1] [] very-2 [] [very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2] [] large-3 [] [large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3] [] part-4 [] [part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4] [] of-5 [] [of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5] [] our-6 [] [our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6] [] problem-7 [] [problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7] [] is-8 [] [is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8] [] that-9 [] [that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9] [] we-10 [] [we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10] [] have-11 [] [have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11] [] not-12 [] [not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12] [] yet-13 [] [yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13] [] found-14 [] [found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14] [] sufficient-15 [] [sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15] [] replacement-16 [] [replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16] [] for-17 [] [for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17] [] the-18 [] [the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18] [] discipline-19 [] [discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19] [] of-20 [] [of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20] [] a-21 [] [a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21] [] lender-22 [] [lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22] [] not-23 [] [not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23] [] lending-24 [] [lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24] [] to-25 [] [to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25] [] a-26 [] [a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26] [] borrower-27 [] [borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] [] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{}
+LEFT-ARC(Effect)
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26] [borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27], [])}
+LEFT-ARC(Effect)
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25] [a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26], [])}
+LEFT-ARC(Effect)
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24] [to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25], [])}
+LEFT-ARC(Effect)
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23] [lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24], [])}
+LEFT-ARC(Effect)
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22] [not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23], [])}
+LEFT-ARC(Effect)
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21] [lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22], [])}
+LEFT-ARC(Effect)
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20] [a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19] [of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18] [discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17] [the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16] [for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15] [replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14] [sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13] [found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12] [yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11] [not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10] [have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9] [we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8] [that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7] [is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5, our-6] [problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4, of-5] [our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3, part-4] [of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2, large-3] [part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1, very-2] [large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[A-1] [very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-LEFT
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [] [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-RIGHT
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28] [the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+RIGHT-ARC(Cause)
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28, the-29] [lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+RIGHT-ARC(Cause)
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28, the-29, lender-30] [is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+RIGHT-ARC(Cause)
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28, the-29, lender-30, is-31] [sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+RIGHT-ARC(Cause)
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28, the-29, lender-30, is-31, sure-32] [that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+RIGHT-ARC(Cause)
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28, the-29, lender-30, is-31, sure-32, that-33] [the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+RIGHT-ARC(Cause)
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34] [borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+RIGHT-ARC(Cause)
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35] [will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+RIGHT-ARC(Cause)
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36] [be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+RIGHT-ARC(Cause)
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37] [able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+RIGHT-ARC(Cause)
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38] [to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+RIGHT-ARC(Cause)
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39] [repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+RIGHT-ARC(Cause)
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40] [.-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-ARC-RIGHT
+[] [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27] unless-28 [unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41] []
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+SHIFT
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28] [] the-29 [] [the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29] [] lender-30 [] [lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30] [] is-31 [] [is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31] [] sure-32 [] [sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32] [] that-33 [] [that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33] [] the-34 [] [the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34] [] borrower-35 [] [borrower-35, will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35] [] will-36 [] [will-36, be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36] [] be-37 [] [be-37, able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37] [] able-38 [] [able-38, to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38] [] to-39 [] [to-39, repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39] [] repay-40 [] [repay-40, .-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-CONN
+[A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40] [] .-41 [] [.-41]
+{unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
+NO-CONN
+
+Something/NN, that/RB, simple/JJ, causes/VBZ, problems/NNS, in/IN, subprime/NN, ,/,, and/CC, it/PRP, has/VBZ, caused/VBN, problems/NNS, elsewhere/RB, ./.
+[] [] Something-1 [] [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{}
+NO-CONN
+[Something-1] [] that-2 [] [that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{}
+NO-CONN
+[Something-1, that-2] [] simple-3 [] [simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{}
+NO-CONN
+[Something-1, that-2, simple-3] [] causes-4 [] [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{}
+LEFT-ARC(Cause)
+[Something-1, that-2] [simple-3] causes-4 [] [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3], [], [])}
+LEFT-ARC(Cause)
+[Something-1] [that-2, simple-3] causes-4 [] [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2], [], [])}
+LEFT-ARC(Cause)
+[] [Something-1, that-2, simple-3] causes-4 [] [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [], [])}
+NO-ARC-RIGHT
+[] [Something-1, that-2, simple-3] causes-4 [causes-4] [problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [], [])}
+RIGHT-ARC(Effect)
+[] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5] [in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5], [])}
+RIGHT-ARC(Effect)
+[] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6] [subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6], [])}
+RIGHT-ARC(Effect)
+[] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7] [,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-ARC-RIGHT
+[] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8] [and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-ARC-RIGHT
+[] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9] [it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-ARC-RIGHT
+[] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10] [has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-ARC-RIGHT
+[] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] [caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-ARC-RIGHT
+[] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12] [problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-ARC-RIGHT
+[] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13] [elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-ARC-RIGHT
+[] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14] [.-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-ARC-RIGHT
+[] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15] []
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+SHIFT
+[Something-1, that-2, simple-3, causes-4] [] problems-5 [] [problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-CONN
+[Something-1, that-2, simple-3, causes-4, problems-5] [] in-6 [] [in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-CONN
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6] [] subprime-7 [] [subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-CONN
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7] [] ,-8 [] [,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-CONN
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8] [] and-9 [] [and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-CONN
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9] [] it-10 [] [it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-CONN
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10] [] has-11 [] [has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-CONN
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] [] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+NO-ARC-LEFT
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10] [has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([], [], [])}
+LEFT-ARC(Cause)
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9] [it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [], [])}
+NO-ARC-LEFT
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8] [and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [], [])}
+NO-ARC-LEFT
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7] [,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [], [])}
+NO-ARC-LEFT
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6] [subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [], [])}
+NO-ARC-LEFT
+[Something-1, that-2, simple-3, causes-4, problems-5] [in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [], [])}
+NO-ARC-LEFT
+[Something-1, that-2, simple-3, causes-4] [problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [], [])}
+NO-ARC-LEFT
+[Something-1, that-2, simple-3] [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [], [])}
+NO-ARC-LEFT
+[Something-1, that-2] [simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [], [])}
+NO-ARC-LEFT
+[Something-1] [that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [], [])}
+NO-ARC-LEFT
+[] [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [], [])}
+NO-ARC-RIGHT
+[] [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [caused-12] [problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [], [])}
+RIGHT-ARC(Effect)
+[] [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [caused-12, problems-13] [elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [problems-13], [])}
+RIGHT-ARC(Effect)
+[] [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [caused-12, problems-13, elsewhere-14] [.-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [problems-13, elsewhere-14], [])}
+NO-ARC-RIGHT
+[] [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [caused-12, problems-13, elsewhere-14, .-15] []
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [problems-13, elsewhere-14], [])}
+SHIFT
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12] [] problems-13 [] [problems-13, elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [problems-13, elsewhere-14], [])}
+NO-CONN
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13] [] elsewhere-14 [] [elsewhere-14, .-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [problems-13, elsewhere-14], [])}
+NO-CONN
+[Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14] [] .-15 [] [.-15]
+{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [problems-13, elsewhere-14], [])}
+NO-CONN
+
+If/IN, properly/RB, done/VBN, ,/,, a/DT, market/NN, sensitive/JJ, regulatory/JJ, authority/NN, not/RB, only/JJ, prevents/VBZ, some/DT, of/IN, the/DT, problems/NNS, ,/,, but/CC, is/VBZ, pro-market/JJ, ,/,, because/IN, we/PRP, have/VBP, investors/NNS, now/RB, who/WP, are/VBP, unwilling/JJ, to/TO, invest/VB, even/RB, in/IN, things/NNS, they/PRP, should/MD, ./.
+[] [] If-1 [] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{}
+NO-ARC-RIGHT
+[] [] If-1 [If-1] [properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([], [], [])}
+RIGHT-ARC(Cause)
+[] [] If-1 [If-1, properly-2] [done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2], [], [])}
+RIGHT-ARC(Cause)
+[] [] If-1 [If-1, properly-2, done-3] [,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3], [], [])}
+NO-ARC-RIGHT
+[] [] If-1 [If-1, properly-2, done-3, ,-4] [a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3], [], [])}
+RIGHT-ARC(Cause)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5] [market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5], [], [])}
+RIGHT-ARC(Cause)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6] [sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6], [], [])}
+RIGHT-ARC(Cause)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7] [regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7], [], [])}
+RIGHT-ARC(Cause)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8] [authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8], [], [])}
+RIGHT-ARC(Cause)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9] [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10] [only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12] [some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13] [of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14] [the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15] [problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16] [,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17] [but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18] [is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19] [pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20] [,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22] [we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23] [have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24] [investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25] [now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26] [who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27] [are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28] [unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29] [to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30] [invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31] [even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32] [in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33] [things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34] [they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35] [should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35], [])}
+RIGHT-ARC(Effect)
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36] [.-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [])}
+NO-ARC-RIGHT
+[] [] If-1 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37] []
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [])}
+SHIFT
+[If-1] [] properly-2 [] [properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [])}
+NO-CONN
+[If-1, properly-2] [] done-3 [] [done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [])}
+NO-CONN
+[If-1, properly-2, done-3] [] ,-4 [] [,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4] [] a-5 [] [a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5] [] market-6 [] [market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6] [] sensitive-7 [] [sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7] [] regulatory-8 [] [regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8] [] authority-9 [] [authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9] [] not-10 [] [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10] [] only-11 [] [only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] [] prevents-12 [] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10] [only-11] prevents-12 [] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([], [], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9] [not-10, only-11] prevents-12 [] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([], [], [])}
+LEFT-ARC(Cause)
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8] [authority-9, not-10, only-11] prevents-12 [] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9], [], [])}
+LEFT-ARC(Cause)
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7] [regulatory-8, authority-9, not-10, only-11] prevents-12 [] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8], [], [])}
+LEFT-ARC(Cause)
+[If-1, properly-2, done-3, ,-4, a-5, market-6] [sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7], [], [])}
+LEFT-ARC(Cause)
+[If-1, properly-2, done-3, ,-4, a-5] [market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6], [], [])}
+LEFT-ARC(Cause)
+[If-1, properly-2, done-3, ,-4] [a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3] [,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [], [])}
+NO-ARC-LEFT
+[If-1, properly-2] [done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [], [])}
+NO-ARC-LEFT
+[If-1] [properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [], [])}
+NO-ARC-LEFT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12] [some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [], [])}
+RIGHT-ARC(Effect)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13] [of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13], [])}
+RIGHT-ARC(Effect)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14] [the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14], [])}
+RIGHT-ARC(Effect)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15] [problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15], [])}
+RIGHT-ARC(Effect)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16] [,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17] [but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18] [is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19] [pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20] [,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22] [we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23] [have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24] [investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25] [now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26] [who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27] [are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28] [unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29] [to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30] [invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31] [even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32] [in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33] [things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34] [they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35] [should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36] [.-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] prevents-12 [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37] []
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+SHIFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12] [] some-13 [] [some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13] [] of-14 [] [of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14] [] the-15 [] [the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15] [] problems-16 [] [problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16] [] ,-17 [] [,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17] [] but-18 [] [but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18] [] is-19 [] [is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19] [] pro-market-20 [] [pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20] [] ,-21 [] [,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] [] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20] [,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [], [])}
+LEFT-ARC(Effect)
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19] [pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20], [])}
+LEFT-ARC(Effect)
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18] [is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17] [but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16] [,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15] [problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14] [the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13] [of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12] [some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11] [prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10] [only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9] [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19], [])}
+LEFT-ARC(Effect)
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8] [authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19, authority-9], [])}
+LEFT-ARC(Effect)
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7] [regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19, authority-9, regulatory-8], [])}
+LEFT-ARC(Effect)
+[If-1, properly-2, done-3, ,-4, a-5, market-6] [sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7], [])}
+LEFT-ARC(Effect)
+[If-1, properly-2, done-3, ,-4, a-5] [market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6], [])}
+LEFT-ARC(Effect)
+[If-1, properly-2, done-3, ,-4] [a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-ARC-LEFT
+[If-1, properly-2, done-3] [,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-ARC-LEFT
+[If-1, properly-2] [done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-ARC-LEFT
+[If-1] [properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-ARC-LEFT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [] [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22] [we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23] [have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24] [investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24, investors-25] [now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24, investors-25, now-26] [who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24, investors-25, now-26, who-27] [are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24, investors-25, now-26, who-27, are-28] [unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29] [to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30] [invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31] [even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32] [in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33] [things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34] [they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35] [should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+RIGHT-ARC(Cause)
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36] [.-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-ARC-RIGHT
+[] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21] because-22 [because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37] []
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+SHIFT
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22] [] we-23 [] [we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23] [] have-24 [] [have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24] [] investors-25 [] [investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25] [] now-26 [] [now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26] [] who-27 [] [who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27] [] are-28 [] [are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28] [] unwilling-29 [] [unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29] [] to-30 [] [to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30] [] invest-31 [] [invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31] [] even-32 [] [even-32, in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32] [] in-33 [] [in-33, things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33] [] things-34 [] [things-34, they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34] [] they-35 [] [they-35, should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35] [] should-36 [] [should-36, .-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+[If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36] [] .-37 [] [.-37]
+{If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
+NO-CONN
+
+To/TO, cause/VB, harm/NN, is/VBZ, bad/JJ, ./.
+[] [] To-1 [] [To-1, cause-2, harm-3, is-4, bad-5, .-6]
+{}
+NO-CONN
+[To-1] [] cause-2 [] [cause-2, harm-3, is-4, bad-5, .-6]
+{}
+NO-ARC-LEFT
+[] [To-1] cause-2 [] [cause-2, harm-3, is-4, bad-5, .-6]
+{cause-2([], [], [])}
+NO-ARC-RIGHT
+[] [To-1] cause-2 [cause-2] [harm-3, is-4, bad-5, .-6]
+{cause-2([], [], [])}
+RIGHT-ARC(Effect)
+[] [To-1] cause-2 [cause-2, harm-3] [is-4, bad-5, .-6]
+{cause-2([], [harm-3], [])}
+NO-ARC-RIGHT
+[] [To-1] cause-2 [cause-2, harm-3, is-4] [bad-5, .-6]
+{cause-2([], [harm-3], [])}
+NO-ARC-RIGHT
+[] [To-1] cause-2 [cause-2, harm-3, is-4, bad-5] [.-6]
+{cause-2([], [harm-3], [])}
+NO-ARC-RIGHT
+[] [To-1] cause-2 [cause-2, harm-3, is-4, bad-5, .-6] []
+{cause-2([], [harm-3], [])}
+SHIFT
+[To-1, cause-2] [] harm-3 [] [harm-3, is-4, bad-5, .-6]
+{cause-2([], [harm-3], [])}
+NO-CONN
+[To-1, cause-2, harm-3] [] is-4 [] [is-4, bad-5, .-6]
+{cause-2([], [harm-3], [])}
+NO-CONN
+[To-1, cause-2, harm-3, is-4] [] bad-5 [] [bad-5, .-6]
+{cause-2([], [harm-3], [])}
+NO-CONN
+[To-1, cause-2, harm-3, is-4, bad-5] [] .-6 [] [.-6]
+{cause-2([], [harm-3], [])}
+NO-CONN
+

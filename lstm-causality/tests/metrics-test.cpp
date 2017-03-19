@@ -3,24 +3,27 @@
 #include <boost/range/combine.hpp>
 #include <gtest/gtest.h>
 
-#include "LSTMCausalityTagger.h"
-#include "Metrics.h"
+#include "../LSTMCausalityTagger.h"
+#include "../Metrics.h"
 
 using namespace std;
 using boost::combine;
 
 struct MetricsTest : public ::testing::Test {
 protected:
-  static void SetUpTestCase() {
+  static void SetUpCorpus(const string& data_path) {
     corpus.reset(
-        new BecauseOracleTransitionCorpus(
-            &vocab, "/var/www/brat/data/BECauSE/testing", true));
+        new BecauseOracleTransitionCorpus(&vocab, data_path, true));
     for (const auto& sentence_and_actions : combine(corpus->sentences,
                                                     corpus->correct_act_sent)) {
       gold_relations.push_back(
           LSTMCausalityTagger::Decode(sentence_and_actions.head,
                                       sentence_and_actions.tail.head));
     }
+  }
+
+  static void SetUpTestCase() {
+    SetUpCorpus("lstm-causality/tests/data/original");
   }
 
   static void TearDownTestCase() {
