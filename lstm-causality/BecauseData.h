@@ -29,7 +29,8 @@ public:
   }
 
   void AddToArgument(const unsigned arg_num, const unsigned index) {
-    assert(index <= sentence.words.rbegin()->first);  // index < max token ID
+    // Make sure index < max token ID (that isn't ROOT)
+    assert(index <= (++sentence.words.rbegin())->first);
     arguments[arg_num].push_back(index);
   }
 

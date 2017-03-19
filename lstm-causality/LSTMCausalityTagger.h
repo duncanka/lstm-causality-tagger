@@ -200,7 +200,7 @@ protected:
     // processing a relation, i.e., either the last word wasn't the start of a
     // connective or we already SHIFTed it off.
     return real_state.current_conn_token_i
-              >= real_state.sentence.rbegin()->first
+              >= (++real_state.sentence.rbegin())->first  // skip ROOT
         && !real_state.currently_processing_rel;
   }
 

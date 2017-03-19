@@ -15,12 +15,12 @@
 class GraphEnhancedParseTree : public lstm_parser::ParseTree {
 public:
   GraphEnhancedParseTree(ParseTree&& tree)
-      : ParseTree(std::move(tree)), sentence_graph(GetHighestNonRootTokenID()) {
+      : ParseTree(std::move(tree)), sentence_graph(GetGraphSize()) {
     MakeGraphAndCalculateDepths();
   }
 
   GraphEnhancedParseTree(const ParseTree& tree)
-      : ParseTree(tree), sentence_graph(GetHighestNonRootTokenID()) {
+      : ParseTree(tree), sentence_graph(GetGraphSize()) {
     MakeGraphAndCalculateDepths();
   }
 
@@ -46,8 +46,11 @@ protected:
 
   void MakeGraphAndCalculateDepths();
 
-  unsigned GetHighestNonRootTokenID() {
-    return GetSentence().words.rbegin()->first + 1;
+  unsigned GetGraphSize() const {
+    // To determine the size of the graph, we find the index of the last token
+    // that isn't ROOT. We still have to add 1, because that will be the token's
+    // index in the graph, and the graph is 0-indexed.
+    return (++GetSentence().words.rbegin())->first + 1;
   }
 };
 
