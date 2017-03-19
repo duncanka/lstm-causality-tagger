@@ -3,6 +3,7 @@
 
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/equal.hpp>
+#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/range/combine.hpp>
 #include <boost/range/irange.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -329,6 +330,7 @@ public:
   BecauseRelationMetrics(
       const std::vector<RelationType>& sentence_gold,
       const std::vector<RelationType>& sentence_predicted,
+      const BecauseOracleTransitionCorpus& source_corpus,
       const GraphEnhancedParseTree& parse, const SpanTokenFilter& filter)
       : argument_metrics(NumArgs()) {
     unsigned tp = 0;
@@ -371,7 +373,8 @@ public:
 
         if (boost::equal(filtered_gold, filtered_pred))
           ++spans_correct;
-        if (GetHead(gold_span, parse) == GetHead(pred_span, parse))
+        if (GetHead(gold_span, parse, source_corpus)
+            == GetHead(pred_span, parse, source_corpus))
           ++heads_correct;
         jaccard_sum += CalculateJaccard(filtered_gold, filtered_pred);
       }
@@ -398,12 +401,22 @@ public:
   }
 
   unsigned GetHead(const typename RelationType::IndexList& span,
-                   const GraphEnhancedParseTree& parse) {
+                   const GraphEnhancedParseTree& parse,
+                   const BecauseOracleTransitionCorpus& source_corpus) {
     unsigned highest_token = -1;
     unsigned highest_token_depth = std::numeric_limits<unsigned>::max();
     for (unsigned token_id : span) {
       unsigned depth = parse.GetTokenDepth(token_id);
-      if (depth < highest_token_depth) {
+      if (depth < highest_token_depth
+          || (depth == highest_token_depth
+              && TokenPreferredForHead(token_id, highest_token, parse,
+                                       source_corpus))) {
+        if (depth >= highest_token_depth) {
+          std::cerr << "Preferring "
+                    << parse.GetSentence().WordForToken(token_id)
+                    << " to " << parse.GetSentence().WordForToken(highest_token)
+                    << " in sentence " << parse.GetSentence() << std::endl;
+        }
         highest_token = token_id;
         highest_token_depth = depth;
       }
@@ -412,8 +425,9 @@ public:
     return highest_token;
   }
 
-  double CalculateJaccard(const typename RelationType::IndexList& gold,
-                          const typename RelationType::IndexList& predicted) {
+  static double CalculateJaccard(
+      const typename RelationType::IndexList& gold,
+      const typename RelationType::IndexList& predicted) {
     if (gold.empty() && predicted.empty()) {
       return 1.0;
     }
@@ -421,6 +435,46 @@ public:
     unsigned num_matching = diff.LCS().size();
     return num_matching / static_cast<double>(gold.size() + predicted.size()
                                               - num_matching);
+  }
+
+  static bool TokenPreferredForHead(
+      unsigned new_token, unsigned old_token,
+      const GraphEnhancedParseTree& parse,
+      const BecauseOracleTransitionCorpus& source_corpus) {
+    // If the depths are equal, prefer verbs/copulas over nouns, and nouns over
+    // others. This helps to get the correct heads for fragmented spans, such as
+    // spans that consist of an xcomp and its subject, as well as a few other
+    // edge cases.
+    if (IsClauseHead(old_token, parse, source_corpus))
+      return false;
+    if (IsClauseHead(new_token, parse, source_corpus))
+      return true;
+    if (source_corpus.pos_is_noun[parse.GetSentence().poses.at(old_token)])
+      return false;
+    if (source_corpus.pos_is_noun[parse.GetSentence().poses.at(new_token)])
+      return true;
+    return false;
+  }
+
+  static bool IsClauseHead(unsigned token_id,
+                           const GraphEnhancedParseTree& parse,
+                           const BecauseOracleTransitionCorpus& source_corpus) {
+    // Non-modal verbs are clause heads.
+    if (source_corpus.pos_is_non_modal_verb[
+          parse.GetSentence().poses.at(token_id)]) {
+      return true;
+    }
+    // Copula heads are clause heads.
+    for (unsigned child_id : parse.GetChildren(token_id)) {
+      if (parse.GetArcLabel(child_id) == "cop")
+        return true;
+    }
+    // Check for an incoming arc label that indicates a clause.
+    if (boost::algorithm::any_of_equal(
+          BecauseOracleTransitionCorpus::INCOMING_CLAUSE_EDGES,
+          parse.GetArcLabel(token_id)))
+      return true;
+    return false;
   }
 
   static unsigned NumArgs() { return RelationType::ARG_NAMES.size(); }

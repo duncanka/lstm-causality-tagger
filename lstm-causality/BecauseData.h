@@ -15,7 +15,9 @@ public:
   typedef std::map<unsigned, std::reference_wrapper<const std::string>>
       IndexedTokenList;
   typedef std::vector<std::reference_wrapper<const std::string>> TokenList;
-  typedef std::vector<unsigned> IndexList; // TODO: switch to set (no dupes)
+  // TODO: switch index list to set (no dupes). That would complicate the
+  // algorithm for a SPLIT operation a bit.
+  typedef std::vector<unsigned> IndexList;
   typedef std::vector<std::string> StringList;
 
   const IndexList& GetConnectiveIndices() const { return connective_indices; }
@@ -43,7 +45,8 @@ public:
     return &arguments[index];
   }
 
-  void SetArgument(unsigned arg_num, const IndexList& indices) {
+  template <typename IndexListType>
+  void SetArgument(unsigned arg_num, const IndexListType& indices) {
     for (unsigned i : indices) {
       assert(i < sentence.Size());
     }

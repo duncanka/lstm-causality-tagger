@@ -127,7 +127,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
       // Cache parse if we haven't yet.
       double parser_lp = as_scalar(cg.incremental_forward());
       CacheParse(sentence, parse_actions, parser_lp, corpus, sentence_index);
-      // TODO: simplify LogProbTager to use its own vocab?
+      // TODO: simplify LogProbTagger to use its own vocab?
       LogProbTagger(&cg, sentence, sentence.words, correct_actions, &correct,
                     &parser_state);
       double lp = as_scalar(cg.incremental_forward());
@@ -205,7 +205,7 @@ double LSTMCausalityTagger::DoDevEvaluation(
     const GraphEnhancedParseTree& parse =
         *corpus->sentence_parses[sentence_index];
     evaluation += CausalityMetrics(
-        gold, predicted, parse,
+        gold, predicted, *corpus, parse,
         SpanTokenFilter{compare_punct, sentence, corpus->pos_is_punct});
   }
 
@@ -402,7 +402,7 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
     ParseTree parse(sentence);
     vector<CausalityRelation> predicted = Tag(sentence, &parse);
     GraphEnhancedParseTree parse_with_depths(move(parse));
-    evaluation += CausalityMetrics(gold, predicted, parse_with_depths,
+    evaluation += CausalityMetrics(gold, predicted, corpus, parse_with_depths,
                                    SpanTokenFilter {compare_punct, sentence,
                                        corpus.pos_is_punct});
   }

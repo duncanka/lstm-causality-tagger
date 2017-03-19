@@ -1,6 +1,5 @@
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/graph/graph_traits.hpp>
-#include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -25,6 +24,19 @@ const vector<string> BecauseOracleTransitionCorpus::PTB_PUNCT_TAGS = {
     "-RSB-"
 };
 
+const vector<string> BecauseOracleTransitionCorpus::PTB_VERB_TAGS = {
+    "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "MD"
+};
+
+const vector<string> BecauseOracleTransitionCorpus::PTB_NOUN_TAGS = {
+    "NN", "NP", "NNS", "NNP", "NNPS", "PRP", "WP", "WDT"
+};
+
+const vector<string> BecauseOracleTransitionCorpus::INCOMING_CLAUSE_EDGES = {
+    "ccomp", "xcomp", "csubj", "csubjpass", "advcl", "acl", "acl:relcl"
+};
+
+
 
 class DepthRecorder : public boost::default_bfs_visitor {
 public:
@@ -43,27 +55,22 @@ public:
 };
 
 
-void GraphEnhancedParseTree::CalculateDepths() {
-  // ROOT is (unsigned)-1, so it shows up last. We definitely don't want such a
-  // big graph, though, so we just represent it as 0 in the graph, CoNLL-style.
-  auto root_iter = parents.find(root_child);
-  assert(root_iter != parents.end());
-  parents.erase(root_iter);
-
+void GraphEnhancedParseTree::MakeGraphAndCalculateDepths() {
   using namespace boost;
-  typedef adjacency_list<vecS, vecS, bidirectionalS> Graph;
-  // # of nodes in the graph is determined by max token index.
-  unsigned node_count = GetSentence().words.rbegin()->first + 1;
-  Graph upward_graph(parents.begin(), parents.end(), node_count);
-  add_edge(root_child, 0, upward_graph);  // child to parent
-  auto sentence_graph = make_reverse_graph(upward_graph);
+  for (const auto& child_and_parent : parents) {
+    unsigned child, parent;
+    boost::tie(child, parent) = child_and_parent;
+    // ROOT is (unsigned)-1, so it shows up last. We definitely don't want such
+    // a big graph, though, so we just store it as 0 in the graph, CoNLL-style.
+    if (child != root_child) {
+      add_edge(parent, child, sentence_graph);
+    }
+  }
+  add_edge(0, root_child, sentence_graph);
   DepthRecorder depths_visitor(&token_depths);
   breadth_first_search(sentence_graph,
                        vertex(0, sentence_graph),
                        visitor(depths_visitor));
-
-  // Restore ROOT (just for good measure)
-  parents[root_child] = Corpus::ROOT_TOKEN_ID;
 }
 
 
@@ -94,10 +101,21 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadSentences(
   training_corpus->sentences.shrink_to_fit();
   training_corpus->correct_act_sent.shrink_to_fit();
 
+  // Remember which POS tag encodings have what statuses (mainly used in
+  // calculation of metrics)
   training_corpus->pos_is_punct.resize(training_corpus->vocab->CountPOS());
+  training_corpus->pos_is_non_modal_verb.resize(
+      training_corpus->vocab->CountPOS());
+  training_corpus->pos_is_noun.resize(training_corpus->vocab->CountPOS());
   for (const auto& pos_entry : training_corpus->vocab->pos_to_int) {
     training_corpus->pos_is_punct[pos_entry.second] =
         boost::algorithm::any_of_equal(PTB_PUNCT_TAGS, pos_entry.first);
+    training_corpus->pos_is_non_modal_verb[pos_entry.second] =
+        pos_entry.first == "MD"
+            ? false
+            : boost::algorithm::any_of_equal(PTB_VERB_TAGS, pos_entry.first);
+    training_corpus->pos_is_noun[pos_entry.second] =
+        boost::algorithm::any_of_equal(PTB_NOUN_TAGS, pos_entry.first);
   }
 }
 
