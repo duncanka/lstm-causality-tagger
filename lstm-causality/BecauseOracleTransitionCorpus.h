@@ -14,6 +14,9 @@
 
 class GraphEnhancedParseTree : public lstm_parser::ParseTree {
 public:
+  GraphEnhancedParseTree(const lstm_parser::Sentence& sentence)
+      : ParseTree(sentence, false), sentence_graph(GetGraphSize()) {}
+
   GraphEnhancedParseTree(ParseTree&& tree)
       : ParseTree(std::move(tree)), sentence_graph(GetGraphSize()) {
     MakeGraphAndCalculateDepths();
@@ -25,7 +28,10 @@ public:
   }
 
   unsigned GetTokenDepth(unsigned token_id) const {
-    return token_depths.at(token_id);
+    auto depth_iter = token_depths.find(token_id);
+    if (depth_iter == token_depths.end())
+      return -1;
+    return depth_iter->second;
   }
 
   auto GetChildren(unsigned token_id) const {

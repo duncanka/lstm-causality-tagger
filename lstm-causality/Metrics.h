@@ -403,10 +403,10 @@ public:
   unsigned GetHead(const typename RelationType::IndexList& span,
                    const GraphEnhancedParseTree& parse,
                    const BecauseOracleTransitionCorpus& source_corpus) {
-    unsigned highest_token = -1;
-    unsigned highest_token_depth = std::numeric_limits<unsigned>::max();
+    int highest_token = -1;  // Using signed int makes this work for testing
+    int highest_token_depth = std::numeric_limits<int>::max();
     for (unsigned token_id : span) {
-      unsigned depth = parse.GetTokenDepth(token_id);
+      int depth = parse.GetTokenDepth(token_id);
       if (depth < highest_token_depth
           || (depth == highest_token_depth
               && TokenPreferredForHead(token_id, highest_token, parse,
@@ -423,7 +423,6 @@ public:
         highest_token_depth = depth;
       }
     }
-    // TODO: make this prefer certain heads over others of equal depth
     return highest_token;
   }
 
