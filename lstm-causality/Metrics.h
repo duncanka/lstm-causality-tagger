@@ -54,10 +54,11 @@ public:
   bool operator==(const ClassificationMetrics& other) const {
     return tp == other.tp && fp == other.fp && fn == other.fn && tn == other.tn
         // In case this is an averaged metrics, check the derived values, too.
-        && (GetAccuracy() == other.GetAccuracy()
+        && (AlmostEqual(GetAccuracy(), other.GetAccuracy())
             || (isnan(GetAccuracy()) && isnan(other.GetAccuracy())))
-        && GetPrecision() == other.GetPrecision()
-        && GetRecall() == other.GetRecall() && GetF1() == other.GetF1();
+        && AlmostEqual(GetPrecision(), other.GetPrecision())
+        && AlmostEqual(GetRecall(), other.GetRecall())
+        && AlmostEqual(GetF1(), other.GetF1());
   }
 
   virtual double GetAccuracy() const {
@@ -161,7 +162,7 @@ public:
 
   bool operator==(const AccuracyMetrics& other) const {
     return correct == other.correct && incorrect == other.incorrect
-        && GetAccuracy() == other.GetAccuracy();
+        && AlmostEqual(GetAccuracy(), other.GetAccuracy());
   }
 
   void operator+=(const AccuracyMetrics& other) {
@@ -245,7 +246,7 @@ struct ArgumentMetrics {
     // instance_count is irrelevant; we only care about it for tracking future
     // changes.
     return *spans == *other.spans && *heads == *other.heads
-        && jaccard_index == other.jaccard_index;
+        && AlmostEqual(jaccard_index, other.jaccard_index);
   }
 };
 
