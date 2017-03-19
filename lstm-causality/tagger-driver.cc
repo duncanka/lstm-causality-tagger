@@ -4,6 +4,7 @@
 #include <boost/program_options.hpp>
 #include <cassert>
 #include <csignal>
+#include <cstdlib>
 #include <iostream>
 #include <map>
 #include <numeric>
@@ -92,7 +93,8 @@ int main(int argc, char** argv) {
     cerr << ' ' << argv[i];
   cerr << endl;
 
-  cnn::Initialize(argc, argv);
+  unsigned random_seed = cnn::Initialize(argc, argv);
+  srand(random_seed + 1);
 
   po::variables_map conf;
   InitCommandLine(argc, argv, &conf);
