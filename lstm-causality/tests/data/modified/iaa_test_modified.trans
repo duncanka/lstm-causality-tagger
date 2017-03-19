@@ -273,114 +273,117 @@ NO-ARC-RIGHT
 RIGHT-ARC(Effect)
 [] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5] [in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
 {causes-4([simple-3, that-2, Something-1], [problems-5], [])}
+CONN-FRAG-RIGHT
+[] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5] [in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5], [])}
 RIGHT-ARC(Effect)
 [] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6] [subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6], [])}
 RIGHT-ARC(Effect)
 [] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7] [,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-ARC-RIGHT
 [] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8] [and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-ARC-RIGHT
 [] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9] [it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-ARC-RIGHT
 [] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10] [has-11, caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-ARC-RIGHT
 [] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] [caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-ARC-RIGHT
 [] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12] [problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-ARC-RIGHT
 [] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13] [elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-ARC-RIGHT
 [] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14] [.-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-ARC-RIGHT
 [] [Something-1, that-2, simple-3] causes-4 [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15] []
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 SHIFT
 [Something-1, that-2, simple-3, causes-4] [] problems-5 [] [problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-CONN
 [Something-1, that-2, simple-3, causes-4, problems-5] [] in-6 [] [in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-CONN
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6] [] subprime-7 [] [subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-CONN
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7] [] ,-8 [] [,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-CONN
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8] [] and-9 [] [and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-CONN
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9] [] it-10 [] [it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-CONN
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10] [] has-11 [] [has-11, caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-CONN
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] [] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], [])}
 NO-ARC-LEFT
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10] [has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([], [], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([], [], [])}
 NO-ARC-LEFT
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9] [it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([], [], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([], [], [])}
 NO-ARC-LEFT
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8] [and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([], [], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([], [], [])}
 NO-ARC-LEFT
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7] [,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([], [], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([], [], [])}
 LEFT-ARC(Cause)
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6] [subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7], [], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7], [], [])}
 LEFT-ARC(Cause)
 [Something-1, that-2, simple-3, causes-4, problems-5] [in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6], [], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6], [], [])}
 LEFT-ARC(Cause)
 [Something-1, that-2, simple-3, causes-4] [problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [], [])}
 NO-ARC-LEFT
 [Something-1, that-2, simple-3] [causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [], [])}
 NO-ARC-LEFT
 [Something-1, that-2] [simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [], [])}
 NO-ARC-LEFT
 [Something-1] [that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [], [])}
 NO-ARC-LEFT
 [] [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [] [caused-12, problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [], [])}
 NO-ARC-RIGHT
 [] [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [caused-12] [problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [], [])}
 RIGHT-ARC(Effect)
 [] [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [caused-12, problems-13] [elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [problems-13], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [problems-13], [])}
 RIGHT-ARC(Effect)
 [] [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [caused-12, problems-13, elsewhere-14] [.-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [problems-13, elsewhere-14], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [problems-13, elsewhere-14], [])}
 NO-ARC-RIGHT
 [] [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11] caused-12 [caused-12, problems-13, elsewhere-14, .-15] []
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [problems-13, elsewhere-14], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [problems-13, elsewhere-14], [])}
 SHIFT
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12] [] problems-13 [] [problems-13, elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [problems-13, elsewhere-14], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [problems-13, elsewhere-14], [])}
 NO-CONN
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13] [] elsewhere-14 [] [elsewhere-14, .-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [problems-13, elsewhere-14], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [problems-13, elsewhere-14], [])}
 NO-CONN
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14] [] .-15 [] [.-15]
-{causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [problems-13, elsewhere-14], [])}
+{causes-4/in-6([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([subprime-7, in-6, problems-5], [problems-13, elsewhere-14], [])}
 NO-CONN
 
 If/IN, properly/RB, done/VBN, ,/,, a/DT, market/NN, sensitive/JJ, regulatory/JJ, authority/NN, not/RB, only/JJ, prevents/VBZ, some/DT, of/IN, the/DT, problems/NNS, ,/,, but/CC, is/VBZ, pro-market/JJ, ,/,, because/IN, we/PRP, have/VBP, investors/NNS, now/RB, who/WP, are/VBP, unwilling/JJ, to/TO, invest/VB, even/RB, in/IN, things/NNS, they/PRP, should/MD, ./.

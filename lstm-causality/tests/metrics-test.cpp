@@ -25,11 +25,16 @@ protected:
                           vector<vector<CausalityRelation>>* relations) {
     corpus->reset(
         new BecauseOracleTransitionCorpus(&vocab, data_path, true));
-    for (const auto& sentence_and_actions : combine(
-        (*corpus)->sentences, (*corpus)->correct_act_sent)) {
-      relations->push_back(
-          LSTMCausalityTagger::Decode(sentence_and_actions.head,
-                                      sentence_and_actions.tail.head));
+    for (unsigned i = 0; i < (*corpus)->sentences.size(); ++i) {
+      const lstm_parser::Sentence& sentence = (*corpus)->sentences[i];
+      const vector<unsigned>& actions = (*corpus)->correct_act_sent[i];
+      relations->push_back(LSTMCausalityTagger::Decode(sentence, actions));
+      //*
+      cerr << sentence << endl;
+      for (const auto& rel : relations->back()) {
+        cerr << rel << endl;
+      }
+      //*/
     }
   }
 
