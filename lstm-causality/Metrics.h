@@ -354,15 +354,10 @@ public:
       const BecauseOracleTransitionCorpus& source_corpus,
       const GraphEnhancedParseTree& parse, const SpanTokenFilter& filter)
       : argument_metrics(NumArgs()) {
-    unsigned tp = 0;
-    unsigned fp = 0;
-    unsigned fn = 0;
-
     ConnectiveDiff diff(sentence_gold, sentence_predicted);
-    unsigned sentence_tp = diff.LCS().size();
-    tp += sentence_tp;
-    fp += sentence_predicted.size() - sentence_tp;
-    fn += sentence_gold.size() - sentence_tp;
+    unsigned tp = diff.LCS().size();
+    unsigned fp = sentence_predicted.size() - tp;
+    unsigned fn = sentence_gold.size() - tp;
 
     const typename ConnectiveDiff::IndexList matching_gold =
         diff.OrigLCSIndices();

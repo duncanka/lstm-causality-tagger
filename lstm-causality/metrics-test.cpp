@@ -14,9 +14,7 @@ protected:
   static void SetUpTestCase() {
     corpus.reset(
         new BecauseOracleTransitionCorpus(
-            &vocab,
-            "/home/jesse/Documents/Work/Research/Causality/Causeway/tests"
-            "/resources/IAATest", true));
+            &vocab, "/var/www/brat/data/BECauSE/testing", true));
     for (const auto& sentence_and_actions : combine(corpus->sentences,
                                                     corpus->correct_act_sent)) {
       gold_relations.push_back(
@@ -53,6 +51,8 @@ TEST_F(MetricsTest, SameAnnotationsTest) {
   ClassificationMetrics correct_connective_metrics(7, 0, 0);
   ArgumentMetrics correct_arg_metrics(7, 0, 7, 0, 1, 7);
 
+  CausalityMetrics total_metrics;
+
   for (const auto& sentence_and_relations : combine(corpus->sentences,
                                                     gold_relations)) {
     const lstm_parser::Sentence& sentence = sentence_and_relations.head;
@@ -60,11 +60,14 @@ TEST_F(MetricsTest, SameAnnotationsTest) {
         sentence_and_relations.tail.head;
     SpanTokenFilter filter = {false, sentence, corpus->pos_is_punct};
     GraphEnhancedParseTree pseudo_parse(sentence);
-    CausalityMetrics metrics(relations, relations, *corpus, pseudo_parse,
-                             filter);
-    ASSERT_EQ(correct_connective_metrics, correct_connective_metrics);
-    ASSERT_EQ(correct_arg_metrics, correct_arg_metrics);
-    TEST_METRICS(metrics, correct_connective_metrics, correct_arg_metrics,
-                 correct_arg_metrics);
+    CausalityMetrics sentence_metrics(relations, relations, *corpus,
+                                      pseudo_parse, filter);
+    cerr << sentence_metrics << endl;
+    total_metrics += sentence_metrics;
   }
+
+  ASSERT_EQ(correct_connective_metrics, correct_connective_metrics);
+  ASSERT_EQ(correct_arg_metrics, correct_arg_metrics);
+  TEST_METRICS(total_metrics, correct_connective_metrics, correct_arg_metrics,
+               correct_arg_metrics);
 }
