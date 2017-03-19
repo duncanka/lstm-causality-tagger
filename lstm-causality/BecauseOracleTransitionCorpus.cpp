@@ -139,8 +139,10 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
   map<unsigned, string> sentence_unk_surface_forms;
   vector<unsigned> correct_actions;
 
-  unsigned root_symbol = corpus->vocab->GetWord(CorpusVocabulary::ROOT);
-  unsigned root_pos_symbol = corpus->vocab->GetPOS(CorpusVocabulary::ROOT);
+  unsigned root_symbol = corpus->vocab->GetOrAddWord(CorpusVocabulary::ROOT);
+  unsigned root_pos_symbol = corpus->vocab->GetOrAddEntry(
+      CorpusVocabulary::ROOT, &corpus->vocab->pos_to_int,
+      &corpus->vocab->int_to_pos);
 
   while (getline(actions_file, line)) {
     if (line.empty()) { // An empty line marks the end of a sentence.
