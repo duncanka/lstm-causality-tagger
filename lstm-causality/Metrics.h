@@ -52,7 +52,12 @@ public:
   }
 
   bool operator==(const ClassificationMetrics& other) const {
-    return tp == other.tp && fp == other.fp && fn == other.fn && tn == other.tn;
+    return tp == other.tp && fp == other.fp && fn == other.fn && tn == other.tn
+        // In case this is an averaged metrics, check the derived values, too.
+        && (GetAccuracy() == other.GetAccuracy()
+            || (isnan(GetAccuracy()) && isnan(other.GetAccuracy())))
+        && GetPrecision() == other.GetPrecision()
+        && GetRecall() == other.GetRecall() && GetF1() == other.GetF1();
   }
 
   virtual double GetAccuracy() const {
@@ -155,7 +160,8 @@ public:
   }
 
   bool operator==(const AccuracyMetrics& other) const {
-    return correct == other.correct && incorrect == other.incorrect;
+    return correct == other.correct && incorrect == other.incorrect
+        && GetAccuracy() == other.GetAccuracy();
   }
 
   void operator+=(const AccuracyMetrics& other) {
@@ -233,6 +239,13 @@ struct ArgumentMetrics {
     ArgumentMetrics sum = *this;
     sum += other;
     return sum;
+  }
+
+  bool operator==(const ArgumentMetrics& other) const {
+    // instance_count is irrelevant; we only care about it for tracking future
+    // changes.
+    return *spans == *other.spans && *heads == *other.heads
+        && jaccard_index == other.jaccard_index;
   }
 };
 
@@ -398,6 +411,16 @@ public:
     BecauseRelationMetrics sum = *this;
     sum += other;
     return sum;
+  }
+
+  bool operator==(const BecauseRelationMetrics<RelationType>& other) {
+    if (*connective_metrics != *other.connective_metrics)
+      return false;
+    for (unsigned i = 0; i < argument_metrics.size(); ++i) {
+      if (*argument_metrics[i] != *other.argument_metrics[i])
+        return false;
+    }
+    return true;
   }
 
   unsigned GetHead(const typename RelationType::IndexList& span,
