@@ -309,14 +309,13 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
     } else if (action_name == "NO-ARC-RIGHT") {
       EnsureCurrentRelation();
       AdvanceArgTokenRight();
-    } else if (action_name == "CONN-FRAG-LEFT") {
+    } /*else if (action_name == "CONN-FRAG-LEFT") {  // not currently possible
       EnsureCurrentRelation();
       current_rel->AddConnectiveToken(current_arg_token);
-      AdvanceArgTokenLeft();
-    } else if (action_name == "CONN-FRAG-RIGHT") {
+    } */ else if (action_name == "CONN-FRAG-RIGHT") {
       EnsureCurrentRelation();
       current_rel->AddConnectiveToken(current_arg_token);
-      AdvanceArgTokenRight();
+      // Do NOT advance the argument token. It could still be part of an arg.
     } else if (starts_with(action_name, "RIGHT-ARC")) {
       AddArc(action);
       AdvanceArgTokenRight();
@@ -579,9 +578,10 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
             || last_action_name[0] == 'C';
       }
 
-      // Another special case: forbid CONN-FRAG after SPLIT.
-      if (last_action_name[0] == 'S' && last_action_name[1] == 'P'
-          && action_name[0] == 'C')
+      // Another special case: forbid CONN-FRAG after SPLIT or CONN-FRAG.
+      if (action_name[0] == 'C'
+          && ((last_action_name[0] == 'S' && last_action_name[1] == 'P')
+              || last_action_name[0] == 'C'))
         return false;
 
       // If it's not a split, a shift, or a forbidden post-split operation,
@@ -783,16 +783,15 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
   } else if (action_name == "NO-ARC-RIGHT") {
     EnsureRelationWithConnective(true);
     AdvanceArgTokenRight();
-  } else if (action_name == "CONN-FRAG-LEFT") {
+  } /* else if (action_name == "CONN-FRAG-LEFT") {  // not currently possible
     cst->current_rel_conn_tokens.push_back(current_arg_token_i);
     connective_lstm.add_input(current_arg_token);
     UpdateCurrentRelationEmbedding();
-    AdvanceArgTokenLeft();
-  } else if (action_name == "CONN-FRAG-RIGHT") {
+  } */ else if (action_name == "CONN-FRAG-RIGHT") {
     cst->current_rel_conn_tokens.push_back(current_arg_token_i);
     connective_lstm.add_input(current_arg_token);
     UpdateCurrentRelationEmbedding();
-    AdvanceArgTokenRight();
+    // Do NOT advance the argument token. It could still be part of an arg.
   } else if (starts_with(action_name, "RIGHT-ARC")) {
     AddArc(action);
     AdvanceArgTokenRight();
