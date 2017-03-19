@@ -135,7 +135,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
       if (lp < 0) {
         cerr << "Log prob " << lp << " < 0 on sentence "
              << corpus->sentences[sentence_index]<< endl;
-        assert(lp >= 0.0);
+        abort();
       }
       cg.backward();
       sgd.update(1.0);
@@ -265,7 +265,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
   auto EnsureCurrentRelation = [&]() {
     if (!current_rel) {
       relations.emplace_back(
-          sentence, vocab, CausalityRelation::CONSEQUENCE,
+          sentence, sentence.vocab, CausalityRelation::CONSEQUENCE,
           IndexList({current_conn_token}));
       current_rel = &relations.back();
     }
@@ -273,7 +273,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
 
   auto AddArc = [&](unsigned action) {
     EnsureCurrentRelation();
-    const string& arc_type = vocab.actions_to_arc_labels[action];
+    const string& arc_type = sentence.vocab.actions_to_arc_labels[action];
     auto arg_iter = find(CausalityRelation::ARG_NAMES.begin(),
         CausalityRelation::ARG_NAMES.end(), arc_type);
     assert(arg_iter != CausalityRelation::ARG_NAMES.end());
@@ -283,7 +283,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
 
   for (auto iter = actions.begin(), end = actions.end(); iter != end; ++iter) {
     unsigned action = *iter;
-    const string& action_name = vocab.action_names[action];
+    const string& action_name = sentence.vocab.action_names[action];
     /*
     cerr << "Decoding action " << action_name << " on connective word \""
          << vocab.int_to_words.at(sentence.words.at(current_conn_token))

@@ -82,7 +82,7 @@ public:
                             const std::vector<unsigned>& selections,
                             bool compare_punct = false);
 
-  std::vector<CausalityRelation> Decode(
+  static std::vector<CausalityRelation> Decode(
       const lstm_parser::Sentence& sentence,
       const std::vector<unsigned> actions);
 
