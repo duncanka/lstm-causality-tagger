@@ -69,12 +69,11 @@ protected:
 
   BecauseRelation(const StringList& arg_names, const StringList& type_names,
                   const lstm_parser::Sentence& sentence,
-                  const lstm_parser::CorpusVocabulary& vocab,
                   const unsigned relation_type,
                   const IndexList& connective_indices,
                   const std::vector<IndexList>& arguments = {{}})
       : arg_names(arg_names), type_names(type_names), sentence(sentence),
-        vocab(vocab), relation_type(relation_type),
+        vocab(sentence.vocab), relation_type(relation_type),
         connective_indices(connective_indices), arguments(arguments) {
     assert(arguments.size() < arg_names.size());
     // Make sure all arguments are created, even if they weren't yet specified.
@@ -114,11 +113,10 @@ public:
   enum CausationType {CONSEQUENCE = 0, MOTIVATION = 1, PURPOSE = 3};
 
   CausalityRelation(const lstm_parser::Sentence& sentence,
-                    const lstm_parser::CorpusVocabulary& vocab,
                     const unsigned relation_type = CONSEQUENCE,
                     const IndexList& connective_indices = {},
                     const std::vector<IndexList>& arguments = {{}})
-      : BecauseRelation(ARG_NAMES, TYPE_NAMES, sentence, vocab, relation_type,
+      : BecauseRelation(ARG_NAMES, TYPE_NAMES, sentence, relation_type,
                         connective_indices, arguments) {}
 
   void SetCause(const IndexList& indices) {

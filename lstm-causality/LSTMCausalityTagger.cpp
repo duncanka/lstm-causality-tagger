@@ -265,7 +265,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
   auto EnsureCurrentRelation = [&]() {
     if (!current_rel) {
       relations.emplace_back(
-          sentence, sentence.vocab, CausalityRelation::CONSEQUENCE,
+          sentence, CausalityRelation::CONSEQUENCE,
           IndexList({current_conn_token}));
       current_rel = &relations.back();
     }
