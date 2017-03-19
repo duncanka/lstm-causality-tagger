@@ -1,3 +1,5 @@
+#define METRICS_PRINT_RAW_COUNTS
+
 #include <boost/range/combine.hpp>
 #include <gtest/gtest.h>
 
@@ -6,7 +8,6 @@
 
 using namespace std;
 using boost::combine;
-
 
 struct MetricsTest : public ::testing::Test {
 protected:

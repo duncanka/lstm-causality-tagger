@@ -137,6 +137,10 @@ protected:
 
 inline std::ostream& operator<<(std::ostream& s,
                          const ClassificationMetrics& metrics) {
+#ifdef METRICS_PRINT_RAW_COUNTS
+  s << "TP: " << metrics.tp << "\nFP:" << metrics.fp
+    << "\nFN:" << metrics.fn << "\nTN: " << metrics.tn << "\n";
+#endif
   s << "Accuracy: " << metrics.GetAccuracy()
     << "\nPrecision: " << metrics.GetPrecision()
     << "\nRecall: " << metrics.GetRecall()
@@ -200,6 +204,10 @@ protected:
 
 inline std::ostream& operator<<(std::ostream& s,
                                 const AccuracyMetrics& metrics) {
+#ifdef METRICS_PRINT_RAW_COUNTS
+  s << "Correct: " << metrics.correct << "\nIncorrect: " << metrics.incorrect
+    << "\n";
+#endif
   s << "Accuracy: " << metrics.GetAccuracy();
   return s;
 }
