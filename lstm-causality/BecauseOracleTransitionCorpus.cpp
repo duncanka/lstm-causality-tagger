@@ -119,6 +119,7 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadSentences(
   }
 }
 
+
 void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
     const string& file_name, TrainingCorpus* corpus) const {
   enum LineType {
@@ -137,7 +138,6 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
   map<unsigned, string> sentence_unk_surface_forms;
   vector<unsigned> correct_actions;
 
-  unsigned unk_word_symbol = corpus->vocab->GetWord(CorpusVocabulary::UNK);
   unsigned root_symbol = corpus->vocab->GetWord(CorpusVocabulary::ROOT);
   unsigned root_pos_symbol = corpus->vocab->GetPOS(CorpusVocabulary::ROOT);
 

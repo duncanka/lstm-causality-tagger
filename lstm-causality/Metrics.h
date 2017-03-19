@@ -259,12 +259,12 @@ inline std::ostream& operator<<(std::ostream& s,
                                 const ArgumentMetrics& metrics) {
   s << "Spans:";
   {
-    IndentingOStreambuf indent(std::cout);
+    IndentingOStreambuf indent(std::cerr);
     s << '\n' << *metrics.spans;
   }
   s << "\nHeads:";
   {
-    IndentingOStreambuf indent(std::cout);
+    IndentingOStreambuf indent(std::cerr);
     s << '\n' << *metrics.heads;
   }
   s << "\nJaccard index: " << metrics.jaccard_index;
