@@ -62,6 +62,18 @@ public:
   }
 
   virtual double GetAccuracy() const {
+    return CalculateAccuracy(tp, fp, fn, tn);
+  }
+  virtual double GetPrecision() const { return CalculatePrecision(tp, fp); }
+  virtual double GetRecall() const { return CalculateRecall(tp, fn); }
+  virtual double GetF1() const {
+    return CalculateF1(GetPrecision(), GetRecall());
+  }
+
+  virtual ~ClassificationMetrics() {}
+
+  static double CalculateAccuracy(unsigned tp, unsigned fp, unsigned fn,
+                                  unsigned tn = -1) {
     if (tn != static_cast<unsigned>(-1)) {
       return static_cast<double>(tp + tn) / (tp + tn + fp + fn);
     } else {
@@ -69,23 +81,17 @@ public:
     }
   }
 
-  virtual double GetPrecision() const {
+  static double CalculatePrecision(unsigned tp, unsigned fp) {
     if (tp + fp == 0)
       return 0;
     return static_cast<double>(tp) / (tp + fp);
   }
 
-  virtual double GetRecall() const {
+  static double CalculateRecall(unsigned tp, unsigned fn) {
     if (tp + fn == 0)
       return 0;
     return static_cast<double>(tp) / (tp + fn);
   }
-
-  virtual double GetF1() const {
-    return CalculateF1(GetPrecision(), GetRecall());
-  }
-
-  virtual ~ClassificationMetrics() {}
 
   static double CalculateF1(double precision, double recall) {
     if (precision + recall == 0)

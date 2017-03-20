@@ -12,11 +12,22 @@ using boost::make_iterator_range;
 constexpr unsigned CAUSE_INDEX = CausalityRelation::CAUSE;
 constexpr unsigned EFFECT_INDEX = CausalityRelation::EFFECT;
 
+
 TEST(MetricsTest, JaccardIndexWorks) {
   BecauseRelation::IndexList gold = {1, 2, 3, 4, 5, 6, 7};
   BecauseRelation::IndexList predicted = {1, 3, 5, 7, 9, 11};
   double jaccard = CausalityMetrics::CalculateJaccard(gold, predicted);
   EXPECT_DOUBLE_EQ(4/9., jaccard);
+}
+
+TEST(MetricsTest, F1Works) {
+  unsigned tp = 1770;
+  unsigned fp = 150;
+  unsigned fn = 330;
+  double f1 = ClassificationMetrics::CalculateF1(
+      ClassificationMetrics::CalculatePrecision(tp, fp),
+      ClassificationMetrics::CalculateRecall(tp, fn));
+  EXPECT_DOUBLE_EQ(0.8804, f1);
 }
 
 
@@ -158,20 +169,48 @@ TEST_F(DataMetricsTest, AveragingMetricsWorks) {
   vector<CausalityMetrics> to_average = {compared_metrics, self_metrics};
   AveragedCausalityMetrics averaged_metrics(make_iterator_range(to_average));
 
-  // Manually set everything in the averaged metrics.
   AveragedCausalityMetrics correct_metrics(
       make_iterator_range(to_average.begin(), to_average.begin()));
+  // Manually set everything in the averaged metrics.
   AveragedClassificationMetrics* correct_conn_metrics =
       static_cast<AveragedClassificationMetrics*>(
           correct_metrics.connective_metrics.get());
+  double precision = ClassificationMetrics::CalculatePrecision(6, 1);
+  double recall = ClassificationMetrics::CalculateRecall(6, 1);
+  double f1 = ClassificationMetrics::CalculateF1(precision, recall);
+  tie(correct_conn_metrics->tp, correct_conn_metrics->fp,
+      correct_conn_metrics->fn, correct_conn_metrics->avg_accuracy,
+      correct_conn_metrics->avg_precision,
+      correct_conn_metrics->avg_recall, correct_conn_metrics->avg_f1) =
+          make_tuple(6, 1, 1, nan(""), precision, recall, f1);
+
   AveragedArgumentMetrics* correct_cause_metrics =
       static_cast<AveragedArgumentMetrics*>(
           correct_metrics.argument_metrics[CAUSE_INDEX].get());
+  tie(correct_cause_metrics->spans->correct,
+      correct_cause_metrics->spans->incorrect,
+      static_cast<AveragedAccuracyMetrics*>(
+          correct_cause_metrics->spans.get())->avg_accuracy,
+      correct_cause_metrics->heads->correct,
+      correct_cause_metrics->heads->incorrect,
+      static_cast<AveragedAccuracyMetrics*>(
+          correct_cause_metrics->heads.get())->avg_accuracy,
+      correct_cause_metrics->jaccard_index) =
+          make_tuple(5, 1, 0.8, 5, 1, 0.8, (1 + 0.6) / 2);
+
   AveragedArgumentMetrics* correct_effect_metrics =
       static_cast<AveragedArgumentMetrics*>(
           correct_metrics.argument_metrics[EFFECT_INDEX].get());
-  make_tuple(correct_conn_metrics->tp, correct_conn_metrics->fp,
-             correct_conn_metrics->fn) = {6, 1, 1};
+  tie(correct_effect_metrics->spans->correct,
+      correct_effect_metrics->spans->incorrect,
+      static_cast<AveragedAccuracyMetrics*>(
+          correct_effect_metrics->spans.get())->avg_accuracy,
+      correct_effect_metrics->heads->correct,
+      correct_effect_metrics->heads->incorrect,
+      static_cast<AveragedAccuracyMetrics*>(
+          correct_effect_metrics->heads.get())->avg_accuracy,
+      correct_effect_metrics->jaccard_index) =
+          make_tuple(6, 1, 0.9, 6, 1, 0.9, 34 / 35.);
 
   TEST_METRICS(averaged_metrics, *correct_conn_metrics,
                *correct_cause_metrics, *correct_effect_metrics);
