@@ -1,14 +1,16 @@
 #define METRICS_PRINT_RAW_COUNTS
 
-#include <boost/range/combine.hpp>
+#include <boost/range/iterator_range.hpp>
 #include <gtest/gtest.h>
 
 #include "../LSTMCausalityTagger.h"
 #include "../Metrics.h"
 
 using namespace std;
-using boost::combine;
+using boost::make_iterator_range;
 
+constexpr unsigned CAUSE_INDEX = CausalityRelation::CAUSE;
+constexpr unsigned EFFECT_INDEX = CausalityRelation::EFFECT;
 
 TEST(MetricsTest, JaccardIndexWorks) {
   BecauseRelation::IndexList gold = {1, 2, 3, 4, 5, 6, 7};
@@ -29,13 +31,40 @@ protected:
       const lstm_parser::Sentence& sentence = (*corpus)->sentences[i];
       const vector<unsigned>& actions = (*corpus)->correct_act_sent[i];
       relations->push_back(LSTMCausalityTagger::Decode(sentence, actions));
-      //*
+      /*
       cerr << sentence << endl;
       for (const auto& rel : relations->back()) {
         cerr << rel << endl;
       }
       //*/
     }
+  }
+
+  inline CausalityMetrics CompareCorpora(
+      const BecauseOracleTransitionCorpus& corpus1,
+      const BecauseOracleTransitionCorpus& corpus2,
+      const vector<vector<CausalityRelation>>& rels1,
+      const vector<vector<CausalityRelation>>& rels2) {
+    CausalityMetrics total_metrics;
+
+    for (unsigned i = 0; i < corpus1.sentences.size(); ++i) {
+      const lstm_parser::Sentence& sentence = corpus1.sentences[i];
+      const vector<CausalityRelation>& original_rels = rels1[i];
+      const vector<CausalityRelation>& modified_rels = rels2[i];
+
+      SpanTokenFilter filter = {false, sentence, corpus1.pos_is_punct};
+      GraphEnhancedParseTree pseudo_parse(sentence);
+      CausalityMetrics sentence_metrics(original_rels, modified_rels, corpus1,
+                                        pseudo_parse, filter);
+      total_metrics += sentence_metrics;
+    }
+
+    return total_metrics;
+  }
+
+  inline CausalityMetrics CompareOriginalAndModified() {
+    return CompareCorpora(*original_corpus, *modified_corpus,
+                          original_relations, modified_relations);
   }
 
   static void SetUpTestCase() {
@@ -68,54 +97,82 @@ vector<vector<CausalityRelation>> DataMetricsTest::modified_relations;
   EXPECT_EQ(correct_connective_metrics, \
             *calculated_metrics.connective_metrics); \
   EXPECT_EQ(correct_cause_metrics, \
-            *calculated_metrics.argument_metrics[CausalityRelation::CAUSE]); \
+            *calculated_metrics.argument_metrics[CAUSE_INDEX]); \
   EXPECT_EQ(correct_effect_metrics, \
-            *calculated_metrics.argument_metrics[CausalityRelation::EFFECT]);
+            *calculated_metrics.argument_metrics[EFFECT_INDEX]);
 
 
 TEST_F(DataMetricsTest, SameAnnotationGetsPerfectScores) {
+  CausalityMetrics self_metrics = CompareCorpora(
+      *original_corpus, *original_corpus, original_relations,
+      original_relations);
+
   ClassificationMetrics correct_connective_metrics(7, 0, 0);
   ArgumentMetrics correct_arg_metrics(7, 0, 7, 0, 1, 7);
-
-  CausalityMetrics total_metrics;
-
-  for (const auto& sentence_and_relations : combine(original_corpus->sentences,
-                                                    original_relations)) {
-    const lstm_parser::Sentence& sentence = sentence_and_relations.head;
-    const vector<CausalityRelation>& relations =
-        sentence_and_relations.tail.head;
-    SpanTokenFilter filter = {false, sentence, original_corpus->pos_is_punct};
-    GraphEnhancedParseTree pseudo_parse(sentence);
-    CausalityMetrics sentence_metrics(relations, relations, *original_corpus,
-                                      pseudo_parse, filter);
-    total_metrics += sentence_metrics;
-  }
-
   ASSERT_EQ(correct_connective_metrics, correct_connective_metrics);
   ASSERT_EQ(correct_arg_metrics, correct_arg_metrics);
-  TEST_METRICS(total_metrics, correct_connective_metrics, correct_arg_metrics,
+  TEST_METRICS(self_metrics, correct_connective_metrics, correct_arg_metrics,
                correct_arg_metrics);
 }
 
+
 TEST_F(DataMetricsTest, ModifiedAnnotationsGivesLessPerfectScores) {
+  CausalityMetrics compared_metrics = CompareOriginalAndModified();
   ClassificationMetrics correct_connective_metrics(5, 2, 2);
   ArgumentMetrics correct_cause_metrics(3, 2, 3, 2, 0.6);
   ArgumentMetrics correct_effect_metrics(4, 1, 5, 0, 33/35.);
+  TEST_METRICS(compared_metrics, correct_connective_metrics,
+               correct_cause_metrics, correct_effect_metrics);
+}
 
-  CausalityMetrics total_metrics;
 
-  for (unsigned i = 0; i < original_corpus->sentences.size(); ++i) {
-    const lstm_parser::Sentence& sentence = original_corpus->sentences[i];
-    const vector<CausalityRelation>& original_rels = original_relations[i];
-    const vector<CausalityRelation>& modified_rels = modified_relations[i];
+TEST_F(DataMetricsTest, AddingMetricsWorks) {
+  CausalityMetrics compared_metrics = CompareOriginalAndModified();
+  CausalityMetrics tweaked_metrics = compared_metrics;
+  tweaked_metrics.argument_metrics[CAUSE_INDEX]->jaccard_index = 0.3;
+  tweaked_metrics.argument_metrics[EFFECT_INDEX]->jaccard_index = 1.0;
+  CausalityMetrics summed_metrics = compared_metrics + tweaked_metrics;
 
-    SpanTokenFilter filter = {false, sentence, original_corpus->pos_is_punct};
-    GraphEnhancedParseTree pseudo_parse(sentence);
-    CausalityMetrics sentence_metrics(original_rels, modified_rels,
-                                      *original_corpus, pseudo_parse, filter);
-    total_metrics += sentence_metrics;
-  }
+  ClassificationMetrics correct_connective_metrics(10, 4, 4);
+  ArgumentMetrics correct_cause_metrics(6, 4, 6, 4, 0.45);
+  ArgumentMetrics correct_effect_metrics(8, 2, 10, 0, 34/35.);
+  TEST_METRICS(summed_metrics, correct_connective_metrics,
+               correct_cause_metrics, correct_effect_metrics);
+}
 
-  TEST_METRICS(total_metrics, correct_connective_metrics, correct_cause_metrics,
-               correct_effect_metrics);
+
+TEST_F(DataMetricsTest, AveragingMetricsWorks) {
+  CausalityMetrics compared_metrics = CompareOriginalAndModified();
+  cerr << "Compared metrics: " << compared_metrics << endl;
+
+  vector<CausalityMetrics> repeated = {compared_metrics, compared_metrics,
+                                       compared_metrics};
+  AveragedCausalityMetrics avged_same(make_iterator_range(repeated));
+  TEST_METRICS(avged_same, *compared_metrics.connective_metrics,
+               *compared_metrics.argument_metrics[CAUSE_INDEX],
+               *compared_metrics.argument_metrics[EFFECT_INDEX]);
+
+  CausalityMetrics self_metrics = CompareCorpora(
+      *original_corpus, *original_corpus, original_relations,
+      original_relations);
+  vector<CausalityMetrics> to_average = {compared_metrics, self_metrics};
+  AveragedCausalityMetrics averaged_metrics(make_iterator_range(to_average));
+
+  // Manually set everything in the averaged metrics.
+  AveragedCausalityMetrics correct_metrics(
+      make_iterator_range(to_average.begin(), to_average.begin()));
+  AveragedClassificationMetrics* correct_conn_metrics =
+      static_cast<AveragedClassificationMetrics*>(
+          correct_metrics.connective_metrics.get());
+  AveragedArgumentMetrics* correct_cause_metrics =
+      static_cast<AveragedArgumentMetrics*>(
+          correct_metrics.argument_metrics[CAUSE_INDEX].get());
+  AveragedArgumentMetrics* correct_effect_metrics =
+      static_cast<AveragedArgumentMetrics*>(
+          correct_metrics.argument_metrics[EFFECT_INDEX].get());
+  make_tuple(correct_conn_metrics->tp, correct_conn_metrics->fp,
+             correct_conn_metrics->fn) = {6, 1, 1};
+
+  TEST_METRICS(averaged_metrics, *correct_conn_metrics,
+               *correct_cause_metrics, *correct_effect_metrics);
 }

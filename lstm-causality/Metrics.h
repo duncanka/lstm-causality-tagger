@@ -11,6 +11,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <gtest/gtest_prod.h>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -94,6 +95,7 @@ public:
 };
 
 class AveragedClassificationMetrics : public ClassificationMetrics {
+  FRIEND_TEST(DataMetricsTest, AveragingMetricsWorks);
 public:
   template <class IteratorType>
   AveragedClassificationMetrics(
@@ -180,6 +182,7 @@ public:
 };
 
 class AveragedAccuracyMetrics : public AccuracyMetrics {
+  FRIEND_TEST(DataMetricsTest, AveragingMetricsWorks);
 public:
   template <class Iterator>
   AveragedAccuracyMetrics(
@@ -259,6 +262,7 @@ struct ArgumentMetrics {
 };
 
 class AveragedArgumentMetrics : public ArgumentMetrics {
+  FRIEND_TEST(DataMetricsTest, AveragingMetricsWorks);
 public:
   template <class IteratorType>
   AveragedArgumentMetrics(boost::iterator_range<IteratorType> all_metrics) {
@@ -355,6 +359,9 @@ public:
       const BecauseOracleTransitionCorpus& source_corpus,
       const GraphEnhancedParseTree& parse, const SpanTokenFilter& filter)
       : argument_metrics(NumArgs()) {
+    // TODO: theoretically, we should maybe be concerned that the relation
+    // objects get copied around inside the diff. In practice, I suspect it'll
+    // just get optimized away.
     ConnectiveDiff diff(sentence_gold, sentence_predicted);
     unsigned tp = diff.LCS().size();
     unsigned fp = sentence_predicted.size() - tp;
@@ -512,6 +519,7 @@ public:
 template <class RelationType>
 class AveragedBecauseRelationMetrics
     : public BecauseRelationMetrics<RelationType> {
+  FRIEND_TEST(DataMetricsTest, AveragingMetricsWorks);
 public:
   template <class IteratorType>
   AveragedBecauseRelationMetrics(
