@@ -389,8 +389,9 @@ public:
 
         if (boost::equal(filtered_gold, filtered_pred))
           ++spans_correct;
-        if (GetHead(gold_span, parse, source_corpus)
-            == GetHead(pred_span, parse, source_corpus))
+        if ((filtered_gold.empty() && filtered_pred.empty())
+            || GetHead(gold_span, parse, source_corpus)
+               == GetHead(pred_span, parse, source_corpus))
           ++heads_correct;
         jaccard_sum += CalculateJaccard(filtered_gold, filtered_pred);
       }
