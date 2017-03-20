@@ -156,7 +156,6 @@ inline std::ostream& operator<<(std::ostream& s,
   return s;
 }
 
-
 class AccuracyMetrics {
 public:
   unsigned correct;

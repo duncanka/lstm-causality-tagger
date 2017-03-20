@@ -209,7 +209,7 @@ TEST_F(DataMetricsTest, AveragingMetricsWorks) {
       static_cast<AveragedAccuracyMetrics*>(
           correct_effect_metrics->heads.get())->avg_accuracy,
       correct_effect_metrics->jaccard_index) =
-          make_tuple(6, 1, 0.9, 6, 1, 0.9, 34 / 35.);
+          make_tuple(6, 1, 0.9, 6, 0, 0.9, 34 / 35.);
 
   TEST_METRICS(averaged_metrics, *correct_conn_metrics,
                *correct_cause_metrics, *correct_effect_metrics);
