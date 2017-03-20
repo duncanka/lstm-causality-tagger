@@ -184,7 +184,8 @@ public:
   template <class Iterator>
   AveragedAccuracyMetrics(
       boost::iterator_range<Iterator> all_metrics)
-      : AccuracyMetrics(boost::accumulate(all_metrics, AccuracyMetrics(0, 0))) {
+      : AccuracyMetrics(boost::accumulate(all_metrics, AccuracyMetrics(0, 0))),
+        avg_accuracy(0) {
     double count = all_metrics.size();
     correct = std::round(correct / count);
     incorrect = std::round(incorrect / count);
