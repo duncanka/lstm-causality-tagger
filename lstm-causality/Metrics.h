@@ -106,7 +106,7 @@ public:
     double count = static_cast<double>(all_metrics.size());
     tp = std::round(tp / count);
     fp = std::round(fp / count);
-    fn = std::round(tn / count);
+    fn = std::round(fn / count);
     if (tn != UNSIGNED_NEG_1)
       tn = std::round(tn / count);
 
