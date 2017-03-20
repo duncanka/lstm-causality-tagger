@@ -280,10 +280,11 @@ public:
                                                        m.instance_count);
     spans.reset(new AveragedAccuracyMetrics(all_spans));
     heads.reset(new AveragedAccuracyMetrics(all_heads));
-    double weighted_jaccard_sum = boost::inner_product(
-        all_instance_counts, all_jaccards, 0.0);
-    instance_count = boost::accumulate(all_instance_counts, 0);
-    jaccard_index = weighted_jaccard_sum / instance_count;
+    // We're assuming an unweighted average here, so don't worry too much about
+    // what happens to the instance counts. Those only matter for adding.
+    instance_count = std::round(boost::accumulate(all_instance_counts, 0) /
+                                static_cast<double>(all_metrics.size()));
+    jaccard_index = boost::accumulate(all_jaccards, 0.0) / all_metrics.size();
   }
 };
 
