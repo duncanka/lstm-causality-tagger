@@ -27,7 +27,7 @@ TEST(MetricsTest, F1Works) {
   double f1 = ClassificationMetrics::CalculateF1(
       ClassificationMetrics::CalculatePrecision(tp, fp),
       ClassificationMetrics::CalculateRecall(tp, fn));
-  EXPECT_DOUBLE_EQ(0.8804, f1);
+  EXPECT_DOUBLE_EQ(0.880597014925373, f1);
 }
 
 
@@ -154,7 +154,6 @@ TEST_F(DataMetricsTest, AddingMetricsWorks) {
 
 TEST_F(DataMetricsTest, AveragingMetricsWorks) {
   CausalityMetrics compared_metrics = CompareOriginalAndModified();
-  cerr << "Compared metrics: " << compared_metrics << endl;
 
   vector<CausalityMetrics> repeated = {compared_metrics, compared_metrics,
                                        compared_metrics};
