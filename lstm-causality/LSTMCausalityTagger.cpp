@@ -163,6 +163,9 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
              << epoch - last_epoch_saved << " > " << epochs_cutoff
              << "; terminating training" << endl;
         break;
+      } else if (best_f1 >= 0.999) {
+        cerr << "Reached maximal F1; terminating training" << endl;
+        break;
       }
     }
   }
