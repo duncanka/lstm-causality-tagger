@@ -205,7 +205,7 @@ int main(int argc, char** argv) {
 
         requested_stop = false;
         previous_cutoff = current_cutoff;
-        //tagger.Reset();
+        tagger.Reset();
       }
 
       cerr << "Average evaluation:" << endl;
