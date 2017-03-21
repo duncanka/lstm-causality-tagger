@@ -246,10 +246,16 @@ struct ArgumentMetrics {
     *heads += *other.heads;
     // Jaccard indices were already probably averages. So we have to preserve
     // the weighting for the new average.
-    unsigned combined_instance_count = instance_count + other.instance_count;
-    jaccard_index = (jaccard_index * instance_count
-        + other.jaccard_index * other.instance_count) / combined_instance_count;
-    instance_count = combined_instance_count;
+    // If either Jaccard index is nan, ignore it and use the other one (and its
+    // instance count). A nan just means there were no spans to measure.
+    if (std::isnan(jaccard_index)) {
+      jaccard_index = other.jaccard_index;
+    } else if (!std::isnan(other.jaccard_index)) {
+      unsigned combined_instance_count = instance_count + other.instance_count;
+      jaccard_index = (jaccard_index * instance_count
+          + other.jaccard_index * other.instance_count) / combined_instance_count;
+      instance_count = combined_instance_count;
+    }
   }
 
   ArgumentMetrics operator+(const ArgumentMetrics& other) const {
