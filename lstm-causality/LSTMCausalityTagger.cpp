@@ -128,9 +128,8 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
       // Cache parse if we haven't yet.
       double parser_lp = as_scalar(cg.incremental_forward());
       CacheParse(sentence, parse_actions, parser_lp, corpus, sentence_index);
-      // TODO: simplify LogProbTagger to use its own vocab?
-      LogProbTagger(&cg, sentence, sentence.words, correct_actions, &correct,
-                    &parser_state);
+      LogProbTagger(&cg, sentence, sentence.words, true, correct_actions,
+                    &correct, &parser_state);
       double lp = as_scalar(cg.incremental_forward());
       if (lp < 0) {
         cerr << "Log prob " << lp << " < 0 on sentence "
@@ -195,8 +194,8 @@ double LSTMCausalityTagger::DoDevEvaluation(
     double parse_lp = as_scalar(cg.incremental_forward());
     CacheParse(sentence, parse_actions, parse_lp, corpus, sentence_index);
     vector<unsigned> actions = LogProbTagger(&cg, sentence, sentence.words,
-                                             correct_actions, &correct_dev,
-                                             &parser_state);
+                                             false, correct_actions,
+                                             &correct_dev, &parser_state);
     llh_dev += as_scalar(cg.incremental_forward());
     vector<CausalityRelation> predicted = Decode(sentence, actions);
 
