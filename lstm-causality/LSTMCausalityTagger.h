@@ -66,14 +66,14 @@ public:
     cnn::ComputationGraph cg;
     cnn::expr::Expression parser_state;
     vector<unsigned> parse_actions = parser.LogProbTagger(
-        sentence, &cg, true, &parser_state);
+        &cg, sentence, true, &parser_state);
     if (parse) {
       double parser_lp = as_scalar(cg.incremental_forward());
       auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp,
                                           parse->IsLabeled());
       *parse = std::move(tree);
     }
-    std::vector<unsigned> actions = LogProbTagger(sentence, &cg, false,
+    std::vector<unsigned> actions = LogProbTagger(&cg, sentence, false,
                                                   &parser_state);
     return Decode(sentence, actions);
   }

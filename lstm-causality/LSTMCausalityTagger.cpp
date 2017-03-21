@@ -124,7 +124,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
       ComputationGraph cg;
       Expression parser_state;
       vector<unsigned> parse_actions = parser.LogProbTagger(
-          sentence, &cg, true, &parser_state);
+          &cg, sentence, true, &parser_state);
       // Cache parse if we haven't yet.
       double parser_lp = as_scalar(cg.incremental_forward());
       CacheParse(sentence, parse_actions, parser_lp, corpus, sentence_index);
@@ -188,11 +188,11 @@ double LSTMCausalityTagger::DoDevEvaluation(
 
     ComputationGraph cg;
     Expression parser_state;
-    vector<unsigned> parse_actions = parser.LogProbTagger(sentence, &cg, true,
+    vector<unsigned> parse_actions = parser.LogProbTagger(&cg, sentence, true,
                                                           &parser_state);
     double parse_lp = as_scalar(cg.incremental_forward());
     CacheParse(sentence, parse_actions, parse_lp, corpus, sentence_index);
-    vector<unsigned> actions = LogProbTagger(sentence, &cg, false);
+    vector<unsigned> actions = LogProbTagger(&cg, sentence, false);
     llh_dev += as_scalar(cg.incremental_forward());
     vector<CausalityRelation> predicted = Decode(sentence, actions);
 
