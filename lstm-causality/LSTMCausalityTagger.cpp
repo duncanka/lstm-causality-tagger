@@ -32,30 +32,7 @@ typedef BecauseRelation::IndexList IndexList;
 
 LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
                                          const TaggerOptions& options)
-    : options(options), parser(parser_model_path),
-      L1_lstm(options.lstm_layers, options.token_dim,
-              options.lambda_hidden_dim, model.get()),
-      L2_lstm(options.lstm_layers, options.token_dim,
-              options.lambda_hidden_dim, model.get()),
-      L3_lstm(options.lstm_layers, options.token_dim,
-              options.lambda_hidden_dim, model.get()),
-      L4_lstm(options.lstm_layers, options.token_dim,
-              options.lambda_hidden_dim, model.get()),
-      action_history_lstm(options.lstm_layers, options.action_dim,
-                          options.actions_hidden_dim, model.get()),
-      // Input to relations LSTM is an embedded relation, whose dimension is
-      // already transformed from span_hidden_dim. (In theory, we could control
-      // this input dim with another parameter, but it doesn't seem worth it.)
-      relations_lstm(options.lstm_layers, options.rels_hidden_dim,
-                     options.rels_hidden_dim, model.get()),
-      connective_lstm(options.lstm_layers, options.token_dim,
-                      options.span_hidden_dim, model.get()),
-      cause_lstm(options.lstm_layers, options.token_dim,
-              options.span_hidden_dim, model.get()),
-      effect_lstm(options.lstm_layers, options.token_dim,
-              options.span_hidden_dim, model.get()),
-      means_lstm(options.lstm_layers, options.token_dim,
-              options.span_hidden_dim, model.get()) {
+    : options(options), parser(parser_model_path) {
   vocab = *parser.GetVocab();  // now that parser is initialized, copy vocab
   // Reset actions
   vocab.action_names.clear();
@@ -63,6 +40,39 @@ LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
   // We don't care about characters
   vocab.chars_to_int.clear();
   vocab.int_to_chars.clear();
+
+  initial_param_pool_state = cnn::ps->get_state();
+
+  InitializeModelAndBuilders();
+}
+
+
+void LSTMCausalityTagger::InitializeModelAndBuilders() {
+  model.reset(new cnn::Model);
+
+  L1_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
+                        options.lambda_hidden_dim, model.get());
+  L2_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
+                        options.lambda_hidden_dim, model.get());
+  L3_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
+                        options.lambda_hidden_dim, model.get());
+  L4_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
+                        options.lambda_hidden_dim, model.get());
+  action_history_lstm = LSTMBuilder(options.lstm_layers, options.action_dim,
+                                    options.actions_hidden_dim, model.get());
+  // Input to relations LSTM is an embedded relation, whose dimension is
+  // already transformed from span_hidden_dim. (In theory, we could control
+  // this input dim with another parameter, but it doesn't seem worth it.)
+  relations_lstm = LSTMBuilder(options.lstm_layers, options.rels_hidden_dim,
+                               options.rels_hidden_dim, model.get());
+  connective_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
+                                options.span_hidden_dim, model.get());
+  cause_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
+                           options.span_hidden_dim, model.get());
+  effect_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
+                            options.span_hidden_dim, model.get());
+  means_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
+                           options.span_hidden_dim, model.get());
 }
 
 

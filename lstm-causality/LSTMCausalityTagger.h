@@ -87,12 +87,15 @@ public:
       const std::vector<unsigned> actions);
 
   void Reset() {
-    model.reset(new cnn::Model);
+    model.release();
+    cnn::ps->restore_state(initial_param_pool_state);
+    InitializeModelAndBuilders();
     InitializeNetworkParameters();
   }
 
 protected:
   lstm_parser::LSTMParser parser;
+  cnn::AlignedMemoryPool::PoolState initial_param_pool_state;
 
   cnn::LSTMBuilder L1_lstm;  // unprocessed words to left of current word
   cnn::LSTMBuilder L2_lstm;  // processed words to left of current word
@@ -236,6 +239,8 @@ protected:
     }
   }
 
+  void InitializeModelAndBuilders();
+
 private:
   friend class boost::serialization::access;
 
@@ -254,10 +259,9 @@ private:
     ar & vocab;
     // Don't finalize yet...we want to finalize once our model is initialized.
 
-    model.reset(new cnn::Model);
     // Reset the LSTMs *before* reading in the network model, to make sure the
     // model knows how big it's supposed to be.
-    // TODO: initialize LSTM builders.
+    InitializeModelAndBuilders();
 
     FinalizeVocab(); // OK, now finalize. :)
 
