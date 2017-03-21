@@ -582,7 +582,7 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
       if (action_name[0] == 'C'
           && ((last_action_name[0] == 'S' && last_action_name[1] == 'P')
               || last_action_name[0] == 'C'))
-        return false;
+        return true;
 
       // If it's not a split, a shift, or a forbidden post-split operation,
       // forbid any operation that doesn't act on arg tokens to the right.
