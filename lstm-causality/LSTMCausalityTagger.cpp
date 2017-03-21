@@ -185,6 +185,8 @@ double LSTMCausalityTagger::DoDevEvaluation(
   for (unsigned sii = num_sentences_train; sii < num_sentences; ++sii) {
     unsigned sentence_index = selections[sii];
     const Sentence& sentence = corpus->sentences[sentence_index];
+    const vector<unsigned>& correct_actions =
+        corpus->correct_act_sent[sentence_index];
 
     ComputationGraph cg;
     Expression parser_state;
@@ -192,7 +194,9 @@ double LSTMCausalityTagger::DoDevEvaluation(
                                                           &parser_state);
     double parse_lp = as_scalar(cg.incremental_forward());
     CacheParse(sentence, parse_actions, parse_lp, corpus, sentence_index);
-    vector<unsigned> actions = LogProbTagger(&cg, sentence, false);
+    vector<unsigned> actions = LogProbTagger(&cg, sentence, sentence.words,
+                                             correct_actions, &correct_dev,
+                                             &parser_state);
     llh_dev += as_scalar(cg.incremental_forward());
     vector<CausalityRelation> predicted = Decode(sentence, actions);
 
