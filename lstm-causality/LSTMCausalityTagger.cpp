@@ -455,6 +455,7 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
       {options.state_dim, options.lambda_hidden_dim});
   p_L4toS = model->add_parameters(
       {options.state_dim, options.lambda_hidden_dim});
+  p_current2S = model->add_parameters({options.state_dim, options.token_dim});
   p_actions2S = model->add_parameters(
       {options.state_dim, options.actions_hidden_dim});
   p_rels2S = model->add_parameters(
@@ -628,11 +629,15 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
 
 Expression LSTMCausalityTagger::GetActionProbabilities(
     const TaggerState& state) {
-  // p_t = sbias + A * actions_lstm + rels2S * rels_lstm + \sum_i LToS_i * L_i
+  const CausalityTaggerState& real_state =
+      static_cast<const CausalityTaggerState&>(state);
+  // p_t = sbias + actions2S * actions_lstm + rels2S * rels_lstm
+  //             + current2S * current_token + \sum_i LToS_i * L_i
   Expression p_t = affine_transform(
       {GetParamExpr(p_sbias), GetParamExpr(p_actions2S),
           action_history_lstm.back(), GetParamExpr(p_rels2S),
-          relations_lstm.back(), GetParamExpr(p_L1toS), L1_lstm.back(),
+          relations_lstm.back(), GetParamExpr(p_current2S),
+          real_state.current_conn_token, GetParamExpr(p_L1toS), L1_lstm.back(),
           GetParamExpr(p_L2toS), L2_lstm.back(), GetParamExpr(p_L3toS),
           L3_lstm.back(), GetParamExpr(p_L4toS), L4_lstm.back()});
   Expression p_t_nonlinear = rectify(p_t);

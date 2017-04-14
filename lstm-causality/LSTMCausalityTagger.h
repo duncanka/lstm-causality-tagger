@@ -183,11 +183,12 @@ protected:
   };
 
   virtual std::vector<cnn::Parameters*> GetParameters() override {
-    return {p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_actions2S, p_rels2S,
-      p_s2a, p_abias, p_rbias, p_connective2rel, p_cause2rel, p_effect2rel,
-      p_means2rel, p_w2t, p_p2t, p_v2t, p_tbias, p_action_start,
-      p_relations_guard, p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard,
-      p_connective_guard, p_cause_guard, p_effect_guard, p_means_guard};
+    return {p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_current2S,
+      p_actions2S, p_rels2S, p_s2a, p_abias, p_rbias, p_connective2rel,
+      p_cause2rel, p_effect2rel, p_means2rel, p_w2t, p_p2t, p_v2t, p_tbias,
+      p_action_start, p_relations_guard, p_L1_guard, p_L2_guard, p_L3_guard,
+      p_L4_guard, p_connective_guard, p_cause_guard, p_effect_guard,
+      p_means_guard};
   }
 
   virtual TaggerState* InitializeParserState(
