@@ -108,8 +108,8 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
   unsigned num_sentences_train = num_sentences - num_sentences_dev;
 
   unsigned sentence_i = num_sentences_train;
-  for (unsigned iteration = 0; !requested_stop || !(*requested_stop);
-       ++iteration) {
+  for (unsigned update_group_num = 0; !requested_stop || !(*requested_stop);
+       ++update_group_num) {
     unsigned actions_seen = 0;
     double correct = 0;
     double llh = 0;
@@ -159,15 +159,16 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
     time_t time_now = chrono::system_clock::to_time_t(
         chrono::system_clock::now());
     double epoch = sentences_seen / num_sentences_train;
-    cerr << "update #" << iteration << " (epoch " << epoch
+    cerr << "update #" << update_group_num << " (epoch " << epoch
          << " | time=" << put_time(localtime(&time_now), "%c %Z") << ")\tllh: "
          << llh << " ppl: " << exp(llh / actions_seen) << " err: "
          << (actions_seen - correct) / actions_seen << endl;
 
-    if (iteration % periods_between_evals == 0) {
+    if (update_group_num % periods_between_evals == 0) {
       best_f1 = DoDevEvaluation(corpus, selections, compare_punct,
-                                num_sentences_train, iteration, sentences_seen,
-                                best_f1, model_fname, &last_epoch_saved);
+                                num_sentences_train, update_group_num,
+                                sentences_seen, best_f1, model_fname,
+                                &last_epoch_saved);
       if (epoch - last_epoch_saved > epochs_cutoff) {
         cerr << "Reached cutoff for epochs with no increase in max dev F1: "
              << epoch - last_epoch_saved << " > " << epochs_cutoff
