@@ -45,8 +45,6 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Dimension for vector representation of parts of speech")
     ("word-dim,w", po::value<unsigned>()->default_value(10),
      "Dimension for vector representation of words")
-    ("rels-hidden-dim,r", po::value<unsigned>()->default_value(32),
-     "Dimension for vector representation of an entire causal relation")
     ("state-dim,s", po::value<unsigned>()->default_value(72),
      "Dimension for overall tagger state")
     ("token-dim,i", po::value<unsigned>()->default_value(48),
@@ -107,7 +105,6 @@ int main(int argc, char** argv) {
        conf["lambda-hidden-dim"].as<unsigned>(),
        conf["actions-hidden-dim"].as<unsigned>(),
        conf["span-hidden-dim"].as<unsigned>(),
-       conf["rels-hidden-dim"].as<unsigned>(),
        conf["action-dim"].as<unsigned>(),
        conf["pos-dim"].as<unsigned>(),
        conf["state-dim"].as<unsigned>()});
@@ -134,7 +131,6 @@ int main(int argc, char** argv) {
        << '_' << tagger.options.lambda_hidden_dim
        << '_' << tagger.options.actions_hidden_dim
        << '_' << tagger.options.span_hidden_dim
-       << '_' << tagger.options.rels_hidden_dim
        << '_' << tagger.options.action_dim
        << '_' << tagger.options.pos_dim
        << '_' << tagger.options.state_dim

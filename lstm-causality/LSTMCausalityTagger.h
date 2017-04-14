@@ -25,7 +25,6 @@ public:
     unsigned lambda_hidden_dim;
     unsigned actions_hidden_dim;
     unsigned span_hidden_dim;
-    unsigned rels_hidden_dim;
     unsigned action_dim;
     unsigned pos_dim;
     unsigned state_dim;  // dimension for the concatenated tagger state
@@ -38,7 +37,6 @@ public:
       ar & lambda_hidden_dim;
       ar & actions_hidden_dim;
       ar & span_hidden_dim;
-      ar & rels_hidden_dim;
       ar & action_dim;
       ar & pos_dim;
       ar & state_dim;
@@ -102,7 +100,6 @@ protected:
   cnn::LSTMBuilder L3_lstm;  // unprocessed words to right of current word
   cnn::LSTMBuilder L4_lstm;  // processed words to left of current word
   cnn::LSTMBuilder action_history_lstm;
-  cnn::LSTMBuilder relations_lstm;
 
   cnn::LSTMBuilder connective_lstm;
   cnn::LSTMBuilder cause_lstm;
@@ -116,23 +113,19 @@ protected:
   cnn::LookupParameters* p_pos;  // pos tag embeddings
 
   // Parameters for overall tagger state
-  cnn::Parameters* p_sbias;       // tagger state bias
-  cnn::Parameters* p_L1toS;       // lambda 1 lstm to tagger state
-  cnn::Parameters* p_L2toS;       // lambda 2 lstm to tagger state
-  cnn::Parameters* p_L3toS;       // lambda 3 lstm to tagger state
-  cnn::Parameters* p_L4toS;       // lambda 4 lstm to tagger state
-  cnn::Parameters* p_current2S;   // current token to tagger state
-  cnn::Parameters* p_actions2S;   // action history lstm to tagger state
-  cnn::Parameters* p_rels2S;      // relations lstm to tagger state
-  cnn::Parameters* p_s2a;         // parser state to action
-  cnn::Parameters* p_abias;       // bias for final action output
-
-  // Parameters for composition function for embedding a relation
-  cnn::Parameters* p_rbias;           // bias for composition function
-  cnn::Parameters* p_connective2rel;  // connective to relation embedding
-  cnn::Parameters* p_cause2rel;       // cause to relation embedding
-  cnn::Parameters* p_effect2rel;      // effect to relation embedding
-  cnn::Parameters* p_means2rel;       // means to relation embedding
+  cnn::Parameters* p_sbias;         // tagger state bias
+  cnn::Parameters* p_L1toS;         // lambda 1 lstm to tagger state
+  cnn::Parameters* p_L2toS;         // lambda 2 lstm to tagger state
+  cnn::Parameters* p_L3toS;         // lambda 3 lstm to tagger state
+  cnn::Parameters* p_L4toS;         // lambda 4 lstm to tagger state
+  cnn::Parameters* p_current2S;     // current token to tagger state
+  cnn::Parameters* p_actions2S;     // action history lstm to tagger state
+  cnn::Parameters* p_s2a;           // parser state to action
+  cnn::Parameters* p_abias;         // bias for final action output
+  cnn::Parameters* p_connective2S;  // connective to relation embedding
+  cnn::Parameters* p_cause2S;       // cause to relation embedding
+  cnn::Parameters* p_effect2S;      // effect to relation embedding
+  cnn::Parameters* p_means2S;       // means to relation embedding
 
   // Parameters for LSTM input for stacks containing words
   cnn::Parameters* p_w2t;           // word to LSTM input
@@ -142,7 +135,6 @@ protected:
   cnn::Parameters* p_action_start;  // action bias
 
   // LSTM guards (create biases for different LSTMs)
-  cnn::Parameters* p_relations_guard;
   cnn::Parameters* p_L1_guard;
   cnn::Parameters* p_L2_guard;
   cnn::Parameters* p_L3_guard;
@@ -184,11 +176,10 @@ protected:
 
   virtual std::vector<cnn::Parameters*> GetParameters() override {
     return {p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_current2S,
-      p_actions2S, p_rels2S, p_s2a, p_abias, p_rbias, p_connective2rel,
-      p_cause2rel, p_effect2rel, p_means2rel, p_w2t, p_p2t, p_v2t, p_tbias,
-      p_action_start, p_relations_guard, p_L1_guard, p_L2_guard, p_L3_guard,
-      p_L4_guard, p_connective_guard, p_cause_guard, p_effect_guard,
-      p_means_guard};
+      p_actions2S, p_s2a, p_abias, p_connective2S, p_cause2S, p_effect2S,
+      p_means2S, p_w2t, p_p2t, p_v2t, p_tbias, p_action_start, p_L1_guard,
+      p_L2_guard, p_L3_guard, p_L4_guard, p_connective_guard, p_cause_guard,
+      p_effect_guard, p_means_guard};
   }
 
   virtual TaggerState* InitializeParserState(
@@ -270,6 +261,18 @@ private:
     ar & *model;
   }
   BOOST_SERIALIZATION_SPLIT_MEMBER();
+
+  void StartNewRelation() {
+    connective_lstm.start_new_sequence();
+    cause_lstm.start_new_sequence();
+    effect_lstm.start_new_sequence();
+    means_lstm.start_new_sequence();
+
+    connective_lstm.add_input(GetParamExpr(p_connective_guard));
+    cause_lstm.add_input(GetParamExpr(p_cause_guard));
+    effect_lstm.add_input(GetParamExpr(p_effect_guard));
+    means_lstm.add_input(GetParamExpr(p_means_guard));
+  }
 };
 
 #endif /* LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_ */

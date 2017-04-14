@@ -60,11 +60,6 @@ void LSTMCausalityTagger::InitializeModelAndBuilders() {
                         options.lambda_hidden_dim, model.get());
   action_history_lstm = LSTMBuilder(options.lstm_layers, options.action_dim,
                                     options.actions_hidden_dim, model.get());
-  // Input to relations LSTM is an embedded relation, whose dimension is
-  // already transformed from span_hidden_dim. (In theory, we could control
-  // this input dim with another parameter, but it doesn't seem worth it.)
-  relations_lstm = LSTMBuilder(options.lstm_layers, options.rels_hidden_dim,
-                               options.rels_hidden_dim, model.get());
   connective_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
                                 options.span_hidden_dim, model.get());
   cause_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
@@ -458,27 +453,22 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   p_current2S = model->add_parameters({options.state_dim, options.token_dim});
   p_actions2S = model->add_parameters(
       {options.state_dim, options.actions_hidden_dim});
-  p_rels2S = model->add_parameters(
-      {options.state_dim, options.rels_hidden_dim});
+  p_connective2S = model->add_parameters(
+      {options.state_dim, options.span_hidden_dim});
+  p_cause2S = model->add_parameters(
+      {options.state_dim, options.span_hidden_dim});
+  p_effect2S = model->add_parameters(
+      {options.state_dim, options.span_hidden_dim});
+  p_means2S = model->add_parameters(
+      {options.state_dim, options.span_hidden_dim});
 
   // Parameters for turning states into actions
   p_abias = model->add_parameters({action_size});
   p_s2a = model->add_parameters({action_size, options.state_dim});
 
-  // Parameters for relation list representation
-  p_rbias = model->add_parameters({options.rels_hidden_dim});
-  p_connective2rel = model->add_parameters(
-      {options.rels_hidden_dim, options.span_hidden_dim});
-  p_cause2rel = model->add_parameters(
-      {options.rels_hidden_dim, options.span_hidden_dim});
-  p_effect2rel = model->add_parameters(
-      {options.rels_hidden_dim, options.span_hidden_dim});
-  p_means2rel = model->add_parameters(
-      {options.rels_hidden_dim, options.span_hidden_dim});
 
   // Parameters for guard/start items in empty lists
   p_action_start = model->add_parameters({options.action_dim});
-  p_relations_guard = model->add_parameters({options.rels_hidden_dim});
   p_L1_guard = model->add_parameters({options.token_dim});
   p_L2_guard = model->add_parameters({options.token_dim});
   p_L3_guard = model->add_parameters({options.token_dim});
@@ -499,20 +489,22 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
 
   vector<reference_wrapper<LSTMBuilder>> all_lstms = {
     L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm,
-    relations_lstm, connective_lstm, cause_lstm, effect_lstm, means_lstm};
+    connective_lstm, cause_lstm, effect_lstm, means_lstm};
   for (reference_wrapper<LSTMBuilder> builder : all_lstms) {
     builder.get().new_graph(*cg);
   }
   // Non-persistent LSTMs get sequences started in StartNewRelation.
   vector<reference_wrapper<LSTMBuilder>> persistent_lstms = {
-    L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm, relations_lstm};
+    L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm};
   for (reference_wrapper<LSTMBuilder> builder : persistent_lstms) {
     builder.get().start_new_sequence();
   }
 
+  // Make sure there's a null relation available to embed.
+  StartNewRelation();
+
   // Initialize the sentence-level LSTMs. All but L4 should start out empty.
   action_history_lstm.add_input(GetParamExpr(p_action_start));
-  relations_lstm.add_input(GetParamExpr(p_relations_guard));
 
   L1_lstm.add_input(GetParamExpr(p_L1_guard));
   state->L1.push_back(GetParamExpr(p_L1_guard));
@@ -631,15 +623,20 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
     const TaggerState& state) {
   const CausalityTaggerState& real_state =
       static_cast<const CausalityTaggerState&>(state);
-  // p_t = sbias + actions2S * actions_lstm + rels2S * rels_lstm
-  //             + current2S * current_token + \sum_i LToS_i * L_i
+  // p_t = sbias + actions2S * actions_lstm + (\sum_i rel_cmpt_i2S * rel_cmpt_i)
+  //             + current2S * current_token + (\sum_i LToS_i * L_i)
   Expression p_t = affine_transform(
-      {GetParamExpr(p_sbias), GetParamExpr(p_actions2S),
-          action_history_lstm.back(), GetParamExpr(p_rels2S),
-          relations_lstm.back(), GetParamExpr(p_current2S),
-          real_state.current_conn_token, GetParamExpr(p_L1toS), L1_lstm.back(),
-          GetParamExpr(p_L2toS), L2_lstm.back(), GetParamExpr(p_L3toS),
-          L3_lstm.back(), GetParamExpr(p_L4toS), L4_lstm.back()});
+      {GetParamExpr(p_sbias),
+       GetParamExpr(p_actions2S), action_history_lstm.back(),
+       GetParamExpr(p_connective2S), connective_lstm.back(),
+       GetParamExpr(p_cause2S), cause_lstm.back(),
+       GetParamExpr(p_effect2S), effect_lstm.back(),
+       GetParamExpr(p_means2S), means_lstm.back(),
+       GetParamExpr(p_current2S), real_state.current_conn_token,
+       GetParamExpr(p_L1toS), L1_lstm.back(),
+       GetParamExpr(p_L2toS), L2_lstm.back(),
+       GetParamExpr(p_L3toS), L3_lstm.back(),
+       GetParamExpr(p_L4toS), L4_lstm.back()});
   Expression p_t_nonlinear = rectify(p_t);
   // r_t = abias + p2a * nlp
   Expression r_t = affine_transform({GetParamExpr(p_abias), GetParamExpr(p_s2a),
@@ -733,47 +730,18 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
     }
   };
 
-  auto EmbedCurrentRelation = [&]() {
-    Expression current_rel_embedding = rectify(affine_transform(
-          {GetParamExpr(p_rbias), GetParamExpr(p_connective2rel),
-              connective_lstm.back(), GetParamExpr(p_cause2rel),
-              cause_lstm.back(), GetParamExpr(p_effect2rel), effect_lstm.back(),
-              GetParamExpr(p_means2rel), means_lstm.back()}));
-    relations_lstm.add_input(current_rel_embedding);
-  };
-
-  auto UpdateCurrentRelationEmbedding = [&]() {
-    relations_lstm.rewind_one_step(); // replace existing relation embedding
-    EmbedCurrentRelation();
-  };
-
-  auto StartNewRelation = [&]() {
-    connective_lstm.start_new_sequence();
-    cause_lstm.start_new_sequence();
-    effect_lstm.start_new_sequence();
-    means_lstm.start_new_sequence();
-
-    connective_lstm.add_input(GetParamExpr(p_connective_guard));
-    cause_lstm.add_input(GetParamExpr(p_cause_guard));
-    effect_lstm.add_input(GetParamExpr(p_effect_guard));
-    means_lstm.add_input(GetParamExpr(p_means_guard));
-
-    cst->currently_processing_rel = true;
-  };
-
-  auto EnsureRelationWithConnective = [&](bool embed) {
+  auto EnsureRelationWithConnective = [&]() {
     if (!cst->currently_processing_rel) {
-      StartNewRelation();
+      // Don't start a new relation here...we should already have a blank one,
+      // either from initialization or from a previous SHIFT.
       connective_lstm.add_input(current_conn_token);
       cst->current_rel_conn_tokens.push_back(current_conn_token_i);
-      if (embed) {
-        EmbedCurrentRelation();
-      }
+      cst->currently_processing_rel = true;
     }
   };
 
   auto AddArc = [&](unsigned action) {
-    EnsureRelationWithConnective(false);  // Don't embed yet -- wait for arg
+    EnsureRelationWithConnective();
 
     const string& arc_type = vocab.actions_to_arc_labels[action];
     LSTMBuilder* arg_builder;
@@ -790,8 +758,6 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
     }
     arg_builder->add_input(cst->all_tokens.at(current_arg_token_i));
     arg_list->push_back(current_arg_token_i);
-
-    EmbedCurrentRelation();
   };
 
   if (action_name == "NO-CONN") {
@@ -800,19 +766,17 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
     DO_LIST_POP(L4);  // remove duplicate of current_conn_token
     SetNewConnectiveToken();
   } else if (action_name == "NO-ARC-LEFT") {
-    EnsureRelationWithConnective(true);
+    EnsureRelationWithConnective();
     AdvanceArgTokenLeft();
   } else if (action_name == "NO-ARC-RIGHT") {
-    EnsureRelationWithConnective(true);
+    EnsureRelationWithConnective();
     AdvanceArgTokenRight();
   } /* else if (action_name == "CONN-FRAG-LEFT") {  // not currently possible
     cst->current_rel_conn_tokens.push_back(current_arg_token_i);
     connective_lstm.add_input(current_arg_token);
-    UpdateCurrentRelationEmbedding();
   } */ else if (action_name == "CONN-FRAG-RIGHT") {
     cst->current_rel_conn_tokens.push_back(current_arg_token_i);
     connective_lstm.add_input(current_arg_token);
-    UpdateCurrentRelationEmbedding();
     // Do NOT advance the argument token. It could still be part of an arg.
   } else if (starts_with(action_name, "RIGHT-ARC")) {
     AddArc(action);
@@ -861,7 +825,6 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
     // token; in theory, this could still be an argument word.
     connective_lstm.add_input(current_arg_token);
     cst->current_rel_conn_tokens.push_back(current_arg_token_i);
-    EmbedCurrentRelation();
   } else if (action_name == "SHIFT") {
     assert(L4.size() == 1 && L1.size() == 1);  // processed all tokens?
     // Move L2 back to L1.
@@ -882,6 +845,7 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
     cst->current_rel_cause_tokens.clear();
     cst->current_rel_effect_tokens.clear();
     cst->current_rel_means_tokens.clear();
+    StartNewRelation();  // relation LSTMs should be empty until next relation
   }
 
   cst->prev_action = action;
