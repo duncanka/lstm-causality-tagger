@@ -39,23 +39,23 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("dev-pct,d", po::value<double>()->default_value(0.2),
      "Percent of training data in each shuffle to use as dev (tuning)")
     ("train", "Whether to train the tagger")
-    ("action-dim,a", po::value<unsigned>()->default_value(20),
+    ("action-dim,a", po::value<unsigned>()->default_value(8),
      "Dimension for vector representation of actions")
-    ("pos-dim,P", po::value<unsigned>()->default_value(20),
+    ("pos-dim,P", po::value<unsigned>()->default_value(12),
      "Dimension for vector representation of parts of speech")
-    ("word-dim,w", po::value<unsigned>()->default_value(48),
+    ("word-dim,w", po::value<unsigned>()->default_value(10),
      "Dimension for vector representation of words")
-    ("rels-hidden-dim,r", po::value<unsigned>()->default_value(100),
+    ("rels-hidden-dim,r", po::value<unsigned>()->default_value(32),
      "Dimension for vector representation of an entire causal relation")
-    ("state-dim,s", po::value<unsigned>()->default_value(100),
+    ("state-dim,s", po::value<unsigned>()->default_value(72),
      "Dimension for overall tagger state")
-    ("token-dim,i", po::value<unsigned>()->default_value(64),
+    ("token-dim,i", po::value<unsigned>()->default_value(48),
      "Dimension for representation of tokens as input to span or lambda LSTMs")
-    ("lambda-hidden-dim,h", po::value<unsigned>()->default_value(64),
+    ("lambda-hidden-dim,h", po::value<unsigned>()->default_value(48),
      "Dimension of the hidden state of each lambda LSTM")
-    ("actions-hidden-dim,A", po::value<unsigned>()->default_value(64),
+    ("actions-hidden-dim,A", po::value<unsigned>()->default_value(32),
      "Dimension of the hidden state of the action history LSTM")
-    ("span-hidden-dim,S", po::value<unsigned>()->default_value(64),
+    ("span-hidden-dim,S", po::value<unsigned>()->default_value(32),
      "Dimension of each connective/argument span LSTM's hidden state")
     ("lstm-layers,l", po::value<unsigned>()->default_value(2),
      "Number of layers for each stack LSTM")
