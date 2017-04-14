@@ -457,7 +457,8 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
       {options.state_dim, options.lambda_hidden_dim});
   p_actions2S = model->add_parameters(
       {options.state_dim, options.actions_hidden_dim});
-  p_rels2S = model->add_parameters({options.state_dim, options.rels_hidden_dim});
+  p_rels2S = model->add_parameters(
+      {options.state_dim, options.rels_hidden_dim});
 
   // Parameters for turning states into actions
   p_abias = model->add_parameters({action_size});

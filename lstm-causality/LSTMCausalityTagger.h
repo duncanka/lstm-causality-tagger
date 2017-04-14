@@ -110,9 +110,9 @@ protected:
   cnn::LSTMBuilder means_lstm;
 
   // Lookup parameters
-  cnn::LookupParameters* p_w;  // word embeddings
-  cnn::LookupParameters* p_t;  // pretrained word embeddings (not updated)
-  cnn::LookupParameters* p_a;  // action embeddings (for action_history_lstm)
+  cnn::LookupParameters* p_w;    // word embeddings
+  cnn::LookupParameters* p_t;    // pretrained word embeddings (not updated)
+  cnn::LookupParameters* p_a;    // action embeddings (for action_history_lstm)
   cnn::LookupParameters* p_pos;  // pos tag embeddings
 
   // Parameters for overall tagger state
@@ -121,8 +121,9 @@ protected:
   cnn::Parameters* p_L2toS;       // lambda 2 lstm to tagger state
   cnn::Parameters* p_L3toS;       // lambda 3 lstm to tagger state
   cnn::Parameters* p_L4toS;       // lambda 4 lstm to tagger state
-  cnn::Parameters* p_actions2S;  // action history lstm to tagger state
-  cnn::Parameters* p_rels2S;     // relations lstm to tagger state
+  cnn::Parameters* p_current2S;   // current token to tagger state
+  cnn::Parameters* p_actions2S;   // action history lstm to tagger state
+  cnn::Parameters* p_rels2S;      // relations lstm to tagger state
   cnn::Parameters* p_s2a;         // parser state to action
   cnn::Parameters* p_abias;       // bias for final action output
 
@@ -137,7 +138,7 @@ protected:
   cnn::Parameters* p_w2t;           // word to LSTM input
   cnn::Parameters* p_p2t;           // POS to LSTM input
   cnn::Parameters* p_v2t;           // pretrained word embeddings to LSTM input
-  cnn::Parameters* p_tbias;            // LSTM input bias
+  cnn::Parameters* p_tbias;         // LSTM input bias
   cnn::Parameters* p_action_start;  // action bias
 
   // LSTM guards (create biases for different LSTMs)
