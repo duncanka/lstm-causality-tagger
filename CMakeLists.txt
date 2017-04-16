@@ -13,7 +13,15 @@ enable_testing()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lstm-parser)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lstm-parser/cnn)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lstm-parser/eos)
-set(WITH_EIGEN_BACKEND 1)
+
+if(BACKEND STREQUAL "cuda")
+    set(WITH_EIGEN_BACKEND 0)
+    set(WITH_CUDA_BACKEND 1)
+    find_package(CUDA REQUIRED)
+else()
+    set(WITH_EIGEN_BACKEND 1)
+    set(WITH_CUDA_BACKEND 0)
+endif(BACKEND STREQUAL "cuda")
 
 # look for Boost
 if(DEFINED ENV{BOOST_ROOT})
