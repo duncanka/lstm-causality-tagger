@@ -10,18 +10,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
 
 enable_testing()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lstm-parser)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lstm-parser/cnn)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lstm-parser/eos)
-
-if(BACKEND STREQUAL "cuda")
-    set(WITH_EIGEN_BACKEND 0)
-    set(WITH_CUDA_BACKEND 1)
-    find_package(CUDA REQUIRED)
-else()
-    set(WITH_EIGEN_BACKEND 1)
-    set(WITH_CUDA_BACKEND 0)
-endif(BACKEND STREQUAL "cuda")
+include_directories(lstm-parser)
+include_directories(lstm-parser/cnn)
+include_directories(lstm-parser/eos)
 
 # look for Boost
 if(DEFINED ENV{BOOST_ROOT})
