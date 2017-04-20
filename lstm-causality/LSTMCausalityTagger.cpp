@@ -129,14 +129,13 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
       // cerr << "Starting sentence " << sentence << endl;
 
       ComputationGraph cg;
-      Expression parser_state;
       vector<unsigned> parse_actions = parser.LogProbTagger(
-          &cg, sentence, true, &parser_state);
+          &cg, sentence, true, &parser_end_state);
       // Cache parse if we haven't yet.
       double parser_lp = as_scalar(cg.incremental_forward());
       CacheParse(sentence, parse_actions, parser_lp, corpus, sentence_index);
       LogProbTagger(&cg, sentence, sentence.words, true, correct_actions,
-                    &correct, &parser_state);
+                    &correct);
       double lp = as_scalar(cg.incremental_forward());
       if (lp < 0) {
         cerr << "Log prob " << lp << " < 0 on sentence "
@@ -199,14 +198,13 @@ double LSTMCausalityTagger::DoDevEvaluation(
         corpus->correct_act_sent[sentence_index];
 
     ComputationGraph cg;
-    Expression parser_state;
     vector<unsigned> parse_actions = parser.LogProbTagger(&cg, sentence, true,
-                                                          &parser_state);
+                                                          &parser_end_state);
     double parse_lp = as_scalar(cg.incremental_forward());
     CacheParse(sentence, parse_actions, parse_lp, corpus, sentence_index);
     vector<unsigned> actions = LogProbTagger(&cg, sentence, sentence.words,
                                              false, correct_actions,
-                                             &correct_dev, &parser_state);
+                                             &correct_dev);
     llh_dev += as_scalar(cg.incremental_forward());
     vector<CausalityRelation> predicted = Decode(sentence, actions);
 
@@ -536,24 +534,32 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     const unsigned token_index = index_and_word_id.first;
     const unsigned word_id = index_and_word_id.second;
     const unsigned pos_id = raw_sent.poses.at(token_index);
+    Expression token_repr = GetTokenExpression(cg, word_id, pos_id);
 
-    Expression word = lookup(*cg, p_w, word_id);
-    Expression pretrained = const_lookup(*cg, p_t, word_id);
-    Expression pos = lookup(*cg, p_pos, pos_id);
-    Expression full_word_repr = rectify(
-        affine_transform({GetParamExpr(p_tbias), GetParamExpr(p_w2t), word,
-            GetParamExpr(p_p2t), pos, GetParamExpr(p_v2t), pretrained}));
-
-    state->L4.push_back(full_word_repr);
+    state->L4.push_back(token_repr);
     state->L4i.push_back(token_index);
-    L4_lstm.add_input(full_word_repr);
-    state->all_tokens[token_index] = full_word_repr;
+    L4_lstm.add_input(token_repr);
+    state->all_tokens[token_index] = token_repr;
   }
 
   state->current_conn_token = state->L4.back();
   state->current_arg_token = state->L4.back();
 
   return state;
+}
+
+
+Expression LSTMCausalityTagger::GetTokenExpression(
+    ComputationGraph* cg, unsigned word_id, unsigned pos_id) {
+  Expression word = lookup(*cg, p_w, word_id);
+  Expression pretrained = const_lookup(*cg, p_t, word_id);
+  Expression pos = lookup(*cg, p_pos, pos_id);
+  Expression full_token_repr = rectify(affine_transform(
+      {GetParamExpr(p_tbias),
+      GetParamExpr(p_w2t), word,
+      GetParamExpr(p_p2t), pos,
+      GetParamExpr(p_v2t), pretrained}));
+  return full_token_repr;
 }
 
 

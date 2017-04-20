@@ -62,17 +62,15 @@ public:
   std::vector<CausalityRelation> Tag(const lstm_parser::Sentence& sentence,
                                      lstm_parser::ParseTree* parse = nullptr) {
     cnn::ComputationGraph cg;
-    cnn::expr::Expression parser_state;
     vector<unsigned> parse_actions = parser.LogProbTagger(
-        &cg, sentence, true, &parser_state);
+        &cg, sentence, true, &parser_end_state);
     if (parse) {
       double parser_lp = as_scalar(cg.incremental_forward());
       auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp,
                                           parse->IsLabeled());
       *parse = std::move(tree);
     }
-    std::vector<unsigned> actions = LogProbTagger(&cg, sentence, false,
-                                                  &parser_state);
+    std::vector<unsigned> actions = LogProbTagger(&cg, sentence, false);
     return Decode(sentence, actions);
   }
 
@@ -273,6 +271,12 @@ private:
     effect_lstm.add_input(GetParamExpr(p_effect_guard));
     means_lstm.add_input(GetParamExpr(p_means_guard));
   }
+
+  Expression GetTokenExpression(cnn::ComputationGraph* cg, unsigned word_id,
+                                unsigned pos_id);
+
+  // Variable to internally cache the final NN state of the parser.
+  cnn::expr::Expression parser_end_state;
 };
 
 #endif /* LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_ */
