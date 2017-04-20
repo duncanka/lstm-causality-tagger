@@ -1,4 +1,6 @@
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/range/combine.hpp>
 #include <chrono>
@@ -286,11 +288,15 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
   auto AddArc = [&](unsigned action) {
     EnsureCurrentRelation();
     const string& arc_type = sentence.vocab.actions_to_arc_labels[action];
-    auto arg_iter = find(CausalityRelation::ARG_NAMES.begin(),
-        CausalityRelation::ARG_NAMES.end(), arc_type);
-    assert(arg_iter != CausalityRelation::ARG_NAMES.end());
-    current_rel->AddToArgument(
-        arg_iter - CausalityRelation::ARG_NAMES.begin(), current_arg_token);
+    vector<string> arg_names;
+    boost::split(arg_names, arc_type, boost::is_any_of(","));
+    for (const string& arg_name : arg_names) {
+      auto arg_iter = find(CausalityRelation::ARG_NAMES.begin(),
+          CausalityRelation::ARG_NAMES.end(), arg_name);
+      assert(arg_iter != CausalityRelation::ARG_NAMES.end());
+      current_rel->AddToArgument(
+          arg_iter - CausalityRelation::ARG_NAMES.begin(), current_arg_token);
+    }
   };
 
   for (auto iter = actions.begin(), end = actions.end(); iter != end; ++iter) {
@@ -745,20 +751,24 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
     EnsureRelationWithConnective();
 
     const string& arc_type = vocab.actions_to_arc_labels[action];
-    LSTMBuilder* arg_builder;
-    vector<unsigned>* arg_list;
-    if (arc_type == "Cause") {
-      arg_builder = &cause_lstm;
-      arg_list = &cst->current_rel_cause_tokens;
-    } else if (arc_type == "Effect") {
-      arg_builder = &effect_lstm;
-      arg_list = &cst->current_rel_effect_tokens;
-    } else {  // arc_type == "Means"
-      arg_builder = &means_lstm;
-      arg_list = &cst->current_rel_means_tokens;
+    vector<string> arg_names;
+    boost::split(arg_names, arc_type, boost::is_any_of(","));
+    for (const string& arg_name : arg_names) {
+      LSTMBuilder* arg_builder;
+      vector<unsigned>* arg_list;
+      if (arg_name == "Cause") {
+        arg_builder = &cause_lstm;
+        arg_list = &cst->current_rel_cause_tokens;
+      } else if (arg_name == "Effect") {
+        arg_builder = &effect_lstm;
+        arg_list = &cst->current_rel_effect_tokens;
+      } else {  // arg_name == "Means"
+        arg_builder = &means_lstm;
+        arg_list = &cst->current_rel_means_tokens;
+      }
+      arg_builder->add_input(cst->all_tokens.at(current_arg_token_i));
+      arg_list->push_back(current_arg_token_i);
     }
-    arg_builder->add_input(cst->all_tokens.at(current_arg_token_i));
-    arg_list->push_back(current_arg_token_i);
   };
 
   if (action_name == "NO-CONN") {
