@@ -15,6 +15,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <utility>
 
 #include "BecauseData.h"
 #include "BecauseOracleTransitionCorpus.h"
@@ -438,6 +439,7 @@ public:
   }
 
   bool operator==(const BecauseRelationMetrics<RelationType>& other) {
+    using namespace std::rel_ops;
     if (*connective_metrics != *other.connective_metrics)
       return false;
     for (unsigned i = 0; i < argument_metrics.size(); ++i) {
