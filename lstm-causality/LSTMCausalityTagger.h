@@ -63,7 +63,7 @@ public:
                                      lstm_parser::ParseTree* parse = nullptr) {
     cnn::ComputationGraph cg;
     vector<unsigned> parse_actions = parser.LogProbTagger(
-        &cg, sentence, true, &parser_end_state);
+        &cg, sentence, true, &parser_states);
     if (parse) {
       double parser_lp = as_scalar(cg.incremental_forward());
       auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp,
@@ -190,7 +190,8 @@ protected:
   virtual TaggerState* InitializeParserState(
       cnn::ComputationGraph* cg, const lstm_parser::Sentence& raw_sent,
       const lstm_parser::Sentence::SentenceMap& sentence,
-      const std::vector<unsigned>& correct_actions) override;
+      const std::vector<unsigned>& correct_actions,
+      std::vector<cnn::expr::Expression>* states_to_expose) override;
 
   virtual void InitializeNetworkParameters() override;
 
@@ -211,8 +212,9 @@ protected:
   virtual cnn::expr::Expression GetActionProbabilities(const TaggerState& state)
       override;
 
-  virtual void DoAction(unsigned action,
-                        TaggerState* state, cnn::ComputationGraph* cg) override;
+  virtual void DoAction(
+      unsigned action, TaggerState* state, cnn::ComputationGraph* cg,
+      std::vector<cnn::expr::Expression>* states_to_expose) override;
 
   virtual void DoSave(eos::portable_oarchive& archive) {
     archive << *this;
@@ -282,8 +284,8 @@ private:
   Expression GetTokenExpression(cnn::ComputationGraph* cg, unsigned word_index,
                                 unsigned word_id, unsigned pos_id);
 
-  // Variable to internally cache the final NN state of the parser.
-  cnn::expr::Expression parser_end_state;
+  // Variable to internally cache NN states from the parser.
+  std::vector<cnn::expr::Expression> parser_states;
 };
 
 #endif /* LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_ */

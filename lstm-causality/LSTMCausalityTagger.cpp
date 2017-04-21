@@ -130,7 +130,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
 
       ComputationGraph cg;
       vector<unsigned> parse_actions = parser.LogProbTagger(
-          &cg, sentence, true, &parser_end_state);
+          &cg, sentence, true, &parser_states);
       // Cache parse if we haven't yet.
       double parser_lp = as_scalar(cg.incremental_forward());
       CacheParse(sentence, parse_actions, parser_lp, corpus, sentence_index);
@@ -199,7 +199,7 @@ double LSTMCausalityTagger::DoDevEvaluation(
 
     ComputationGraph cg;
     vector<unsigned> parse_actions = parser.LogProbTagger(&cg, sentence, true,
-                                                          &parser_end_state);
+                                                          &parser_states);
     double parse_lp = as_scalar(cg.incremental_forward());
     CacheParse(sentence, parse_actions, parse_lp, corpus, sentence_index);
     vector<unsigned> actions = LogProbTagger(&cg, sentence, sentence.words,
@@ -498,7 +498,8 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     ComputationGraph* cg,
     const Sentence& raw_sent,
     const Sentence::SentenceMap& sentence,  // w/ OOVs replaced
-    const vector<unsigned>& correct_actions) {
+    const vector<unsigned>& correct_actions,
+    vector<Expression>* states_to_expose) {
   CausalityTaggerState* state = new CausalityTaggerState(raw_sent, sentence);
 
   vector<reference_wrapper<LSTMBuilder>> all_lstms = {
@@ -580,9 +581,9 @@ Expression LSTMCausalityTagger::GetTokenExpression(ComputationGraph* cg,
   Expression parse_state_selections = logistic(affine_transform(
       {GetParamExpr(p_parse_sel_bias),
        GetParamExpr(p_token_parse_sel), token_with_index,
-       GetParamExpr(p_parse2sel), parser_end_state}));
+       GetParamExpr(p_parse2sel), parser_states.back()}));
   Expression token_parse_repr = cwise_multiply(parse_state_selections,
-                                               parser_end_state);
+                                               parser_states.back());
   Expression full_token_repr = token_repr + rectify(affine_transform(
       {GetParamExpr(p_full_t_bias),
        GetParamExpr(p_parse2t), token_parse_repr}));
@@ -708,7 +709,8 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
     DO_LIST_POP(from_list);
 
 void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
-                                   ComputationGraph* cg) {
+                                   ComputationGraph* cg,
+                                   vector<Expression>* states_to_expose) {
   CausalityTaggerState* cst = static_cast<CausalityTaggerState*>(state);
   const string& action_name = vocab.action_names[action];
 
