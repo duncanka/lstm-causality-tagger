@@ -190,8 +190,7 @@ protected:
   virtual TaggerState* InitializeParserState(
       cnn::ComputationGraph* cg, const lstm_parser::Sentence& raw_sent,
       const lstm_parser::Sentence::SentenceMap& sentence,
-      const std::vector<unsigned>& correct_actions,
-      std::vector<cnn::expr::Expression>* states_to_expose) override;
+      const std::vector<unsigned>& correct_actions) override;
 
   virtual void InitializeNetworkParameters() override;
 
@@ -214,7 +213,7 @@ protected:
 
   virtual void DoAction(
       unsigned action, TaggerState* state, cnn::ComputationGraph* cg,
-      std::vector<cnn::expr::Expression>* states_to_expose) override;
+      std::map<std::string, cnn::expr::Expression>* states_to_expose) override;
 
   virtual void DoSave(eos::portable_oarchive& archive) {
     archive << *this;
@@ -285,7 +284,7 @@ private:
                                 unsigned word_id, unsigned pos_id);
 
   // Variable to internally cache NN states from the parser.
-  std::vector<cnn::expr::Expression> parser_states;
+  std::map<std::string, cnn::expr::Expression> parser_states;
 };
 
 #endif /* LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_ */

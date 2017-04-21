@@ -498,8 +498,7 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     ComputationGraph* cg,
     const Sentence& raw_sent,
     const Sentence::SentenceMap& sentence,  // w/ OOVs replaced
-    const vector<unsigned>& correct_actions,
-    vector<Expression>* states_to_expose) {
+    const vector<unsigned>& correct_actions) {
   CausalityTaggerState* state = new CausalityTaggerState(raw_sent, sentence);
 
   vector<reference_wrapper<LSTMBuilder>> all_lstms = {
@@ -578,12 +577,13 @@ Expression LSTMCausalityTagger::GetTokenExpression(ComputationGraph* cg,
   // Expression from a known value...
   Expression index_expr = zeroes(*cg, Dim({1})) + word_index;
   Expression token_with_index = concatenate({token_repr, index_expr});
+  Expression parser_tree_embedding = parser_states.at("Tree");
   Expression parse_state_selections = logistic(affine_transform(
       {GetParamExpr(p_parse_sel_bias),
        GetParamExpr(p_token_parse_sel), token_with_index,
-       GetParamExpr(p_parse2sel), parser_states.back()}));
+       GetParamExpr(p_parse2sel), parser_tree_embedding}));
   Expression token_parse_repr = cwise_multiply(parse_state_selections,
-                                               parser_states.back());
+                                               parser_tree_embedding);
   Expression full_token_repr = token_repr + rectify(affine_transform(
       {GetParamExpr(p_full_t_bias),
        GetParamExpr(p_parse2t), token_parse_repr}));
@@ -710,7 +710,7 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
 
 void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
                                    ComputationGraph* cg,
-                                   vector<Expression>* states_to_expose) {
+                                   map<string, Expression>* states_to_expose) {
   CausalityTaggerState* cst = static_cast<CausalityTaggerState*>(state);
   const string& action_name = vocab.action_names[action];
 
