@@ -444,6 +444,15 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   p_w2t = model->add_parameters({options.token_dim, options.word_dim});
   p_v2t = model->add_parameters({options.token_dim, pretrained_dim});
   p_p2t = model->add_parameters({options.token_dim, options.pos_dim});
+  // Parameters for incorporating parse info into token representation
+  const unsigned parser_state_size = parser.options.hidden_dim;
+  const unsigned tok_with_index_dim = options.token_dim + 1;
+  p_parse_sel_bias = model->add_parameters({parser_state_size});
+  p_token_parse_sel = model->add_parameters({parser_state_size,
+                                             tok_with_index_dim});
+  p_parse2sel = model->add_parameters({parser_state_size, parser_state_size});
+  p_full_t_bias = model->add_parameters({options.token_dim});
+  p_parse2t = model->add_parameters({options.token_dim, parser_state_size});
 
   // Parameters for overall state representation
   p_sbias = model->add_parameters({options.state_dim});
@@ -534,7 +543,8 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     const unsigned token_index = index_and_word_id.first;
     const unsigned word_id = index_and_word_id.second;
     const unsigned pos_id = raw_sent.poses.at(token_index);
-    Expression token_repr = GetTokenExpression(cg, word_id, pos_id);
+    Expression token_repr = GetTokenExpression(cg, token_index, word_id,
+                                               pos_id);
 
     state->L4.push_back(token_repr);
     state->L4i.push_back(token_index);
@@ -549,16 +559,34 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
 }
 
 
-Expression LSTMCausalityTagger::GetTokenExpression(
-    ComputationGraph* cg, unsigned word_id, unsigned pos_id) {
+Expression LSTMCausalityTagger::GetTokenExpression(ComputationGraph* cg,
+                                                   unsigned word_index,
+                                                   unsigned word_id,
+                                                   unsigned pos_id) {
   Expression word = lookup(*cg, p_w, word_id);
   Expression pretrained = const_lookup(*cg, p_t, word_id);
   Expression pos = lookup(*cg, p_pos, pos_id);
-  Expression full_token_repr = rectify(affine_transform(
+  Expression token_repr = rectify(affine_transform(
       {GetParamExpr(p_tbias),
-      GetParamExpr(p_w2t), word,
-      GetParamExpr(p_p2t), pos,
-      GetParamExpr(p_v2t), pretrained}));
+       GetParamExpr(p_w2t), word,
+       GetParamExpr(p_p2t), pos,
+       GetParamExpr(p_v2t), pretrained}));
+
+  // Mix in parse information about this token.
+  // TODO: there must be a more straightforward way of creating a scalar
+  // Expression from a known value...
+  Expression index_expr = zeroes(*cg, Dim({1})) + word_index;
+  Expression token_with_index = concatenate({token_repr, index_expr});
+  Expression parse_state_selections = logistic(affine_transform(
+      {GetParamExpr(p_parse_sel_bias),
+       GetParamExpr(p_token_parse_sel), token_with_index,
+       GetParamExpr(p_parse2sel), parser_end_state}));
+  Expression token_parse_repr = cwise_multiply(parse_state_selections,
+                                               parser_end_state);
+  Expression full_token_repr = token_repr + rectify(affine_transform(
+      {GetParamExpr(p_full_t_bias),
+       GetParamExpr(p_parse2t), token_parse_repr}));
+
   return full_token_repr;
 }
 

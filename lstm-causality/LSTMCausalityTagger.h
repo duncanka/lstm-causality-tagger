@@ -125,12 +125,18 @@ protected:
   cnn::Parameters* p_effect2S;      // effect to relation embedding
   cnn::Parameters* p_means2S;       // means to relation embedding
 
-  // Parameters for LSTM input for stacks containing words
-  cnn::Parameters* p_w2t;           // word to LSTM input
-  cnn::Parameters* p_p2t;           // POS to LSTM input
-  cnn::Parameters* p_v2t;           // pretrained word embeddings to LSTM input
+  // Parameters for LSTM input for stacks containing tokens
+  cnn::Parameters* p_w2t;           // word to token representation
+  cnn::Parameters* p_p2t;           // POS to token representation
+  cnn::Parameters* p_v2t;           // pretrained word embeddings to token repr
   cnn::Parameters* p_tbias;         // LSTM input bias
   cnn::Parameters* p_action_start;  // action bias
+  // Parameters for incorporating parse info into tokens
+  cnn::Parameters* p_parse_sel_bias;   // selection bias
+  cnn::Parameters* p_token_parse_sel;  // weights for selecting parse info
+  cnn::Parameters* p_parse2sel;        // parse info to selections
+  cnn::Parameters* p_full_t_bias;      // bias for token with parse info
+  cnn::Parameters* p_parse2t;          // updated parse info to token
 
   // LSTM guards (create biases for different LSTMs)
   cnn::Parameters* p_L1_guard;
@@ -175,9 +181,10 @@ protected:
   virtual std::vector<cnn::Parameters*> GetParameters() override {
     return {p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_current2S,
       p_actions2S, p_s2a, p_abias, p_connective2S, p_cause2S, p_effect2S,
-      p_means2S, p_w2t, p_p2t, p_v2t, p_tbias, p_action_start, p_L1_guard,
-      p_L2_guard, p_L3_guard, p_L4_guard, p_connective_guard, p_cause_guard,
-      p_effect_guard, p_means_guard};
+      p_means2S, p_w2t, p_p2t, p_v2t, p_tbias, p_action_start,
+      p_parse_sel_bias, p_token_parse_sel, p_parse2sel,
+      p_full_t_bias, p_parse2t, p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard,
+      p_connective_guard, p_cause_guard, p_effect_guard, p_means_guard};
   }
 
   virtual TaggerState* InitializeParserState(
@@ -272,8 +279,8 @@ private:
     means_lstm.add_input(GetParamExpr(p_means_guard));
   }
 
-  Expression GetTokenExpression(cnn::ComputationGraph* cg, unsigned word_id,
-                                unsigned pos_id);
+  Expression GetTokenExpression(cnn::ComputationGraph* cg, unsigned word_index,
+                                unsigned word_id, unsigned pos_id);
 
   // Variable to internally cache the final NN state of the parser.
   cnn::expr::Expression parser_end_state;
