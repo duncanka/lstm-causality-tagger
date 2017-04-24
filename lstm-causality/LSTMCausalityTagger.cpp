@@ -453,6 +453,7 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   p_parse2sel = model->add_parameters({parser_state_size, parser_state_size});
   p_full_t_bias = model->add_parameters({options.token_dim});
   p_parse2t = model->add_parameters({options.token_dim, parser_state_size});
+  p_subtree2t = model->add_parameters({options.token_dim, parser_state_size});
 
   // Parameters for overall state representation
   p_sbias = model->add_parameters({options.state_dim});
@@ -584,9 +585,11 @@ Expression LSTMCausalityTagger::GetTokenExpression(ComputationGraph* cg,
        GetParamExpr(p_parse2sel), parser_tree_embedding}));
   Expression token_parse_repr = cwise_multiply(parse_state_selections,
                                                parser_tree_embedding);
+  Expression subtree_repr = parser_states.at(to_string(word_index));
   Expression full_token_repr = token_repr + rectify(affine_transform(
       {GetParamExpr(p_full_t_bias),
-       GetParamExpr(p_parse2t), token_parse_repr}));
+       GetParamExpr(p_parse2t), token_parse_repr,
+       GetParamExpr(p_subtree2t), subtree_repr}));
 
   return full_token_repr;
 }
