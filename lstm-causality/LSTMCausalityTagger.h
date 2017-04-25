@@ -124,6 +124,13 @@ protected:
   cnn::Parameters* p_cause2S;       // cause to relation embedding
   cnn::Parameters* p_effect2S;      // effect to relation embedding
   cnn::Parameters* p_means2S;       // means to relation embedding
+  // Parameters for mixing in parse info
+  cnn::Parameters* p_parse_sel_bias;
+  cnn::Parameters* p_state_to_parse_sel;
+  cnn::Parameters* p_parse2sel;
+  cnn::Parameters* p_full_state_bias;
+  cnn::Parameters* p_parse2pstate;
+  cnn::Parameters* p_state2pstate;
 
   // Parameters for LSTM input for stacks containing tokens
   cnn::Parameters* p_w2t;           // word to token representation
@@ -176,9 +183,11 @@ protected:
   virtual std::vector<cnn::Parameters*> GetParameters() override {
     return {p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_current2S,
       p_actions2S, p_s2a, p_abias, p_connective2S, p_cause2S, p_effect2S,
-      p_means2S, p_w2t, p_p2t, p_v2t, p_tbias, p_action_start, p_subtree2t,
-      p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard, p_connective_guard,
-      p_cause_guard, p_effect_guard, p_means_guard};
+      p_means2S, p_parse_sel_bias, p_state_to_parse_sel, p_parse2sel,
+      p_full_state_bias, p_parse2pstate, p_state2pstate, p_w2t, p_p2t, p_v2t,
+      p_tbias, p_action_start, p_subtree2t, p_L1_guard, p_L2_guard, p_L3_guard,
+      p_L4_guard, p_connective_guard, p_cause_guard, p_effect_guard,
+      p_means_guard};
   }
 
   virtual TaggerState* InitializeParserState(

@@ -425,10 +425,11 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
 
 
 void LSTMCausalityTagger::InitializeNetworkParameters() {
-  unsigned action_size = vocab.CountActions() + 1;
-  unsigned pos_size = vocab.CountPOS() + 10; // bad way of handling new POS
-  unsigned vocab_size = vocab.CountWords() + 1;
-  unsigned pretrained_dim = parser.pretrained.begin()->second.size();
+  const unsigned action_size = vocab.CountActions() + 1;
+  const unsigned pos_size = vocab.CountPOS() + 10; // bad way to handle new POS
+  const unsigned vocab_size = vocab.CountWords() + 1;
+  const unsigned pretrained_dim = parser.pretrained.begin()->second.size();
+  const unsigned parser_state_size = parser.options.hidden_dim;
 
   assert(!parser.pretrained.empty());
   assert(parser.options.use_pos);
@@ -445,7 +446,6 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   p_v2t = model->add_parameters({options.token_dim, pretrained_dim});
   p_p2t = model->add_parameters({options.token_dim, options.pos_dim});
   // Parameters for incorporating parse info into token representation
-  const unsigned parser_state_size = parser.options.hidden_dim;
   p_subtree2t = model->add_parameters({options.token_dim, parser_state_size});
 
   // Parameters for overall state representation
@@ -469,6 +469,17 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
       {options.state_dim, options.span_hidden_dim});
   p_means2S = model->add_parameters(
       {options.state_dim, options.span_hidden_dim});
+  // Parameters for incorporating parse info into state
+  p_parse_sel_bias = model->add_parameters({parser_state_size});
+  p_state_to_parse_sel = model->add_parameters(
+      {parser_state_size, options.state_dim});
+  p_parse2sel = model->add_parameters(
+      {parser_state_size, parser_state_size});
+  p_full_state_bias = model->add_parameters({options.state_dim});
+  p_parse2pstate = model->add_parameters(
+      {options.state_dim, parser_state_size});
+  p_state2pstate = model->add_parameters(
+      {options.state_dim, options.state_dim});
 
   // Parameters for turning states into actions
   p_abias = model->add_parameters({action_size});
@@ -644,9 +655,9 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
     const TaggerState& state) {
   const CausalityTaggerState& real_state =
       static_cast<const CausalityTaggerState&>(state);
-  // p_t = sbias + actions2S * actions_lstm + (\sum_i rel_cmpt_i2S * rel_cmpt_i)
-  //             + current2S * current_token + (\sum_i LToS_i * L_i)
-  Expression p_t = affine_transform(
+  // sbias + actions2S * actions_lstm + (\sum_i rel_cmpt_i2S * rel_cmpt_i)
+  //       + current2S * current_token + (\sum_i LToS_i * L_i)
+  Expression state_expr = rectify(affine_transform(
       {GetParamExpr(p_sbias),
        GetParamExpr(p_actions2S), action_history_lstm.back(),
        GetParamExpr(p_connective2S), connective_lstm.back(),
@@ -657,12 +668,25 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
        GetParamExpr(p_L1toS), L1_lstm.back(),
        GetParamExpr(p_L2toS), L2_lstm.back(),
        GetParamExpr(p_L3toS), L3_lstm.back(),
-       GetParamExpr(p_L4toS), L4_lstm.back()});
-  Expression p_t_nonlinear = rectify(p_t);
-  // r_t = abias + p2a * nlp
-  Expression r_t = affine_transform({GetParamExpr(p_abias), GetParamExpr(p_s2a),
-                                     p_t_nonlinear});
-  return r_t;
+       GetParamExpr(p_L4toS), L4_lstm.back()}));
+
+  // Mix in parse information from full parse tree.
+  Expression parser_tree_embedding = parser_states.at("Tree");
+  Expression parse_state_selections = logistic(affine_transform(
+      {GetParamExpr(p_parse_sel_bias),
+       GetParamExpr(p_state_to_parse_sel), state_expr,
+       GetParamExpr(p_parse2sel), parser_tree_embedding}));
+  Expression selected_parse_repr = cwise_multiply(parse_state_selections,
+                                                  parser_tree_embedding);
+  Expression full_state_repr = rectify(affine_transform(
+      {GetParamExpr(p_full_state_bias),
+       GetParamExpr(p_parse2pstate), selected_parse_repr,
+       GetParamExpr(p_state2pstate), state_expr}));
+
+  // abias + s2a * full_state_repr
+  Expression p_a = affine_transform({GetParamExpr(p_abias), GetParamExpr(p_s2a),
+                                     full_state_repr});
+  return p_a;
 }
 
 
