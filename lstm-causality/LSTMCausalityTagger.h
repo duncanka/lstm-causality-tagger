@@ -130,20 +130,14 @@ protected:
   cnn::Parameters* p_p2t;           // POS to token representation
   cnn::Parameters* p_v2t;           // pretrained word embeddings to token repr
   cnn::Parameters* p_tbias;         // LSTM input bias
-  cnn::Parameters* p_action_start;  // action bias
-  // Parameters for incorporating parse info into tokens
-  cnn::Parameters* p_parse_sel_bias;   // selection bias
-  cnn::Parameters* p_token_parse_sel;  // weights for selecting parse info
-  cnn::Parameters* p_parse2sel;        // parse info to selections
-  cnn::Parameters* p_full_t_bias;      // bias for token with parse info
-  cnn::Parameters* p_parse2t;          // global parse info to token
-  cnn::Parameters* p_subtree2t;        // node subtree parse info to token
+  cnn::Parameters* p_subtree2t;     // node subtree parse info to token
 
   // LSTM guards (create biases for different LSTMs)
   cnn::Parameters* p_L1_guard;
   cnn::Parameters* p_L2_guard;
   cnn::Parameters* p_L3_guard;
   cnn::Parameters* p_L4_guard;
+  cnn::Parameters* p_action_start;  // action bias
   // Guards for per-instance LSTMs
   cnn::Parameters* p_connective_guard;
   cnn::Parameters* p_cause_guard;
@@ -182,10 +176,9 @@ protected:
   virtual std::vector<cnn::Parameters*> GetParameters() override {
     return {p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_current2S,
       p_actions2S, p_s2a, p_abias, p_connective2S, p_cause2S, p_effect2S,
-      p_means2S, p_w2t, p_p2t, p_v2t, p_tbias, p_action_start,
-      p_parse_sel_bias, p_token_parse_sel, p_parse2sel, p_full_t_bias,
-      p_parse2t, p_subtree2t, p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard,
-      p_connective_guard, p_cause_guard, p_effect_guard, p_means_guard};
+      p_means2S, p_w2t, p_p2t, p_v2t, p_tbias, p_action_start, p_subtree2t,
+      p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard, p_connective_guard,
+      p_cause_guard, p_effect_guard, p_means_guard};
   }
 
   virtual TaggerState* InitializeParserState(

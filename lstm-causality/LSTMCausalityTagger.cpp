@@ -446,13 +446,6 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   p_p2t = model->add_parameters({options.token_dim, options.pos_dim});
   // Parameters for incorporating parse info into token representation
   const unsigned parser_state_size = parser.options.hidden_dim;
-  const unsigned tok_with_index_dim = options.token_dim + 1;
-  p_parse_sel_bias = model->add_parameters({parser_state_size});
-  p_token_parse_sel = model->add_parameters({parser_state_size,
-                                             tok_with_index_dim});
-  p_parse2sel = model->add_parameters({parser_state_size, parser_state_size});
-  p_full_t_bias = model->add_parameters({options.token_dim});
-  p_parse2t = model->add_parameters({options.token_dim, parser_state_size});
   p_subtree2t = model->add_parameters({options.token_dim, parser_state_size});
 
   // Parameters for overall state representation
@@ -480,7 +473,6 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   // Parameters for turning states into actions
   p_abias = model->add_parameters({action_size});
   p_s2a = model->add_parameters({action_size, options.state_dim});
-
 
   // Parameters for guard/start items in empty lists
   p_action_start = model->add_parameters({options.action_dim});
@@ -567,31 +559,15 @@ Expression LSTMCausalityTagger::GetTokenExpression(ComputationGraph* cg,
   Expression word = lookup(*cg, p_w, word_id);
   Expression pretrained = const_lookup(*cg, p_t, word_id);
   Expression pos = lookup(*cg, p_pos, pos_id);
+  Expression subtree_repr = parser_states.at(to_string(word_index));
+  // TODO: add in the token index directly as an input?
   Expression token_repr = rectify(affine_transform(
       {GetParamExpr(p_tbias),
        GetParamExpr(p_w2t), word,
        GetParamExpr(p_p2t), pos,
-       GetParamExpr(p_v2t), pretrained}));
-
-  // Mix in parse information about this token.
-  // TODO: there must be a more straightforward way of creating a scalar
-  // Expression from a known value...
-  Expression index_expr = zeroes(*cg, Dim({1})) + word_index;
-  Expression token_with_index = concatenate({token_repr, index_expr});
-  Expression parser_tree_embedding = parser_states.at("Tree");
-  Expression parse_state_selections = logistic(affine_transform(
-      {GetParamExpr(p_parse_sel_bias),
-       GetParamExpr(p_token_parse_sel), token_with_index,
-       GetParamExpr(p_parse2sel), parser_tree_embedding}));
-  Expression token_parse_repr = cwise_multiply(parse_state_selections,
-                                               parser_tree_embedding);
-  Expression subtree_repr = parser_states.at(to_string(word_index));
-  Expression full_token_repr = token_repr + rectify(affine_transform(
-      {GetParamExpr(p_full_t_bias),
-       GetParamExpr(p_parse2t), token_parse_repr,
+       GetParamExpr(p_v2t), pretrained,
        GetParamExpr(p_subtree2t), subtree_repr}));
-
-  return full_token_repr;
+  return token_repr;
 }
 
 
