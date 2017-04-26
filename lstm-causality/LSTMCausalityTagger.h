@@ -192,7 +192,7 @@ protected:
         p_tbias, p_w2t, p_p2t, p_v2t,
         p_action_start, p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard,
         p_connective_guard, p_cause_guard, p_effect_guard, p_means_guard};
-    if (options.subtrees) {
+    if (options.gated_parse) {
       auto to_add = {p_parse_sel_bias, p_state_to_parse_sel, p_parse2sel,
                      p_full_state_bias, p_parse2pstate, p_state2pstate};
       params.insert(params.end(), to_add.begin(), to_add.end());
