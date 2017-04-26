@@ -62,9 +62,9 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      " before stopping training on that fold (SIGINT always works to stop)")
     ("compare-punct,c",
      "Whether to count punctuation when comparing argument spans")
-    ("subtrees,u",
+    ("subtrees,u", po::bool_switch()->default_value(true),
      "Whether to include embeddings of parse subtrees in token representations")
-    ("gated-parse,g",
+    ("gated-parse,g", po::bool_switch()->default_value(true),
      "Whether to include gated parse tree embedding in the overall state")
     ("dev-eval-period,D", po::value<unsigned>()->default_value(25),
      "How many training iterations to go between dev evaluations");
