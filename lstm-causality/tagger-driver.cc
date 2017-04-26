@@ -66,7 +66,7 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Whether to include embeddings of parse subtrees in token representations")
     ("gated-parse,g", po::value<bool>()->default_value(true),
      "Whether to include gated parse tree embedding in the overall state")
-    ("dropout,D", po::value<double>()->default_value(0.5),
+    ("dropout,D", po::value<double>()->default_value(0.0),
      "Dropout rate (no dropout is implemented for a value of 0)")
     ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
      "How many training iterations to go between dev evaluations");
