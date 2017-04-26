@@ -28,6 +28,7 @@ public:
     unsigned action_dim;
     unsigned pos_dim;
     unsigned state_dim;  // dimension for the concatenated tagger state
+    double dropout;
     bool subtrees;
     bool gated_parse;
 
@@ -42,6 +43,7 @@ public:
       ar & action_dim;
       ar & pos_dim;
       ar & state_dim;
+      ar & dropout;
       ar & subtrees;
       ar & gated_parse;
     }
@@ -304,8 +306,17 @@ private:
     return (options.gated_parse || options.subtrees) ? &parser_states : nullptr;
   }
 
-  // Variable to internally cache NN states from the parser.
-  CachedExpressionMap parser_states;
+  Expression RectifyWithDropout(Expression e) {
+    if (in_training && options.dropout) {
+      return cnn::expr::rectify(cnn::expr::dropout(e, options.dropout));
+    } else {
+      return cnn::expr::rectify(e);
+    }
+  }
+
+  CachedExpressionMap parser_states;  // internal cache of parser NN states
+  std::vector<std::reference_wrapper<cnn::LSTMBuilder>> all_lstms;
+  std::vector<std::reference_wrapper<cnn::LSTMBuilder>> persistent_lstms;
 };
 
 #endif /* LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_ */

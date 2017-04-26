@@ -34,7 +34,11 @@ typedef BecauseRelation::IndexList IndexList;
 
 LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
                                          const TaggerOptions& options)
-    : options(options), parser(parser_model_path) {
+    : options(options), parser(parser_model_path),
+      all_lstms({L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm,
+                 connective_lstm, cause_lstm, effect_lstm, means_lstm}),
+      persistent_lstms({L1_lstm, L2_lstm, L3_lstm, L4_lstm,
+                        action_history_lstm}) {
   vocab = *parser.GetVocab();  // now that parser is initialized, copy vocab
   // Reset actions
   vocab.action_names.clear();
@@ -96,6 +100,12 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
   //MomentumSGDTrainer sgd(model);
   sgd.eta_decay = 0.08;
   //sgd.eta_decay = 0.05;
+
+  if (options.dropout) {
+    for (auto &builder : all_lstms) {
+      builder.get().set_dropout(options.dropout);
+    }
+  }
 
   double sentences_seen = 0;
   double best_f1 = -numeric_limits<double>::infinity();
@@ -174,6 +184,12 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
         cerr << "Reached maximal F1; terminating training" << endl;
         break;
       }
+    }
+  }
+
+  if (options.dropout) {
+    for (auto &builder : all_lstms) {
+      builder.get().disable_dropout();
     }
   }
 }
@@ -509,15 +525,10 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     const vector<unsigned>& correct_actions) {
   CausalityTaggerState* state = new CausalityTaggerState(raw_sent, sentence);
 
-  vector<reference_wrapper<LSTMBuilder>> all_lstms = {
-    L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm,
-    connective_lstm, cause_lstm, effect_lstm, means_lstm};
   for (reference_wrapper<LSTMBuilder> builder : all_lstms) {
     builder.get().new_graph(*cg);
   }
   // Non-persistent LSTMs get sequences started in StartNewRelation.
-  vector<reference_wrapper<LSTMBuilder>> persistent_lstms = {
-    L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm};
   for (reference_wrapper<LSTMBuilder> builder : persistent_lstms) {
     builder.get().start_new_sequence();
   }
@@ -585,7 +596,7 @@ Expression LSTMCausalityTagger::GetTokenExpression(ComputationGraph* cg,
     args.push_back(GetParamExpr(p_subtree2t));
     args.push_back(subtree_repr);
   }
-  Expression token_repr = rectify(affine_transform(args));
+  Expression token_repr = RectifyWithDropout(affine_transform(args));
   return token_repr;
 }
 
@@ -665,7 +676,7 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
       static_cast<const CausalityTaggerState&>(state);
   // sbias + actions2S * actions_lstm + (\sum_i rel_cmpt_i2S * rel_cmpt_i)
   //       + current2S * current_token + (\sum_i LToS_i * L_i)
-  Expression state_repr = rectify(affine_transform(
+  Expression state_repr = RectifyWithDropout(affine_transform(
       {GetParamExpr(p_sbias),
        GetParamExpr(p_actions2S), action_history_lstm.back(),
        GetParamExpr(p_connective2S), connective_lstm.back(),
@@ -688,7 +699,7 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
          GetParamExpr(p_parse2sel), parser_tree_embedding}));
     Expression selected_parse_repr = cwise_multiply(parse_state_selections,
                                                     parser_tree_embedding);
-    full_state_repr = rectify(affine_transform(
+    full_state_repr = RectifyWithDropout(affine_transform(
         {GetParamExpr(p_full_state_bias),
          GetParamExpr(p_parse2pstate), selected_parse_repr,
          GetParamExpr(p_state2pstate), state_repr}));

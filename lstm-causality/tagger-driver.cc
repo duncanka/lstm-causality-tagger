@@ -62,11 +62,13 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      " before stopping training on that fold (SIGINT always works to stop)")
     ("compare-punct,c",
      "Whether to count punctuation when comparing argument spans")
-    ("subtrees,u", po::bool_switch()->default_value(true),
+    ("subtrees,u", po::value<bool>()->default_value(true),
      "Whether to include embeddings of parse subtrees in token representations")
-    ("gated-parse,g", po::bool_switch()->default_value(true),
+    ("gated-parse,g", po::value<bool>()->default_value(true),
      "Whether to include gated parse tree embedding in the overall state")
-    ("dev-eval-period,D", po::value<unsigned>()->default_value(25),
+    ("dropout,D", po::value<double>()->default_value(0.5),
+     "Dropout rate (no dropout is implemented for a value of 0)")
+    ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
      "How many training iterations to go between dev evaluations");
 
   po::options_description dcmdline_options;
@@ -112,8 +114,9 @@ int main(int argc, char** argv) {
        conf["action-dim"].as<unsigned>(),
        conf["pos-dim"].as<unsigned>(),
        conf["state-dim"].as<unsigned>(),
-       conf.count("subtrees"),
-       conf.count("gated-parse")});
+       conf["dropout"].as<double>(),
+       conf["subtrees"].as<bool>(),
+       conf["gated-parse"].as<bool>()});
   if (conf.count("train")) {
     double dev_pct = conf["dev-pct"].as<double>();
     if (dev_pct < 0.0 || dev_pct > 1.0) {
@@ -139,12 +142,13 @@ int main(int argc, char** argv) {
        << '_' << tagger.options.span_hidden_dim
        << '_' << tagger.options.action_dim
        << '_' << tagger.options.pos_dim
-       << '_' << tagger.options.state_dim;
+       << '_' << tagger.options.state_dim
+       << '_' << tagger.options.dropout;
     if (tagger.options.subtrees)
       os << "_subtrees";
     if (tagger.options.gated_parse)
       os << "_gated-parse";
-    os << "-pid" << getpid() << ".params";
+    os << "__pid" << getpid() << ".params";
     const string fname = os.str();
     cerr << "Writing parameters to file: " << fname << endl;
 
