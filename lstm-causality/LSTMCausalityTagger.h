@@ -28,6 +28,8 @@ public:
     unsigned action_dim;
     unsigned pos_dim;
     unsigned state_dim;  // dimension for the concatenated tagger state
+    bool subtrees;
+    bool gated_parse;
 
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version) {
@@ -40,6 +42,8 @@ public:
       ar & action_dim;
       ar & pos_dim;
       ar & state_dim;
+      ar & subtrees;
+      ar & gated_parse;
     }
   };
 
@@ -181,13 +185,22 @@ protected:
   };
 
   virtual std::vector<cnn::Parameters*> GetParameters() override {
-    return {p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_current2S,
-      p_actions2S, p_s2a, p_abias, p_connective2S, p_cause2S, p_effect2S,
-      p_means2S, p_parse_sel_bias, p_state_to_parse_sel, p_parse2sel,
-      p_full_state_bias, p_parse2pstate, p_state2pstate, p_w2t, p_p2t, p_v2t,
-      p_tbias, p_action_start, p_subtree2t, p_L1_guard, p_L2_guard, p_L3_guard,
-      p_L4_guard, p_connective_guard, p_cause_guard, p_effect_guard,
-      p_means_guard};
+    std::vector<cnn::Parameters*> params = {
+        p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_current2S, p_actions2S,
+        p_connective2S, p_cause2S, p_effect2S, p_means2S,
+        p_abias, p_s2a,
+        p_tbias, p_w2t, p_p2t, p_v2t,
+        p_action_start, p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard,
+        p_connective_guard, p_cause_guard, p_effect_guard, p_means_guard};
+    if (options.subtrees) {
+      auto to_add = {p_parse_sel_bias, p_state_to_parse_sel, p_parse2sel,
+                     p_full_state_bias, p_parse2pstate, p_state2pstate};
+      params.insert(params.end(), to_add.begin(), to_add.end());
+    }
+    if (options.subtrees) {
+      params.push_back(p_subtree2t);
+    }
+    return params;
   }
 
   virtual TaggerState* InitializeParserState(
@@ -245,6 +258,7 @@ protected:
 
 private:
   friend class boost::serialization::access;
+  typedef std::map<std::string, cnn::expr::Expression> CachedExpressionMap;
 
   template<class Archive>
   void save(Archive& ar, const unsigned int version) const {
@@ -286,8 +300,12 @@ private:
   Expression GetTokenExpression(cnn::ComputationGraph* cg, unsigned word_index,
                                 unsigned word_id, unsigned pos_id);
 
+  CachedExpressionMap* GetCachedParserStates() {
+    return (options.gated_parse || options.subtrees) ? &parser_states : nullptr;
+  }
+
   // Variable to internally cache NN states from the parser.
-  std::map<std::string, cnn::expr::Expression> parser_states;
+  CachedExpressionMap parser_states;
 };
 
 #endif /* LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_ */

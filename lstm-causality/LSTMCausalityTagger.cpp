@@ -130,7 +130,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
 
       ComputationGraph cg;
       vector<unsigned> parse_actions = parser.LogProbTagger(
-          &cg, sentence, true, &parser_states);
+          &cg, sentence, true, GetCachedParserStates());
       // Cache parse if we haven't yet.
       double parser_lp = as_scalar(cg.incremental_forward());
       CacheParse(sentence, parse_actions, parser_lp, corpus, sentence_index);
@@ -198,8 +198,8 @@ double LSTMCausalityTagger::DoDevEvaluation(
         corpus->correct_act_sent[sentence_index];
 
     ComputationGraph cg;
-    vector<unsigned> parse_actions = parser.LogProbTagger(&cg, sentence, true,
-                                                          &parser_states);
+    vector<unsigned> parse_actions = parser.LogProbTagger(
+        &cg, sentence, true, GetCachedParserStates());
     double parse_lp = as_scalar(cg.incremental_forward());
     CacheParse(sentence, parse_actions, parse_lp, corpus, sentence_index);
     vector<unsigned> actions = LogProbTagger(&cg, sentence, sentence.words,
@@ -445,8 +445,10 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   p_w2t = model->add_parameters({options.token_dim, options.word_dim});
   p_v2t = model->add_parameters({options.token_dim, pretrained_dim});
   p_p2t = model->add_parameters({options.token_dim, options.pos_dim});
-  // Parameters for incorporating parse info into token representation
-  p_subtree2t = model->add_parameters({options.token_dim, parser_state_size});
+  if (options.subtrees) {
+    // Parameters for incorporating parse info into token representation
+    p_subtree2t = model->add_parameters({options.token_dim, parser_state_size});
+  }
 
   // Parameters for overall state representation
   p_sbias = model->add_parameters({options.state_dim});
@@ -469,17 +471,19 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
       {options.state_dim, options.span_hidden_dim});
   p_means2S = model->add_parameters(
       {options.state_dim, options.span_hidden_dim});
-  // Parameters for incorporating parse info into state
-  p_parse_sel_bias = model->add_parameters({parser_state_size});
-  p_state_to_parse_sel = model->add_parameters(
-      {parser_state_size, options.state_dim});
-  p_parse2sel = model->add_parameters(
-      {parser_state_size, parser_state_size});
-  p_full_state_bias = model->add_parameters({options.state_dim});
-  p_parse2pstate = model->add_parameters(
-      {options.state_dim, parser_state_size});
-  p_state2pstate = model->add_parameters(
-      {options.state_dim, options.state_dim});
+  if (options.gated_parse) {
+    // Parameters for incorporating parse info into state
+    p_parse_sel_bias = model->add_parameters({parser_state_size});
+    p_state_to_parse_sel = model->add_parameters(
+        {parser_state_size, options.state_dim});
+    p_parse2sel = model->add_parameters(
+        {parser_state_size, parser_state_size});
+    p_full_state_bias = model->add_parameters({options.state_dim});
+    p_parse2pstate = model->add_parameters(
+        {options.state_dim, parser_state_size});
+    p_state2pstate = model->add_parameters(
+        {options.state_dim, options.state_dim});
+  }
 
   // Parameters for turning states into actions
   p_abias = model->add_parameters({action_size});
@@ -570,14 +574,18 @@ Expression LSTMCausalityTagger::GetTokenExpression(ComputationGraph* cg,
   Expression word = lookup(*cg, p_w, word_id);
   Expression pretrained = const_lookup(*cg, p_t, word_id);
   Expression pos = lookup(*cg, p_pos, pos_id);
-  Expression subtree_repr = parser_states.at(to_string(word_index));
   // TODO: add in the token index directly as an input?
-  Expression token_repr = rectify(affine_transform(
-      {GetParamExpr(p_tbias),
-       GetParamExpr(p_w2t), word,
-       GetParamExpr(p_p2t), pos,
-       GetParamExpr(p_v2t), pretrained,
-       GetParamExpr(p_subtree2t), subtree_repr}));
+  vector<Expression> args = {
+      GetParamExpr(p_tbias),
+      GetParamExpr(p_w2t), word,
+      GetParamExpr(p_p2t), pos,
+      GetParamExpr(p_v2t), pretrained};
+  if (options.subtrees) {
+    Expression subtree_repr = parser_states.at(to_string(word_index));
+    args.push_back(GetParamExpr(p_subtree2t));
+    args.push_back(subtree_repr);
+  }
+  Expression token_repr = rectify(affine_transform(args));
   return token_repr;
 }
 
@@ -657,7 +665,7 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
       static_cast<const CausalityTaggerState&>(state);
   // sbias + actions2S * actions_lstm + (\sum_i rel_cmpt_i2S * rel_cmpt_i)
   //       + current2S * current_token + (\sum_i LToS_i * L_i)
-  Expression state_expr = rectify(affine_transform(
+  Expression state_repr = rectify(affine_transform(
       {GetParamExpr(p_sbias),
        GetParamExpr(p_actions2S), action_history_lstm.back(),
        GetParamExpr(p_connective2S), connective_lstm.back(),
@@ -670,18 +678,23 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
        GetParamExpr(p_L3toS), L3_lstm.back(),
        GetParamExpr(p_L4toS), L4_lstm.back()}));
 
-  // Mix in parse information from full parse tree.
-  Expression parser_tree_embedding = parser_states.at("Tree");
-  Expression parse_state_selections = logistic(affine_transform(
-      {GetParamExpr(p_parse_sel_bias),
-       GetParamExpr(p_state_to_parse_sel), state_expr,
-       GetParamExpr(p_parse2sel), parser_tree_embedding}));
-  Expression selected_parse_repr = cwise_multiply(parse_state_selections,
-                                                  parser_tree_embedding);
-  Expression full_state_repr = rectify(affine_transform(
-      {GetParamExpr(p_full_state_bias),
-       GetParamExpr(p_parse2pstate), selected_parse_repr,
-       GetParamExpr(p_state2pstate), state_expr}));
+  Expression full_state_repr;
+  if (options.gated_parse) {
+    // Mix in parse information from full parse tree.
+    Expression parser_tree_embedding = parser_states.at("Tree");
+    Expression parse_state_selections = logistic(affine_transform(
+        {GetParamExpr(p_parse_sel_bias),
+         GetParamExpr(p_state_to_parse_sel), state_repr,
+         GetParamExpr(p_parse2sel), parser_tree_embedding}));
+    Expression selected_parse_repr = cwise_multiply(parse_state_selections,
+                                                    parser_tree_embedding);
+    full_state_repr = rectify(affine_transform(
+        {GetParamExpr(p_full_state_bias),
+         GetParamExpr(p_parse2pstate), selected_parse_repr,
+         GetParamExpr(p_state2pstate), state_repr}));
+  } else {
+    full_state_repr = state_repr;
+  }
 
   // abias + s2a * full_state_repr
   Expression p_a = affine_transform({GetParamExpr(p_abias), GetParamExpr(p_s2a),
