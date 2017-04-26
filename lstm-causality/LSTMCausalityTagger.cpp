@@ -727,8 +727,11 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
     list_name##i.pop_back(); \
     list_name##_lstm.rewind_one_step();
 #define SET_LIST_BASED_VARS(var_name, list, expr) \
-    var_name = list.expr; \
-    var_name##_i = list##i.expr;
+    /* For the LSTM, don't apply expr to list -- if expr is back(), for example,
+       it'll use the encoding of the whole list, not the last element. Instead,
+       use the token index from list##i to look up the relevant Expression. */ \
+    var_name##_i = list##i.expr; \
+    var_name = cst->all_tokens[var_name##_i];
 // TODO: redefine to use std::move?
 #define MOVE_LIST_ITEM(from_list, to_list, tmp_var) \
     SET_LIST_BASED_VARS(tmp_var, from_list, back()); \
