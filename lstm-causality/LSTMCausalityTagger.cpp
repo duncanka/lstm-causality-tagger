@@ -175,7 +175,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
                                 num_sentences_train, update_group_num,
                                 sentences_seen, best_f1, model_fname,
                                 &last_epoch_saved);
-      if (epoch - last_epoch_saved > epochs_cutoff) {
+      if (epoch - last_epoch_saved > epochs_cutoff && best_f1 > 0) {
         cerr << "Reached cutoff for epochs with no increase in max dev F1: "
              << epoch - last_epoch_saved << " > " << epochs_cutoff
              << "; terminating training" << endl;
