@@ -105,18 +105,19 @@ int main(int argc, char** argv) {
 
   LSTMCausalityTagger tagger(
       conf["parser-model"].as<string>(),
-      {conf["word-dim"].as<unsigned>(),
-       conf["lstm-layers"].as<unsigned>(),
-       conf["token-dim"].as<unsigned>(),
-       conf["lambda-hidden-dim"].as<unsigned>(),
-       conf["actions-hidden-dim"].as<unsigned>(),
-       conf["span-hidden-dim"].as<unsigned>(),
-       conf["action-dim"].as<unsigned>(),
-       conf["pos-dim"].as<unsigned>(),
-       conf["state-dim"].as<unsigned>(),
-       conf["dropout"].as<double>(),
-       conf["subtrees"].as<bool>(),
-       conf["gated-parse"].as<bool>()});
+      LSTMCausalityTagger::TaggerOptions{
+          conf["word-dim"].as<unsigned>(),
+          conf["lstm-layers"].as<unsigned>(),
+          conf["token-dim"].as<unsigned>(),
+          conf["lambda-hidden-dim"].as<unsigned>(),
+          conf["actions-hidden-dim"].as<unsigned>(),
+          conf["span-hidden-dim"].as<unsigned>(),
+          conf["action-dim"].as<unsigned>(),
+          conf["pos-dim"].as<unsigned>(),
+          conf["state-dim"].as<unsigned>(),
+          conf["dropout"].as<double>(),
+          conf["subtrees"].as<bool>(),
+          conf["gated-parse"].as<bool>()});
   if (conf.count("train")) {
     double dev_pct = conf["dev-pct"].as<double>();
     if (dev_pct < 0.0 || dev_pct > 1.0) {
@@ -202,6 +203,7 @@ int main(int argc, char** argv) {
                      fname, dev_eval_period, epochs_cutoff, &requested_stop);
 
         cerr << "Evaluating..." << endl;
+        tagger.LoadModel(fname);  // Reset to last saved state
         vector<unsigned> fold_test_order(
             all_sentence_indices.begin() + previous_cutoff,
             all_sentence_indices.begin() + current_cutoff);

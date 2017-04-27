@@ -53,6 +53,24 @@ LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
 }
 
 
+void LSTMCausalityTagger::LoadModel(const string& model_path) {
+  cerr << "Loading tagger model from " << model_path << "...";
+  model.release();
+  cnn::ps->restore_state(initial_param_pool_state);
+  auto t_start = chrono::high_resolution_clock::now();
+  ifstream model_file(model_path.c_str(), ios::binary);
+  if (!model_file) {
+    cerr << "Unable to open model file; aborting" << endl;
+    abort();
+  }
+  eos::portable_iarchive archive(model_file);
+  archive >> *this;
+  auto t_end = chrono::high_resolution_clock::now();
+  auto ms_passed = chrono::duration<double, milli>(t_end - t_start).count();
+  cerr << "done. (Loading took " << ms_passed << " milliseconds.)" << endl;
+}
+
+
 void LSTMCausalityTagger::InitializeModelAndBuilders() {
   model.reset(new cnn::Model);
 
@@ -592,7 +610,8 @@ Expression LSTMCausalityTagger::GetTokenExpression(ComputationGraph* cg,
       GetParamExpr(p_p2t), pos,
       GetParamExpr(p_v2t), pretrained};
   if (options.subtrees) {
-    Expression subtree_repr = parser_states.at(to_string(word_index));
+    Expression subtree_repr = nobackprop(
+        parser_states.at(to_string(word_index)));
     args.push_back(GetParamExpr(p_subtree2t));
     args.push_back(subtree_repr);
   }
@@ -692,7 +711,7 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
   Expression full_state_repr;
   if (options.gated_parse) {
     // Mix in parse information from full parse tree.
-    Expression parser_tree_embedding = parser_states.at("Tree");
+    Expression parser_tree_embedding = nobackprop(parser_states.at("Tree"));
     Expression parse_state_selections = logistic(affine_transform(
         {GetParamExpr(p_parse_sel_bias),
          GetParamExpr(p_state_to_parse_sel), state_repr,

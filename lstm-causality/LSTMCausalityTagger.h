@@ -54,7 +54,16 @@ public:
   LSTMCausalityTagger(const std::string& parser_model_path,
                       const TaggerOptions& options);
 
-  // TODO: add constructor for loading from model
+  LSTMCausalityTagger(const std::string& parser_model_path,
+                      const std::string& model_path)
+      : parser(parser_model_path),
+        all_lstms({L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm,
+                   connective_lstm, cause_lstm, effect_lstm, means_lstm}),
+        persistent_lstms({L1_lstm, L2_lstm, L3_lstm, L4_lstm,
+                          action_history_lstm}) {
+    initial_param_pool_state = cnn::ps->get_state();
+    LoadModel(model_path);
+  }
 
   virtual ~LSTMCausalityTagger() {}
 
@@ -69,7 +78,7 @@ public:
                                      lstm_parser::ParseTree* parse = nullptr) {
     cnn::ComputationGraph cg;
     vector<unsigned> parse_actions = parser.LogProbTagger(
-        &cg, sentence, true, &parser_states);
+        &cg, sentence, true, GetCachedParserStates());
     if (parse) {
       double parser_lp = as_scalar(cg.incremental_forward());
       auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp,
@@ -94,6 +103,8 @@ public:
     InitializeModelAndBuilders();
     InitializeNetworkParameters();
   }
+
+  void LoadModel(const std::string& model_path);
 
 protected:
   lstm_parser::LSTMParser parser;
@@ -281,7 +292,7 @@ private:
     // model knows how big it's supposed to be.
     InitializeModelAndBuilders();
 
-    FinalizeVocab(); // OK, now finalize. :)
+    FinalizeVocab(); // OK, now finalize. :) (Also initializes network params.)
 
     ar & *model;
   }
