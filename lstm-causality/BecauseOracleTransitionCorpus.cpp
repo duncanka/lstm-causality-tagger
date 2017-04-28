@@ -60,12 +60,14 @@ void GraphEnhancedParseTree::MakeGraphAndCalculateDepths() {
   // ROOT is (unsigned)-1, so it shows up last. We definitely don't want such
   // a big graph, though, so we just store it as 0 in the graph, CoNLL-style,
   // and skip it below.
-  add_edge(0, root_child, sentence_graph);
+  const string& root_arc_label = arc_labels->at(root_child);
+  add_edge(0, root_child, root_arc_label, sentence_graph);
   for (const auto& child_and_parent : parents) {
     unsigned child, parent;
     boost::tie(child, parent) = child_and_parent;
     if (child != root_child) {
-      add_edge(parent, child, sentence_graph);
+      const string& arc_label = arc_labels->at(child);
+      add_edge(parent, child, arc_label, sentence_graph);
     }
   }
   DepthRecorder depths_visitor(&token_depths);

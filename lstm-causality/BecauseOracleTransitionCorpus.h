@@ -45,8 +45,10 @@ public:
   }
 
 protected:
-  typedef boost::adjacency_list<boost::vecS, boost::vecS,
-                                boost::bidirectionalS> Graph;
+  struct dependency_label_t {};
+  typedef boost::property<dependency_label_t, std::string> DepLabelProperty;
+  typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
+                                boost::no_property, DepLabelProperty> Graph;
   std::map<unsigned, unsigned> token_depths;
   Graph sentence_graph;
 
