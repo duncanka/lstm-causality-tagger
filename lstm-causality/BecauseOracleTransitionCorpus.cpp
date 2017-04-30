@@ -38,12 +38,13 @@ const vector<string> BecauseOracleTransitionCorpus::INCOMING_CLAUSE_EDGES = {
 
 
 
+template<typename Graph>
 class DepthRecorder : public boost::default_bfs_visitor {
 public:
-  DepthRecorder(map<unsigned, unsigned>* depths) : depths(depths) {}
-
-  template<typename Edge, typename Graph>
-  void tree_edge(const Edge& e, const Graph& g) const {
+  DepthRecorder(std::map<typename Graph::vertex_descriptor, unsigned>* depths)
+      : depths(depths) {}
+  void tree_edge(const typename Graph::edge_descriptor& e,
+                 const Graph& g) const {
     unsigned parent = boost::source(e, g);
     unsigned child = boost::target(e, g);
     // On the first access of the source, the map access should initialize its
@@ -51,7 +52,7 @@ public:
     (*depths)[child] = (*depths)[parent] + 1;
   }
 
-  map<unsigned, unsigned>* depths;
+  std::map<typename Graph::vertex_descriptor, unsigned>* depths;
 };
 
 
@@ -70,7 +71,7 @@ void GraphEnhancedParseTree::MakeGraphAndCalculateDepths() {
       add_edge(parent, child, arc_label, sentence_graph);
     }
   }
-  DepthRecorder depths_visitor(&token_depths);
+  DepthRecorder<Graph> depths_visitor(&token_depths);
   breadth_first_search(sentence_graph,
                        vertex(0, sentence_graph),
                        visitor(depths_visitor));

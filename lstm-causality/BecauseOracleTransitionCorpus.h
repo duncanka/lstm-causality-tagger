@@ -49,8 +49,8 @@ protected:
   typedef boost::property<dependency_label_t, std::string> DepLabelProperty;
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
                                 boost::no_property, DepLabelProperty> Graph;
-  std::map<unsigned, unsigned> token_depths;
   Graph sentence_graph;
+  std::map<Graph::vertex_descriptor, unsigned> token_depths;
 
   void MakeGraphAndCalculateDepths();
 
