@@ -25,6 +25,11 @@ public:
   typedef boost::multi_array<typename Graph::vertex_descriptor, 2>
       PredecessorMatrix;
 
+  struct ParsePathLink {
+    const std::string& arc_label;
+    bool reversed;
+  };
+
   static const std::vector<std::string> SUBJECT_EDGE_LABELS;
 
   GraphEnhancedParseTree(const lstm_parser::Sentence& sentence)
@@ -63,14 +68,32 @@ public:
         | boost::adaptors::transformed(get_child_from_edge);
   }
 
+  std::vector<ParsePathLink> GetParsePath(unsigned source, unsigned dest) {
+    std::vector<ParsePathLink> path;
+    Graph::edge_descriptor edge;
+    bool is_forward_edge;
+    for (unsigned predecessor = dest; predecessor != source;
+         dest = predecessor) {
+      predecessor = path_predecessors[source][dest];
+      if (predecessor == static_cast<unsigned>(-1)) {
+        assert(path.empty());
+        return path;
+      }
+      tie(edge, is_forward_edge) =
+          boost::edge(predecessor, dest, sentence_graph);
+      path.push_back({sentence_graph[edge].dep_label, is_forward_edge});
+    }
+    return path;
+  }
+
 protected:
   Graph sentence_graph;
   std::map<Vertex, unsigned> token_depths;
 
   // Row i of the predecessor matrix contains information on the shortest paths
-  // from point i: each entry predecessors[i, j] gives the index of the previous
+  // from point i: each entry predecessors[i][j] gives the index of the previous
   // node in the path from point i to point j. If no path exists between point i
-  // and j, then predecessors[i, j] = -1.
+  // and j, then predecessors[i][j] = -1.
   PredecessorMatrix path_predecessors;
 
   void BuildAndAnalyzeGraph();

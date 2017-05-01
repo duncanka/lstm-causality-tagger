@@ -128,6 +128,7 @@ void GraphEnhancedParseTree::ComputeDepthsAndShortestPaths() {
   // Unfortunately, the Boost all-pairs shortest path algorithms don't allow
   // saving the predecessors, so we'll just do iterated Dijkstra (which anyway
   // is just as fast for this graph, probably).
+  // TODO: for ROOT, don't bother with Dijkstra -- just use this->parents.
   auto all_vertices = boost::vertices(pseudo_unweighted_graph);
   for (const Vertex& start : boost::make_iterator_range(all_vertices)) {
     auto predecessor_map = boost::make_iterator_property_map(
