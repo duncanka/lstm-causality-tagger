@@ -82,4 +82,13 @@ typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
 }
 
 
+template <class Container>
+bool Contains(const Container& container,
+              const typename Container::value_type& element) {
+  auto find_result = std::find(std::begin(container), std::end(container),
+                               element);
+  return find_result != std::end(container);
+}
+
+
 #endif /* LSTM_CAUSALITY_UTILITIES_H_ */
