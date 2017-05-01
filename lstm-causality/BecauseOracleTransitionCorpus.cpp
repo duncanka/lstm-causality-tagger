@@ -1,6 +1,6 @@
 #include <boost/algorithm/cxx11/any_of.hpp>
-#include <boost/graph/graph_traits.hpp>
 #include <boost/graph/breadth_first_search.hpp>
+#include <boost/graph/graph_traits.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
@@ -40,34 +40,6 @@ const vector<string> BecauseOracleTransitionCorpus::INCOMING_CLAUSE_EDGES = {
 
 const vector<string> GraphEnhancedParseTree::SUBJECT_EDGE_LABELS = {
   "nsubj", "csubj", "nsubjpass", "csubjpass"
-};
-
-
-template<typename Graph>
-class PredecessorAndDepthRecorder : public boost::default_bfs_visitor {
-public:
-  PredecessorAndDepthRecorder(
-      typename Graph::vertex_descriptor source,
-      GraphEnhancedParseTree::PredecessorMatrix* predecessors,
-      std::map<typename Graph::vertex_descriptor, unsigned>* depths = nullptr)
-      : source(source), depths(depths), path_predecessors(predecessors) {}
-
-  void tree_edge(const typename Graph::edge_descriptor& e,
-                 const Graph& g) const {
-    typename Graph::vertex_descriptor parent = boost::source(e, g);
-    typename Graph::vertex_descriptor child = boost::target(e, g);
-    if (depths) {
-      // On the first access of the source, the map access should initialize its
-      // distance to be 0.
-      (*depths)[child] = (*depths)[parent] + 1;
-    }
-    (*path_predecessors)[source][child] = parent;
-  }
-
-private:
-  typename Graph::vertex_descriptor source;
-  std::map<typename Graph::vertex_descriptor, unsigned>* depths;
-  GraphEnhancedParseTree::PredecessorMatrix* path_predecessors;
 };
 
 
@@ -117,22 +89,15 @@ void GraphEnhancedParseTree::BuildAndAnalyzeGraph() {
 void GraphEnhancedParseTree::ComputeDepthsAndShortestPaths() {
   std::fill(path_predecessors.origin(),
             path_predecessors.origin() + path_predecessors.num_elements(), -1);
-  // For the rest of the nodes, just calculate path predecessors.
-  for (const auto& token_id_and_word : sentence.get().words) {
-    const unsigned token_id = token_id_and_word.first;
-    if (token_id == lstm_parser::Corpus::ROOT_TOKEN_ID) {
-      // BFS search from ROOT is special: vertex = 0, and calculate token depths
-      PredecessorAndDepthRecorder<Graph> bfs_recorder(0, &path_predecessors,
-                                                      &token_depths);
-      breadth_first_search(sentence_graph, vertex(0, sentence_graph),
-                           visitor(bfs_recorder));
-    } else {
-      PredecessorAndDepthRecorder<Graph> bfs_recorder(token_id,
-                                                      &path_predecessors);
-      breadth_first_search(sentence_graph, vertex(token_id, sentence_graph),
-                           visitor(bfs_recorder));
-    }
-  }
+
+  cerr << "Sentence: " << sentence.get() << endl;
+  boost::associative_property_map<map<Vertex, unsigned>> token_depths_map(
+      token_depths);
+  auto depth_visitor = boost::make_bfs_visitor(boost::record_distances(
+      token_depths_map, boost::on_tree_edge()));
+  breadth_first_search(sentence_graph, vertex(0, sentence_graph),
+                       boost::visitor(depth_visitor));
+
 }
 
 
