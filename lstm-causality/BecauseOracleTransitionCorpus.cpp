@@ -1,5 +1,6 @@
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/graph/breadth_first_search.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -87,10 +88,7 @@ void GraphEnhancedParseTree::BuildAndAnalyzeGraph() {
 
 
 void GraphEnhancedParseTree::ComputeDepthsAndShortestPaths() {
-  std::fill(path_predecessors.origin(),
-            path_predecessors.origin() + path_predecessors.num_elements(), -1);
-
-  cerr << "Sentence: " << sentence.get() << endl;
+  // First compute unweighted depths from ROOT using BFS.
   boost::associative_property_map<map<Vertex, unsigned>> token_depths_map(
       token_depths);
   auto depth_visitor = boost::make_bfs_visitor(boost::record_distances(
@@ -98,6 +96,61 @@ void GraphEnhancedParseTree::ComputeDepthsAndShortestPaths() {
   breadth_first_search(sentence_graph, vertex(0, sentence_graph),
                        boost::visitor(depth_visitor));
 
+  // For shortest paths, we want to allow following arcs in both directions, so
+  // we create artificial back-edges for each one-way arc.
+  Graph pseudo_unweighted_graph = sentence_graph;
+  vector<Graph::edge_descriptor> edges_to_replicate;
+  for (const auto& e : boost::make_iterator_range(
+      edges(pseudo_unweighted_graph))) {
+    bool reverse_exists = edge(boost::target(e, pseudo_unweighted_graph),
+                               boost::source(e, pseudo_unweighted_graph),
+                               pseudo_unweighted_graph).second;
+    if (!reverse_exists) {
+      edges_to_replicate.push_back(e);
+    }
+  }
+  // Do the actual adding after to avoid iterator stability issues.
+  for (const auto& e : edges_to_replicate) {
+    boost::add_edge(boost::target(e, pseudo_unweighted_graph),
+                    boost::source(e, pseudo_unweighted_graph),
+                    {"", pseudo_unweighted_graph[e].weight},
+                    pseudo_unweighted_graph);
+  }
+
+  // Fill predecessors with -1's, since there will be some tokens that are not
+  // part of the graph at all.
+  std::fill(path_predecessors.origin(),
+            path_predecessors.origin() + path_predecessors.num_elements(), -1);
+  /*
+  const lstm_parser::Sentence& s = sentence.get();
+  cerr << "Sentence: " << s << endl;
+  //*/
+  // Unfortunately, the Boost all-pairs shortest path algorithms don't allow
+  // saving the predecessors, so we'll just do iterated Dijkstra (which anyway
+  // is just as fast for this graph, probably).
+  auto all_vertices = boost::vertices(pseudo_unweighted_graph);
+  for (const Vertex& start : boost::make_iterator_range(all_vertices)) {
+    auto predecessor_map = boost::make_iterator_property_map(
+        path_predecessors[start].begin(), boost::identity_property_map());
+    auto weight_map = get(&ArcInfo::weight, pseudo_unweighted_graph);
+    boost::dijkstra_shortest_paths(
+        pseudo_unweighted_graph, start,
+        boost::weight_map(weight_map).predecessor_map(predecessor_map));
+    /*
+    auto ConvertRoot = [](unsigned token_id) {
+      return token_id == 0 ? lstm_parser::Corpus::ROOT_TOKEN_ID : token_id;
+    };
+    for (unsigned child = 0; child < GetGraphSize(); ++child) {
+      unsigned predecessor = path_predecessors[start][child];
+      cerr << "On path from "
+           << s.vocab.int_to_words.at(s.words.at(ConvertRoot(start)))
+           << ": set parent of "
+           << s.vocab.int_to_words.at(s.words.at(ConvertRoot(child))) << " to "
+           << s.vocab.int_to_words.at(s.words.at(ConvertRoot(predecessor)))
+           << endl;
+    }
+    //*/
+  }
 }
 
 
