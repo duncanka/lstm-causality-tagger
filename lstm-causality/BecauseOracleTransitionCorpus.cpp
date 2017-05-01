@@ -4,6 +4,7 @@
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/multi_array.hpp>
 #include <cstddef>
 #include <cassert>
 #include <fstream>
@@ -14,6 +15,7 @@
 #include <string>
 
 #include "BecauseOracleTransitionCorpus.h"
+#include "utilities.h"
 
 namespace fs = boost::filesystem;
 using namespace std;
@@ -36,45 +38,101 @@ const vector<string> BecauseOracleTransitionCorpus::INCOMING_CLAUSE_EDGES = {
     "ccomp", "xcomp", "csubj", "csubjpass", "advcl", "acl", "acl:relcl"
 };
 
-
-
-template<typename Graph>
-class DepthRecorder : public boost::default_bfs_visitor {
-public:
-  DepthRecorder(std::map<typename Graph::vertex_descriptor, unsigned>* depths)
-      : depths(depths) {}
-  void tree_edge(const typename Graph::edge_descriptor& e,
-                 const Graph& g) const {
-    unsigned parent = boost::source(e, g);
-    unsigned child = boost::target(e, g);
-    // On the first access of the source, the map access should initialize its
-    // distance to be 0.
-    (*depths)[child] = (*depths)[parent] + 1;
-  }
-
-  std::map<typename Graph::vertex_descriptor, unsigned>* depths;
+const vector<string> GraphEnhancedParseTree::SUBJECT_EDGE_LABELS = {
+  "nsubj", "csubj", "nsubjpass", "csubjpass"
 };
 
 
-void GraphEnhancedParseTree::MakeGraphAndCalculateDepths() {
+template<typename Graph>
+class PredecessorAndDepthRecorder : public boost::default_bfs_visitor {
+public:
+  PredecessorAndDepthRecorder(
+      typename Graph::vertex_descriptor source,
+      GraphEnhancedParseTree::PredecessorMatrix* predecessors,
+      std::map<typename Graph::vertex_descriptor, unsigned>* depths = nullptr)
+      : source(source), depths(depths), path_predecessors(predecessors) {}
+
+  void tree_edge(const typename Graph::edge_descriptor& e,
+                 const Graph& g) const {
+    typename Graph::vertex_descriptor parent = boost::source(e, g);
+    typename Graph::vertex_descriptor child = boost::target(e, g);
+    if (depths) {
+      // On the first access of the source, the map access should initialize its
+      // distance to be 0.
+      (*depths)[child] = (*depths)[parent] + 1;
+    }
+    (*path_predecessors)[source][child] = parent;
+  }
+
+private:
+  typename Graph::vertex_descriptor source;
+  std::map<typename Graph::vertex_descriptor, unsigned>* depths;
+  GraphEnhancedParseTree::PredecessorMatrix* path_predecessors;
+};
+
+
+void GraphEnhancedParseTree::BuildAndAnalyzeGraph() {
   using namespace boost;
   // ROOT is (unsigned)-1, so it shows up last. We definitely don't want such
   // a big graph, though, so we just store it as 0 in the graph, CoNLL-style,
   // and skip it below.
   const string& root_arc_label = arc_labels->at(root_child);
-  add_edge(0, root_child, root_arc_label, sentence_graph);
+  add_edge(0, root_child, {root_arc_label, 1.0}, sentence_graph);
+
+  // Adjust edge weights to make better paths preferred.
+  vector<unsigned> xcomp_children;
+  vector<unsigned> subjects;
   for (const auto& child_and_parent : parents) {
     unsigned child, parent;
     boost::tie(child, parent) = child_and_parent;
     if (child != root_child) {
+      float weight = 1.0;
       const string& arc_label = arc_labels->at(child);
-      add_edge(parent, child, arc_label, sentence_graph);
+      if (arc_label == "xcomp") {
+        weight = 0.98;
+        xcomp_children.push_back(child);
+      } else if (arc_label == "expl" || boost::starts_with(arc_label, "acl")) {
+        weight = 1.01;
+      } else if (Contains(SUBJECT_EDGE_LABELS, arc_label)) {
+        subjects.push_back(child);
+      }
+      add_edge(parent, child, {arc_label, weight}, sentence_graph);
     }
   }
-  DepthRecorder<Graph> depths_visitor(&token_depths);
-  breadth_first_search(sentence_graph,
-                       vertex(0, sentence_graph),
-                       visitor(depths_visitor));
+
+  // We still need to adjust the weights on subject children of xcomps.
+  for (const auto& child_and_parent : parents) {
+    unsigned child, parent;
+    boost::tie(child, parent) = child_and_parent;
+    if (Contains(xcomp_children, parent) && Contains(subjects, child)) {
+      Graph::edge_descriptor e = edge(parent, child, sentence_graph).first;
+      sentence_graph[e].weight = 0.985;
+    }
+  }
+
+  ComputeDepthsAndShortestPaths();
+}
+
+
+void GraphEnhancedParseTree::ComputeDepthsAndShortestPaths() {
+  std::fill(path_predecessors.origin(),
+            path_predecessors.origin() + path_predecessors.num_elements(), -1);
+  // For the rest of the nodes, just calculate path predecessors.
+  for (const auto& token_id_and_word : sentence.get().words) {
+    const unsigned token_id = token_id_and_word.first;
+    if (token_id == lstm_parser::Corpus::ROOT_TOKEN_ID) {
+      // BFS search from ROOT is special: vertex = 0, and calculate token depths
+      PredecessorAndDepthRecorder<Graph> bfs_recorder(0, &path_predecessors,
+                                                      &token_depths);
+      breadth_first_search(sentence_graph, vertex(0, sentence_graph),
+                           visitor(bfs_recorder));
+    } else {
+      PredecessorAndDepthRecorder<Graph> bfs_recorder(token_id,
+                                                      &path_predecessors);
+      breadth_first_search(sentence_graph, vertex(token_id, sentence_graph),
+                           visitor(bfs_recorder));
+    }
+  }
 }
 
 

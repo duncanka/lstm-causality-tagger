@@ -3,6 +3,7 @@
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
+#include <boost/multi_array.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <map>
 #include <memory>
@@ -14,17 +15,35 @@
 
 class GraphEnhancedParseTree : public lstm_parser::ParseTree {
 public:
+  struct ArcInfo {
+    std::string dep_label;
+    float weight;
+  };
+  typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
+                                boost::no_property, ArcInfo> Graph;
+  typedef Graph::vertex_descriptor Vertex;
+  typedef boost::multi_array<typename Graph::vertex_descriptor, 2>
+      PredecessorMatrix;
+
+  static const std::vector<std::string> SUBJECT_EDGE_LABELS;
+
   GraphEnhancedParseTree(const lstm_parser::Sentence& sentence)
-      : ParseTree(sentence, false), sentence_graph(GetGraphSize()) {}
+      : ParseTree(sentence, false), sentence_graph(GetGraphSize()),
+        path_predecessors(boost::array<unsigned, 2>{GetGraphSize(),
+                                                    GetGraphSize()}) {}
 
   GraphEnhancedParseTree(ParseTree&& tree)
-      : ParseTree(std::move(tree)), sentence_graph(GetGraphSize()) {
-    MakeGraphAndCalculateDepths();
+      : ParseTree(std::move(tree)), sentence_graph(GetGraphSize()),
+        path_predecessors(boost::array<unsigned, 2>{GetGraphSize(),
+                                                    GetGraphSize()}) {
+    BuildAndAnalyzeGraph();
   }
 
   GraphEnhancedParseTree(const ParseTree& tree)
-      : ParseTree(tree), sentence_graph(GetGraphSize()) {
-    MakeGraphAndCalculateDepths();
+      : ParseTree(tree), sentence_graph(GetGraphSize()),
+        path_predecessors(boost::array<unsigned, 2>{GetGraphSize(),
+                                                    GetGraphSize()}) {
+    BuildAndAnalyzeGraph();
   }
 
   unsigned GetTokenDepth(unsigned token_id) const {
@@ -45,14 +64,18 @@ public:
   }
 
 protected:
-  struct dependency_label_t {};
-  typedef boost::property<dependency_label_t, std::string> DepLabelProperty;
-  typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-                                boost::no_property, DepLabelProperty> Graph;
   Graph sentence_graph;
-  std::map<Graph::vertex_descriptor, unsigned> token_depths;
+  std::map<Vertex, unsigned> token_depths;
 
-  void MakeGraphAndCalculateDepths();
+  // Row i of the predecessor matrix contains information on the shortest paths
+  // from point i: each entry predecessors[i, j] gives the index of the previous
+  // node in the path from point i to point j. If no path exists between point i
+  // and j, then predecessors[i, j] = -1.
+  PredecessorMatrix path_predecessors;
+
+  void BuildAndAnalyzeGraph();
+
+  void ComputeDepthsAndShortestPaths();
 
   unsigned GetGraphSize() const {
     // To determine the size of the graph, we find the index of the last token
