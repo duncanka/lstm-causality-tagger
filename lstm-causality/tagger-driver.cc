@@ -212,7 +212,7 @@ int main(int argc, char** argv) {
             all_sentence_indices.begin() + previous_cutoff,
             all_sentence_indices.begin() + current_cutoff);
         CausalityMetrics evaluation = tagger.Evaluate(
-            full_corpus, fold_test_order, compare_punct);
+            &full_corpus, fold_test_order, compare_punct);
         cerr << "Evaluation for fold " << fold + 1 << " ("
              << fold_test_order.size() << " test sentences)" << endl;
         IndentingOStreambuf indent(cerr);

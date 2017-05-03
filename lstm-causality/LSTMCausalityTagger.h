@@ -77,21 +77,19 @@ public:
              const volatile sig_atomic_t* requested_stop = nullptr);
 
   std::vector<CausalityRelation> Tag(const lstm_parser::Sentence& sentence,
-                                     lstm_parser::ParseTree* parse = nullptr) {
+                                     GraphEnhancedParseTree* parse) {
     cnn::ComputationGraph cg;
     vector<unsigned> parse_actions = parser.LogProbTagger(
         &cg, sentence, true, GetCachedParserStates());
-    if (parse) {
-      double parser_lp = as_scalar(cg.incremental_forward());
-      auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp,
-                                          parse->IsLabeled());
-      *parse = std::move(tree);
-    }
+    double parser_lp = as_scalar(cg.incremental_forward());
+    auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp,
+                                        true);
+    *parse = GraphEnhancedParseTree(std::move(tree));
     std::vector<unsigned> actions = LogProbTagger(&cg, sentence, false);
     return Decode(sentence, actions);
   }
 
-  CausalityMetrics Evaluate(const BecauseOracleTransitionCorpus& corpus,
+  CausalityMetrics Evaluate(BecauseOracleTransitionCorpus* corpus,
                             const std::vector<unsigned>& selections,
                             bool compare_punct = false);
 

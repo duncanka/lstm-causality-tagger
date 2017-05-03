@@ -442,20 +442,21 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
 
 
 CausalityMetrics LSTMCausalityTagger::Evaluate(
-    const BecauseOracleTransitionCorpus& corpus,
+    BecauseOracleTransitionCorpus* corpus,
     const vector<unsigned>& selections, bool compare_punct) {
   CausalityMetrics evaluation;
   for (unsigned sentence_index : selections) {
-    const Sentence& sentence = corpus.sentences[sentence_index];
+    Sentence* sentence = &corpus->sentences[sentence_index];
     const vector<unsigned>& gold_actions =
-        corpus.correct_act_sent[sentence_index];
-    vector<CausalityRelation> gold = Decode(sentence, gold_actions);
-    ParseTree parse(sentence);
-    vector<CausalityRelation> predicted = Tag(sentence, &parse);
-    GraphEnhancedParseTree parse_with_depths(move(parse));
-    evaluation += CausalityMetrics(gold, predicted, corpus, parse_with_depths,
-                                   SpanTokenFilter {compare_punct, sentence,
-                                       corpus.pos_is_punct});
+        corpus->correct_act_sent[sentence_index];
+    auto parse_with_depths = new GraphEnhancedParseTree(*sentence);
+    corpus->sentence_parses[sentence_index].reset(parse_with_depths);
+    sentence->tree = parse_with_depths;
+    vector<CausalityRelation> predicted = Tag(*sentence, parse_with_depths);
+    vector<CausalityRelation> gold = Decode(*sentence, gold_actions);
+    evaluation += CausalityMetrics(
+        gold, predicted, *corpus, *parse_with_depths,
+        SpanTokenFilter {compare_punct, *sentence, corpus->pos_is_punct});
   }
   return evaluation;
 }
