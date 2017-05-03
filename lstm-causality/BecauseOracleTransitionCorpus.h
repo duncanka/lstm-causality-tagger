@@ -26,6 +26,8 @@ public:
       PredecessorMatrix;
 
   struct ParsePathLink {
+    unsigned start;
+    unsigned end;
     const std::string& arc_label;
     bool reversed;
   };
@@ -68,20 +70,27 @@ public:
         | boost::adaptors::transformed(get_child_from_edge);
   }
 
-  std::vector<ParsePathLink> GetParsePath(unsigned source, unsigned dest) {
+  std::vector<ParsePathLink> GetParsePath(unsigned source,
+                                          unsigned dest) const {
+    source = ConvertRoot(source);
+    dest = ConvertRoot(dest);
     std::vector<ParsePathLink> path;
     Graph::edge_descriptor edge;
     bool is_forward_edge;
     for (unsigned predecessor = dest; predecessor != source;
          dest = predecessor) {
-      predecessor = path_predecessors[source][dest];
+      predecessor = ConvertRoot(path_predecessors[source][dest]);
       if (predecessor == static_cast<unsigned>(-1)) {
         assert(path.empty());
         return path;
       }
       tie(edge, is_forward_edge) =
           boost::edge(predecessor, dest, sentence_graph);
-      path.push_back({sentence_graph[edge].dep_label, is_forward_edge});
+      if (!is_forward_edge) {
+        edge = boost::edge(dest, predecessor, sentence_graph).first;
+      }
+      path.push_back({predecessor, dest, sentence_graph[edge].dep_label,
+                      is_forward_edge});
     }
     return path;
   }
@@ -106,6 +115,14 @@ protected:
     // index in the graph, and the graph is 0-indexed.
     return (++GetSentence().words.rbegin())->first + 1;
   }
+
+  unsigned ConvertRoot(unsigned token_id, bool from_graph = false) const {
+    if (from_graph)
+      return token_id == 0 ? lstm_parser::Corpus::ROOT_TOKEN_ID : token_id;
+    else
+      return token_id == lstm_parser::Corpus::ROOT_TOKEN_ID ? 0 : token_id;
+  };
+
 };
 
 class BecauseOracleTransitionCorpus: public lstm_parser::TrainingCorpus {

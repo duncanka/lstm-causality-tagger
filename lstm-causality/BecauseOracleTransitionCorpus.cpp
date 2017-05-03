@@ -138,17 +138,14 @@ void GraphEnhancedParseTree::ComputeDepthsAndShortestPaths() {
         pseudo_unweighted_graph, start,
         boost::weight_map(weight_map).predecessor_map(predecessor_map));
     /*
-    auto ConvertRoot = [](unsigned token_id) {
-      return token_id == 0 ? lstm_parser::Corpus::ROOT_TOKEN_ID : token_id;
-    };
     for (unsigned child = 0; child < GetGraphSize(); ++child) {
       unsigned predecessor = path_predecessors[start][child];
       cerr << "On path from "
-           << s.vocab.int_to_words.at(s.words.at(ConvertRoot(start)))
+           << s.vocab.int_to_words.at(s.words.at(ConvertRoot(start, true)))
            << ": set parent of "
-           << s.vocab.int_to_words.at(s.words.at(ConvertRoot(child))) << " to "
-           << s.vocab.int_to_words.at(s.words.at(ConvertRoot(predecessor)))
-           << endl;
+           << s.vocab.int_to_words.at(s.words.at(ConvertRoot(child, true)))
+           << " to " << s.vocab.int_to_words.at(s.words.at(
+                            ConvertRoot(predecessor, true))) << endl;
     }
     //*/
   }
