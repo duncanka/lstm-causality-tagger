@@ -35,8 +35,8 @@ typedef BecauseRelation::IndexList IndexList;
 LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
                                          const TaggerOptions& options)
     : options(options), parser(parser_model_path),
-      all_lstms({L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm,
-                 connective_lstm, cause_lstm, effect_lstm, means_lstm}),
+      sentence_lstms({L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm,
+                      connective_lstm, cause_lstm, effect_lstm, means_lstm}),
       persistent_lstms({L1_lstm, L2_lstm, L3_lstm, L4_lstm,
                         action_history_lstm}) {
   vocab = *parser.GetVocab();  // now that parser is initialized, copy vocab
@@ -84,6 +84,9 @@ void LSTMCausalityTagger::InitializeModelAndBuilders() {
                         options.lambda_hidden_dim, model.get());
   action_history_lstm = LSTMBuilder(options.lstm_layers, options.action_dim,
                                     options.actions_hidden_dim, model.get());
+  // Add one to rel_dim for whether it's forward or back.
+  parse_path_lstm = LSTMBuilder(options.lstm_layers, parser.options.rel_dim + 1,
+                                options.parse_path_hidden_dim, model.get());
   connective_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
                                 options.span_hidden_dim, model.get());
   cause_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
@@ -120,7 +123,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
   //sgd.eta_decay = 0.05;
 
   if (options.dropout) {
-    for (auto &builder : all_lstms) {
+    for (auto &builder : sentence_lstms) {
       builder.get().set_dropout(options.dropout);
     }
   }
@@ -150,7 +153,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
       }
 
       unsigned sentence_index = selections[sub_order[sentence_i]];
-      const Sentence& sentence = corpus->sentences[sentence_index];
+      Sentence* sentence = &corpus->sentences[sentence_index];
       const vector<unsigned>& correct_actions =
           corpus->correct_act_sent[sentence_index];
 
@@ -158,11 +161,11 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
 
       ComputationGraph cg;
       vector<unsigned> parse_actions = parser.LogProbTagger(
-          &cg, sentence, true, GetCachedParserStates());
+          &cg, *sentence, true, GetCachedParserStates());
       // Cache parse if we haven't yet.
       double parser_lp = as_scalar(cg.incremental_forward());
-      CacheParse(sentence, parse_actions, parser_lp, corpus, sentence_index);
-      LogProbTagger(&cg, sentence, sentence.words, true, correct_actions,
+      CacheParse(sentence, corpus, sentence_index, parse_actions, parser_lp);
+      LogProbTagger(&cg, *sentence, sentence->words, true, correct_actions,
                     &correct);
       double lp = as_scalar(cg.incremental_forward());
       if (lp < 0) {
@@ -206,7 +209,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
   }
 
   if (options.dropout) {
-    for (auto &builder : all_lstms) {
+    for (auto &builder : sentence_lstms) {
       builder.get().disable_dropout();
     }
   }
@@ -227,31 +230,31 @@ double LSTMCausalityTagger::DoDevEvaluation(
   const auto t_start = chrono::high_resolution_clock::now();
   for (unsigned sii = num_sentences_train; sii < num_sentences; ++sii) {
     unsigned sentence_index = selections[sii];
-    const Sentence& sentence = corpus->sentences[sentence_index];
+    Sentence* sentence = &corpus->sentences[sentence_index];
     const vector<unsigned>& correct_actions =
         corpus->correct_act_sent[sentence_index];
 
     ComputationGraph cg;
     vector<unsigned> parse_actions = parser.LogProbTagger(
-        &cg, sentence, true, GetCachedParserStates());
+        &cg, *sentence, true, GetCachedParserStates());
     double parse_lp = as_scalar(cg.incremental_forward());
-    CacheParse(sentence, parse_actions, parse_lp, corpus, sentence_index);
-    vector<unsigned> actions = LogProbTagger(&cg, sentence, sentence.words,
+    CacheParse(sentence, corpus, sentence_index, parse_actions, parse_lp);
+    vector<unsigned> actions = LogProbTagger(&cg, *sentence, sentence->words,
                                              false, correct_actions,
                                              &correct_dev);
     llh_dev += as_scalar(cg.incremental_forward());
-    vector<CausalityRelation> predicted = Decode(sentence, actions);
+    vector<CausalityRelation> predicted = Decode(*sentence, actions);
 
     const vector<unsigned>& gold_actions =
         corpus->correct_act_sent[sentence_index];
-    vector<CausalityRelation> gold = Decode(sentence, gold_actions);
+    vector<CausalityRelation> gold = Decode(*sentence, gold_actions);
 
     num_actions += actions.size();
     const GraphEnhancedParseTree& parse =
         *corpus->sentence_parses[sentence_index];
     evaluation += CausalityMetrics(
         gold, predicted, *corpus, parse,
-        SpanTokenFilter{compare_punct, sentence, corpus->pos_is_punct});
+        SpanTokenFilter{compare_punct, *sentence, corpus->pos_is_punct});
   }
 
   auto t_end = chrono::high_resolution_clock::now();
@@ -497,6 +500,8 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   p_current2S = model->add_parameters({options.state_dim, options.token_dim});
   p_actions2S = model->add_parameters(
       {options.state_dim, options.actions_hidden_dim});
+  p_parsepath2S = model->add_parameters(
+      {options.state_dim, options.parse_path_hidden_dim});
   p_connective2S = model->add_parameters(
       {options.state_dim, options.span_hidden_dim});
   p_cause2S = model->add_parameters(
@@ -525,6 +530,7 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
 
   // Parameters for guard/start items in empty lists
   p_action_start = model->add_parameters({options.action_dim});
+  p_parse_path_start = model->add_parameters({parser.options.rel_dim + 1});
   p_L1_guard = model->add_parameters({options.token_dim});
   p_L2_guard = model->add_parameters({options.token_dim});
   p_L3_guard = model->add_parameters({options.token_dim});
@@ -543,10 +549,12 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     const vector<unsigned>& correct_actions) {
   CausalityTaggerState* state = new CausalityTaggerState(raw_sent, sentence);
 
-  for (reference_wrapper<LSTMBuilder> builder : all_lstms) {
+  for (reference_wrapper<LSTMBuilder> builder : sentence_lstms) {
     builder.get().new_graph(*cg);
   }
-  // Non-persistent LSTMs get sequences started in StartNewRelation.
+  parse_path_lstm.new_graph(*cg);
+
+  // Non-persistent sentence LSTMs get sequences started in StartNewRelation.
   for (reference_wrapper<LSTMBuilder> builder : persistent_lstms) {
     builder.get().start_new_sequence();
   }
@@ -580,8 +588,8 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     const unsigned token_index = index_and_word_id.first;
     const unsigned word_id = index_and_word_id.second;
     const unsigned pos_id = raw_sent.poses.at(token_index);
-    Expression token_repr = GetTokenExpression(cg, token_index, word_id,
-                                               pos_id);
+    Expression token_repr = GetTokenEmbedding(cg, token_index, word_id,
+                                              pos_id);
 
     state->L4.push_back(token_repr);
     state->L4i.push_back(token_index);
@@ -596,10 +604,10 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
 }
 
 
-Expression LSTMCausalityTagger::GetTokenExpression(ComputationGraph* cg,
-                                                   unsigned word_index,
-                                                   unsigned word_id,
-                                                   unsigned pos_id) {
+Expression LSTMCausalityTagger::GetTokenEmbedding(ComputationGraph* cg,
+                                                  unsigned word_index,
+                                                  unsigned word_id,
+                                                  unsigned pos_id) {
   Expression word = lookup(*cg, p_w, word_id);
   Expression pretrained = const_lookup(*cg, p_t, word_id);
   Expression pos = lookup(*cg, p_pos, pos_id);
@@ -689,6 +697,50 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
 }
 
 
+Expression LSTMCausalityTagger::GetParsePathEmbedding(
+    const CausalityTaggerState& state) {
+  parse_path_lstm.start_new_sequence();
+  parse_path_lstm.add_input(GetParamExpr(p_parse_path_start));
+
+  if (state.currently_processing_rel
+      && state.current_arg_token_i != static_cast<unsigned>(-1)) {
+    const GraphEnhancedParseTree* tree = static_cast<GraphEnhancedParseTree*>(
+        state.raw_sentence.tree);
+    auto parse_path = tree->GetParsePath(state.current_conn_token_i,
+                                         state.current_arg_token_i);
+
+    for (const GraphEnhancedParseTree::ParsePathLink& arc : parse_path) {
+      const vector<string>& action_names = parser.GetVocab()->action_names;
+      auto GetActionIter = [&arc, &action_names](bool is_left) {
+        string action_name = (is_left ? "RIGHT-ARC(" : "LEFT-ARC(")
+            + arc.arc_label + ")";
+        return find(action_names.begin(), action_names.end(), action_name);
+      };
+
+      // TODO: is this a sensible way to handle left vs. right arc?
+      // (In particular, SWAPs will screw up directions.)
+      bool is_left = arc.start < arc.end;
+      auto action_iter = GetActionIter(is_left);
+      if (action_iter == action_names.end()) {
+        action_iter = GetActionIter(!is_left);
+      }
+      if (action_iter == action_names.end()) {
+        cerr << "Invalid arc label: " << arc.arc_label << endl;
+        abort();
+      }
+      int action_id = action_iter - action_names.begin();
+      ComputationGraph* cg = state.current_arg_token.pg;
+      Expression relation = const_lookup(*cg, parser.p_r, action_id);
+      Expression back_edge = zeroes(*cg, {1}) + static_cast<cnn::real>(
+          arc.reversed);
+      parse_path_lstm.add_input(concatenate({relation, back_edge}));
+    }
+  }
+
+  return parse_path_lstm.back();
+}
+
+
 Expression LSTMCausalityTagger::GetActionProbabilities(
     const TaggerState& state) {
   const CausalityTaggerState& real_state =
@@ -703,6 +755,7 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
        GetParamExpr(p_effect2S), effect_lstm.back(),
        GetParamExpr(p_means2S), means_lstm.back(),
        GetParamExpr(p_current2S), real_state.current_conn_token,
+       GetParamExpr(p_parsepath2S), GetParsePathEmbedding(real_state),
        GetParamExpr(p_L1toS), L1_lstm.back(),
        GetParamExpr(p_L2toS), L2_lstm.back(),
        GetParamExpr(p_L3toS), L3_lstm.back(),

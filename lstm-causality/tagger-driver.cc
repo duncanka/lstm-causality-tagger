@@ -53,6 +53,8 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Dimension of the hidden state of each lambda LSTM")
     ("actions-hidden-dim,A", po::value<unsigned>()->default_value(32),
      "Dimension of the hidden state of the action history LSTM")
+    ("parse-path-hidden-dim", po::value<unsigned>()->default_value(12),
+     "Dimension of the hidden state of the parse path embedding LSTM")
     ("span-hidden-dim,S", po::value<unsigned>()->default_value(32),
      "Dimension of each connective/argument span LSTM's hidden state")
     ("lstm-layers,l", po::value<unsigned>()->default_value(2),
@@ -111,6 +113,7 @@ int main(int argc, char** argv) {
           conf["token-dim"].as<unsigned>(),
           conf["lambda-hidden-dim"].as<unsigned>(),
           conf["actions-hidden-dim"].as<unsigned>(),
+          conf["parse-path-hidden-dim"].as<unsigned>(),
           conf["span-hidden-dim"].as<unsigned>(),
           conf["action-dim"].as<unsigned>(),
           conf["pos-dim"].as<unsigned>(),
@@ -140,6 +143,7 @@ int main(int argc, char** argv) {
        << '_' << tagger.options.token_dim
        << '_' << tagger.options.lambda_hidden_dim
        << '_' << tagger.options.actions_hidden_dim
+       << '_' << tagger.options.parse_path_hidden_dim
        << '_' << tagger.options.span_hidden_dim
        << '_' << tagger.options.action_dim
        << '_' << tagger.options.pos_dim

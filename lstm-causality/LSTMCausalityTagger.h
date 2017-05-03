@@ -24,6 +24,7 @@ public:
     unsigned token_dim;
     unsigned lambda_hidden_dim;
     unsigned actions_hidden_dim;
+    unsigned parse_path_hidden_dim;
     unsigned span_hidden_dim;
     unsigned action_dim;
     unsigned pos_dim;
@@ -39,6 +40,7 @@ public:
       ar & token_dim;
       ar & lambda_hidden_dim;
       ar & actions_hidden_dim;
+      ar & parse_path_hidden_dim;
       ar & span_hidden_dim;
       ar & action_dim;
       ar & pos_dim;
@@ -57,8 +59,8 @@ public:
   LSTMCausalityTagger(const std::string& parser_model_path,
                       const std::string& model_path)
       : parser(parser_model_path),
-        all_lstms({L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm,
-                   connective_lstm, cause_lstm, effect_lstm, means_lstm}),
+        sentence_lstms({L1_lstm, L2_lstm, L3_lstm, L4_lstm, action_history_lstm,
+                        connective_lstm, cause_lstm, effect_lstm, means_lstm}),
         persistent_lstms({L1_lstm, L2_lstm, L3_lstm, L4_lstm,
                           action_history_lstm}) {
     initial_param_pool_state = cnn::ps->get_state();
@@ -114,7 +116,9 @@ protected:
   cnn::LSTMBuilder L2_lstm;  // processed words to left of current word
   cnn::LSTMBuilder L3_lstm;  // unprocessed words to right of current word
   cnn::LSTMBuilder L4_lstm;  // processed words to left of current word
+
   cnn::LSTMBuilder action_history_lstm;
+  cnn::LSTMBuilder parse_path_lstm;  // path btw current word and current conn.
 
   cnn::LSTMBuilder connective_lstm;
   cnn::LSTMBuilder cause_lstm;
@@ -135,6 +139,7 @@ protected:
   cnn::Parameters* p_L4toS;         // lambda 4 lstm to tagger state
   cnn::Parameters* p_current2S;     // current token to tagger state
   cnn::Parameters* p_actions2S;     // action history lstm to tagger state
+  cnn::Parameters* p_parsepath2S;   // parse path to tagger state
   cnn::Parameters* p_s2a;           // parser state to action
   cnn::Parameters* p_abias;         // bias for final action output
   cnn::Parameters* p_connective2S;  // connective to relation embedding
@@ -161,7 +166,8 @@ protected:
   cnn::Parameters* p_L2_guard;
   cnn::Parameters* p_L3_guard;
   cnn::Parameters* p_L4_guard;
-  cnn::Parameters* p_action_start;  // action bias
+  cnn::Parameters* p_action_start;      // action bias
+  cnn::Parameters* p_parse_path_start;  // parse path bias
   // Guards for per-instance LSTMs
   cnn::Parameters* p_connective_guard;
   cnn::Parameters* p_cause_guard;
@@ -200,10 +206,11 @@ protected:
   virtual std::vector<cnn::Parameters*> GetParameters() override {
     std::vector<cnn::Parameters*> params = {
         p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_current2S, p_actions2S,
-        p_connective2S, p_cause2S, p_effect2S, p_means2S,
+        p_parsepath2S, p_connective2S, p_cause2S, p_effect2S, p_means2S,
         p_abias, p_s2a,
         p_tbias, p_w2t, p_p2t, p_v2t,
-        p_action_start, p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard,
+        p_parse_path_start, p_action_start, p_L1_guard, p_L2_guard, p_L3_guard,
+          p_L4_guard,
         p_connective_guard, p_cause_guard, p_effect_guard, p_means_guard};
     if (options.gated_parse) {
       auto to_add = {p_parse_sel_bias, p_state_to_parse_sel, p_parse2sel,
@@ -255,15 +262,17 @@ protected:
                          double best_f1, const std::string& model_fname,
                          double* last_epoch_saved);
 
-  void CacheParse(const lstm_parser::Sentence& sentence,
-                  const std::vector<unsigned>& parse_actions, double parser_lp,
+  void CacheParse(lstm_parser::Sentence* sentence,
                   BecauseOracleTransitionCorpus* corpus,
-                  unsigned sentence_index) const {
+                  unsigned sentence_index,
+                  const std::vector<unsigned>& parse_actions,
+                  double parser_lp) const {
     if (!corpus->sentence_parses[sentence_index]) {
-      auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp,
+      auto tree = parser.RecoverParseTree(*sentence, parse_actions, parser_lp,
                                           true);
-      corpus->sentence_parses[sentence_index].reset(
-          new GraphEnhancedParseTree(std::move(tree)));
+      auto tree_with_graph = new GraphEnhancedParseTree(std::move(tree));
+      corpus->sentence_parses[sentence_index].reset(tree_with_graph);
+      sentence->tree = tree_with_graph;
     }
   }
 
@@ -310,8 +319,10 @@ private:
     means_lstm.add_input(GetParamExpr(p_means_guard));
   }
 
-  Expression GetTokenExpression(cnn::ComputationGraph* cg, unsigned word_index,
-                                unsigned word_id, unsigned pos_id);
+  Expression GetTokenEmbedding(cnn::ComputationGraph* cg, unsigned word_index,
+                               unsigned word_id, unsigned pos_id);
+
+  Expression GetParsePathEmbedding(const CausalityTaggerState& state);
 
   CachedExpressionMap* GetCachedParserStates() {
     return (options.gated_parse || options.subtrees) ? &parser_states : nullptr;
@@ -326,7 +337,8 @@ private:
   }
 
   CachedExpressionMap parser_states;  // internal cache of parser NN states
-  std::vector<std::reference_wrapper<cnn::LSTMBuilder>> all_lstms;
+  std::vector<std::reference_wrapper<cnn::LSTMBuilder>> sentence_lstms;
+  // LSTMs that persist across causal instances within a sentence.
   std::vector<std::reference_wrapper<cnn::LSTMBuilder>> persistent_lstms;
 };
 
