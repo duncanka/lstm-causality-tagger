@@ -28,7 +28,7 @@ volatile sig_atomic_t requested_stop = false;
 void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
   po::options_description opts("Configuration options");
   opts.add_options()
-    ("parser-model,p",
+    ("parser-model,M",
       po::value<string>()->default_value(
           "lstm-parser/english_pos_2_32_100_20_100_12_20.params"),
      "File from which to load saved syntactic parser model")
@@ -53,8 +53,9 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Dimension of the hidden state of each lambda LSTM")
     ("actions-hidden-dim,A", po::value<unsigned>()->default_value(32),
      "Dimension of the hidden state of the action history LSTM")
-    ("parse-path-hidden-dim", po::value<unsigned>()->default_value(12),
-     "Dimension of the hidden state of the parse path embedding LSTM")
+    ("parse-path-hidden-dim,p", po::value<unsigned>()->default_value(12),
+     "Dimension of the hidden state of the parse path embedding LSTM. If 0,"
+     " parse paths are not used.")
     ("span-hidden-dim,S", po::value<unsigned>()->default_value(32),
      "Dimension of each connective/argument span LSTM's hidden state")
     ("lstm-layers,l", po::value<unsigned>()->default_value(2),
@@ -68,8 +69,8 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Whether to include embeddings of parse subtrees in token representations")
     ("gated-parse,g", po::value<bool>()->default_value(true),
      "Whether to include gated parse tree embedding in the overall state")
-    ("dropout,D", po::value<double>()->default_value(0.0),
-     "Dropout rate (no dropout is implemented for a value of 0)")
+    ("dropout,D", po::value<float>()->default_value(0.0),
+     "Dropout rate (no dropout is performed for a value of 0)")
     ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
      "How many training iterations to go between dev evaluations");
 
@@ -118,7 +119,7 @@ int main(int argc, char** argv) {
           conf["action-dim"].as<unsigned>(),
           conf["pos-dim"].as<unsigned>(),
           conf["state-dim"].as<unsigned>(),
-          conf["dropout"].as<double>(),
+          conf["dropout"].as<float>(),
           conf["subtrees"].as<bool>(),
           conf["gated-parse"].as<bool>()});
   if (conf.count("train")) {
@@ -130,6 +131,10 @@ int main(int argc, char** argv) {
     if (!conf.count("training-data")) {
       cerr << "Can't train without training corpus!"
               " Please provide --training-data." << endl;
+      abort();
+    }
+    if (tagger.options.dropout >= 1.0) {
+      cerr << "Invalid dropout rate: " << tagger.options.dropout << endl;
       abort();
     }
     double epochs_cutoff = conf["epochs-cutoff"].as<double>();

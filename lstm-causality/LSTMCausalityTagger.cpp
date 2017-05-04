@@ -84,9 +84,12 @@ void LSTMCausalityTagger::InitializeModelAndBuilders() {
                         options.lambda_hidden_dim, model.get());
   action_history_lstm = LSTMBuilder(options.lstm_layers, options.action_dim,
                                     options.actions_hidden_dim, model.get());
-  // Add one to rel_dim for whether it's forward or back.
-  parse_path_lstm = LSTMBuilder(options.lstm_layers, parser.options.rel_dim + 1,
-                                options.parse_path_hidden_dim, model.get());
+  if (options.parse_path_hidden_dim > 0) {
+    parse_path_lstm = LSTMBuilder(options.lstm_layers,
+                                  // Add bit to rel_dim for forward vs back edge
+                                  parser.options.rel_dim + 1,
+                                  options.parse_path_hidden_dim, model.get());
+  }
   connective_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
                                 options.span_hidden_dim, model.get());
   cause_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
@@ -501,8 +504,6 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   p_current2S = model->add_parameters({options.state_dim, options.token_dim});
   p_actions2S = model->add_parameters(
       {options.state_dim, options.actions_hidden_dim});
-  p_parsepath2S = model->add_parameters(
-      {options.state_dim, options.parse_path_hidden_dim});
   p_connective2S = model->add_parameters(
       {options.state_dim, options.span_hidden_dim});
   p_cause2S = model->add_parameters(
@@ -531,7 +532,11 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
 
   // Parameters for guard/start items in empty lists
   p_action_start = model->add_parameters({options.action_dim});
-  p_parse_path_start = model->add_parameters({parser.options.rel_dim + 1});
+  if (options.parse_path_hidden_dim > 0) {
+    p_parse_path_start = model->add_parameters({parser.options.rel_dim + 1});
+    p_parsepath2S = model->add_parameters(
+        {options.state_dim, options.parse_path_hidden_dim});
+  }
   p_L1_guard = model->add_parameters({options.token_dim});
   p_L2_guard = model->add_parameters({options.token_dim});
   p_L3_guard = model->add_parameters({options.token_dim});
@@ -553,7 +558,9 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
   for (reference_wrapper<LSTMBuilder> builder : sentence_lstms) {
     builder.get().new_graph(*cg);
   }
-  parse_path_lstm.new_graph(*cg);
+  if (options.parse_path_hidden_dim > 0) {
+    parse_path_lstm.new_graph(*cg);
+  }
 
   // Non-persistent sentence LSTMs get sequences started in StartNewRelation.
   for (reference_wrapper<LSTMBuilder> builder : persistent_lstms) {
@@ -700,6 +707,8 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
 
 Expression LSTMCausalityTagger::GetParsePathEmbedding(
     const CausalityTaggerState& state) {
+  assert(options.parse_path_hidden_dim > 0);
+
   parse_path_lstm.start_new_sequence();
   parse_path_lstm.add_input(GetParamExpr(p_parse_path_start));
 
@@ -748,19 +757,22 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
       static_cast<const CausalityTaggerState&>(state);
   // sbias + actions2S * actions_lstm + (\sum_i rel_cmpt_i2S * rel_cmpt_i)
   //       + current2S * current_token + (\sum_i LToS_i * L_i)
-  Expression state_repr = RectifyWithDropout(affine_transform(
-      {GetParamExpr(p_sbias),
-       GetParamExpr(p_actions2S), action_history_lstm.back(),
-       GetParamExpr(p_connective2S), connective_lstm.back(),
-       GetParamExpr(p_cause2S), cause_lstm.back(),
-       GetParamExpr(p_effect2S), effect_lstm.back(),
-       GetParamExpr(p_means2S), means_lstm.back(),
-       GetParamExpr(p_current2S), real_state.current_conn_token,
-       GetParamExpr(p_parsepath2S), GetParsePathEmbedding(real_state),
-       GetParamExpr(p_L1toS), L1_lstm.back(),
-       GetParamExpr(p_L2toS), L2_lstm.back(),
-       GetParamExpr(p_L3toS), L3_lstm.back(),
-       GetParamExpr(p_L4toS), L4_lstm.back()}));
+  vector<Expression> state_args = {GetParamExpr(p_sbias),
+      GetParamExpr(p_actions2S), action_history_lstm.back(),
+      GetParamExpr(p_connective2S), connective_lstm.back(),
+      GetParamExpr(p_cause2S), cause_lstm.back(),
+      GetParamExpr(p_effect2S), effect_lstm.back(),
+      GetParamExpr(p_means2S), means_lstm.back(),
+      GetParamExpr(p_current2S), real_state.current_conn_token,
+      GetParamExpr(p_L1toS), L1_lstm.back(),
+      GetParamExpr(p_L2toS), L2_lstm.back(),
+      GetParamExpr(p_L3toS), L3_lstm.back(),
+      GetParamExpr(p_L4toS), L4_lstm.back()};
+  if (options.parse_path_hidden_dim > 0) {
+    state_args.push_back(GetParamExpr(p_parsepath2S));
+    state_args.push_back(GetParsePathEmbedding(real_state));
+  }
+  Expression state_repr = RectifyWithDropout(affine_transform(state_args));
 
   Expression full_state_repr;
   if (options.gated_parse) {
