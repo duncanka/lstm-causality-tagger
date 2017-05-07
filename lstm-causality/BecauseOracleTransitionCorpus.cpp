@@ -152,8 +152,34 @@ void GraphEnhancedParseTree::ComputeDepthsAndShortestPaths() {
 }
 
 
+vector<GraphEnhancedParseTree::ParsePathLink>
+    GraphEnhancedParseTree::GetParsePath(unsigned source, unsigned dest) const {
+  source = ConvertRoot(source);
+  dest = ConvertRoot(dest);
+  vector<ParsePathLink> path;
+  Graph::edge_descriptor edge;
+  bool is_forward_edge;
+  for (unsigned predecessor = dest; predecessor != source;
+       dest = predecessor) {
+    predecessor = ConvertRoot(path_predecessors[source][dest]);
+    if (predecessor == static_cast<unsigned>(-1)) {
+      assert(path.empty());
+      return path;
+    }
+    tie(edge, is_forward_edge) =
+        boost::edge(predecessor, dest, sentence_graph);
+    if (!is_forward_edge) {
+      edge = boost::edge(dest, predecessor, sentence_graph).first;
+    }
+    path.push_back({predecessor, dest, sentence_graph[edge].dep_label,
+                    is_forward_edge});
+  }
+  return path;
+}
+
+
 void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadSentences(
-    const std::string& directory_path, Corpus* corpus) const {
+    const string& directory_path, Corpus* corpus) const {
   BecauseOracleTransitionCorpus* training_corpus =
       static_cast<BecauseOracleTransitionCorpus*>(corpus);
 

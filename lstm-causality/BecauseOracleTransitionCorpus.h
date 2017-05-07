@@ -70,30 +70,7 @@ public:
         | boost::adaptors::transformed(get_child_from_edge);
   }
 
-  std::vector<ParsePathLink> GetParsePath(unsigned source,
-                                          unsigned dest) const {
-    source = ConvertRoot(source);
-    dest = ConvertRoot(dest);
-    std::vector<ParsePathLink> path;
-    Graph::edge_descriptor edge;
-    bool is_forward_edge;
-    for (unsigned predecessor = dest; predecessor != source;
-         dest = predecessor) {
-      predecessor = ConvertRoot(path_predecessors[source][dest]);
-      if (predecessor == static_cast<unsigned>(-1)) {
-        assert(path.empty());
-        return path;
-      }
-      tie(edge, is_forward_edge) =
-          boost::edge(predecessor, dest, sentence_graph);
-      if (!is_forward_edge) {
-        edge = boost::edge(dest, predecessor, sentence_graph).first;
-      }
-      path.push_back({predecessor, dest, sentence_graph[edge].dep_label,
-                      is_forward_edge});
-    }
-    return path;
-  }
+  std::vector<ParsePathLink> GetParsePath(unsigned source, unsigned dest) const;
 
 protected:
   Graph sentence_graph;
