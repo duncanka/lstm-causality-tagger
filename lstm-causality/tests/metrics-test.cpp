@@ -16,8 +16,10 @@ constexpr unsigned EFFECT_INDEX = CausalityRelation::EFFECT;
 TEST(MetricsTest, JaccardIndexWorks) {
   BecauseRelation::IndexList gold = {1, 2, 3, 4, 5, 6, 7};
   BecauseRelation::IndexList predicted = {1, 3, 5, 7, 9, 11};
-  double jaccard = CausalityMetrics::CalculateJaccard(gold, predicted);
+  double jaccard = CausalityMetrics::CalculateJaccard(gold, predicted, 0);
   EXPECT_DOUBLE_EQ(4/9., jaccard);
+  jaccard = CausalityMetrics::CalculateJaccard(gold, predicted, 2);
+  EXPECT_DOUBLE_EQ(4/11., jaccard);
 }
 
 TEST(MetricsTest, F1Works) {
@@ -167,10 +169,10 @@ TEST_F(DataMetricsTest, AveragingMetricsWorks) {
       original_relations);
   vector<CausalityMetrics> to_average = {compared_metrics, self_metrics};
   AveragedCausalityMetrics averaged_metrics(make_iterator_range(to_average));
-
-  AveragedCausalityMetrics correct_metrics(
+  AveragedCausalityMetrics correct_metrics(  // start off averaging nothing
       make_iterator_range(to_average.begin(), to_average.begin()));
-  // Manually set everything in the averaged metrics.
+
+  // Manually set everything for the correct averaged metrics.
   AveragedClassificationMetrics* correct_conn_metrics =
       static_cast<AveragedClassificationMetrics*>(
           correct_metrics.connective_metrics.get());
@@ -209,7 +211,7 @@ TEST_F(DataMetricsTest, AveragingMetricsWorks) {
       static_cast<AveragedAccuracyMetrics*>(
           correct_effect_metrics->heads.get())->avg_accuracy,
       correct_effect_metrics->jaccard_index) =
-          make_tuple(6, 1, 0.9, 6, 0, 0.9, 34 / 35.);
+          make_tuple(5.5, 0.5, 0.9, 6, 0, 1, 34 / 35.);
 
   TEST_METRICS(averaged_metrics, *correct_conn_metrics,
                *correct_cause_metrics, *correct_effect_metrics);

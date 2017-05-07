@@ -159,8 +159,9 @@ inline std::ostream& operator<<(std::ostream& s,
 
 class AccuracyMetrics {
 public:
-  unsigned correct;
-  unsigned incorrect;
+  // Store as floats to make averages work
+  double correct;
+  double incorrect;
 
   AccuracyMetrics(unsigned correct, unsigned incorrect) :
       correct(correct), incorrect(incorrect) {}
@@ -168,11 +169,12 @@ public:
   virtual ~AccuracyMetrics() {}
 
   virtual double GetAccuracy() const {
-    return static_cast<double>(correct) / (correct + incorrect);
+    return correct / (correct + incorrect);
   }
 
   bool operator==(const AccuracyMetrics& other) const {
-    return correct == other.correct && incorrect == other.incorrect
+    return FloatsAlmostSame(correct, other.correct)
+        && FloatsAlmostSame(incorrect, other.incorrect)
         && FloatsAlmostSame(GetAccuracy(), other.GetAccuracy());
   }
 
@@ -185,6 +187,10 @@ public:
     return AccuracyMetrics(correct + other.correct,
                            incorrect + other.incorrect);
   }
+
+private:
+  AccuracyMetrics(double correct, double incorrect) :
+      correct(correct), incorrect(incorrect) {}
 };
 
 class AveragedAccuracyMetrics : public AccuracyMetrics {
@@ -193,11 +199,12 @@ public:
   template <class Iterator>
   AveragedAccuracyMetrics(
       boost::iterator_range<Iterator> all_metrics)
-      : AccuracyMetrics(boost::accumulate(all_metrics, AccuracyMetrics(0, 0))),
+      : AccuracyMetrics(boost::accumulate(all_metrics,
+                                          AccuracyMetrics(0u, 0u))),
         avg_accuracy(0) {
     double count = all_metrics.size();
-    correct = std::round(correct / count);
-    incorrect = std::round(incorrect / count);
+    correct = correct / count;
+    incorrect = incorrect / count;
     for (const AccuracyMetrics& metrics : all_metrics) {
       avg_accuracy += metrics.GetAccuracy();
     }
@@ -254,7 +261,8 @@ struct ArgumentMetrics {
     } else if (!std::isnan(other.jaccard_index)) {
       unsigned combined_instance_count = instance_count + other.instance_count;
       jaccard_index = (jaccard_index * instance_count
-          + other.jaccard_index * other.instance_count) / combined_instance_count;
+                       + other.jaccard_index * other.instance_count)
+          / combined_instance_count;
       instance_count = combined_instance_count;
     }
   }
@@ -372,7 +380,7 @@ public:
       const BecauseOracleTransitionCorpus& source_corpus,
       const GraphEnhancedParseTree& parse, const SpanTokenFilter& filter,
       const unsigned missing_instances = 0,
-      const std::vector<BecauseOracleTransitionCorpus::ExtrasententialArgs>&
+      const vector<BecauseOracleTransitionCorpus::ExtrasententialArgCounts>&
           missing_args = {})
       : argument_metrics(NumArgs()) {
     // TODO: theoretically, we should maybe be concerned that the relation
@@ -381,7 +389,7 @@ public:
     ConnectiveDiff diff(sentence_gold, sentence_predicted);
     unsigned tp = diff.LCS().size();
     unsigned fp = sentence_predicted.size() - tp;
-    unsigned fn = sentence_gold.size() - tp;
+    unsigned fn = sentence_gold.size() - tp + missing_instances;
 
     const typename ConnectiveDiff::IndexList matching_gold =
         diff.OrigLCSIndices();
@@ -411,13 +419,24 @@ public:
         BecauseRelation::IndexList filtered_pred(pred_span);
         ReallyDeleteIf(&filtered_pred, filter);
 
-        if (boost::equal(filtered_gold, filtered_pred))
-          ++spans_correct;
-        if ((filtered_gold.empty() && filtered_pred.empty())
-            || GetHead(gold_span, parse, source_corpus)
-               == GetHead(pred_span, parse, source_corpus))
-          ++heads_correct;
-        jaccard_sum += CalculateJaccard(filtered_gold, filtered_pred);
+        unsigned gold_arg_missing_tokens =
+            missing_args.empty() ? 0 : missing_args[gold_index][arg_num];
+        // If we have any missing tokens for the argument, assume we got the
+        // head and span wrong. (We definitely got the span wrong, and it's not
+        // even clear what it'd mean to get the head right.)
+        if (gold_arg_missing_tokens == 0) {
+          if (boost::equal(filtered_gold, filtered_pred))
+            ++spans_correct;
+          if ((filtered_gold.empty() && filtered_pred.empty())
+              || GetHead(gold_span, parse, source_corpus)
+                 == GetHead(pred_span, parse, source_corpus))
+            ++heads_correct;
+        } else {
+          std::cerr << "WARNING: missing argument tokens for relation "
+                    << sentence_gold[gold_index] << std::endl;
+        }
+        jaccard_sum += CalculateJaccard(filtered_gold, filtered_pred,
+                                        gold_arg_missing_tokens);
       }
       auto current_arg_metrics = new ArgumentMetrics(
           spans_correct, num_matching_connectives - spans_correct,
@@ -480,14 +499,16 @@ public:
 
   static double CalculateJaccard(
       const typename RelationType::IndexList& gold,
-      const typename RelationType::IndexList& predicted) {
-    if (gold.empty() && predicted.empty()) {
+      const typename RelationType::IndexList& predicted,
+      const unsigned unknown_predicted) {
+    if (gold.empty() && predicted.empty() && unknown_predicted == 0) {
       return 1.0;
     }
     IndexDiff diff(gold, predicted);
     unsigned num_matching = diff.LCS().size();
-    return num_matching / static_cast<double>(gold.size() + predicted.size()
-                                              - num_matching);
+    return num_matching
+        / static_cast<double>(gold.size() + predicted.size() + unknown_predicted
+            - num_matching);
   }
 
   static bool TokenPreferredForHead(

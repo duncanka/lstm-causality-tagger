@@ -457,7 +457,7 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
     sentence->tree = parse_with_depths;
     unsigned missing_instances =
         corpus->missing_instance_counts[sentence_index];
-    const vector<BecauseOracleTransitionCorpus::ExtrasententialArgs>&
+    const vector<BecauseOracleTransitionCorpus::ExtrasententialArgCounts>&
         missing_args = corpus->missing_arg_tokens[sentence_index];
     vector<CausalityRelation> predicted = Tag(*sentence, parse_with_depths);
     vector<CausalityRelation> gold = Decode(*sentence, gold_actions);

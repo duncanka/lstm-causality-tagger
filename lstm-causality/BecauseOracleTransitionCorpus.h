@@ -105,16 +105,12 @@ protected:
 class BecauseOracleTransitionCorpus: public lstm_parser::TrainingCorpus {
 public:
   friend class LSTMCausalityTagger;
+  typedef boost::array<unsigned, 3> ExtrasententialArgCounts;
+
   const static std::vector<std::string> PTB_PUNCT_TAGS;
   const static std::vector<std::string> PTB_VERB_TAGS;
   const static std::vector<std::string> PTB_NOUN_TAGS;
   const static std::vector<std::string> INCOMING_CLAUSE_EDGES;
-
-  struct ExtrasententialArgs {
-    unsigned cause_tokens;
-    unsigned effect_tokens;
-    unsigned means_tokens;
-  };
 
   BecauseOracleTransitionCorpus(lstm_parser::CorpusVocabulary* vocab,
                                 const std::string& file, bool is_training)
@@ -124,7 +120,8 @@ public:
   }
 
   std::vector<unsigned> missing_instance_counts;
-  std::vector<std::vector<ExtrasententialArgs>> missing_arg_tokens;
+  // Sentence x instance x argument
+  std::vector<std::vector<ExtrasententialArgCounts>> missing_arg_tokens;
 
   // Cache of sentence parses for evaluation purposes
   std::vector<std::unique_ptr<GraphEnhancedParseTree>> sentence_parses;

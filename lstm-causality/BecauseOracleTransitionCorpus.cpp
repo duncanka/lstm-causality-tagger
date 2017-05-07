@@ -258,7 +258,7 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
       training_corpus->missing_instance_counts.push_back(missing_instances);
 
       string missing_args_str;
-      vector<ExtrasententialArgs> sentence_missing_args;
+      vector<ExtrasententialArgCounts> sentence_missing_args;
       while(getline(line_stream, missing_args_str, ' ')) {
         if (!missing_args_str.empty()) {
           size_t slash_pos_1 = missing_args_str.find('/');
