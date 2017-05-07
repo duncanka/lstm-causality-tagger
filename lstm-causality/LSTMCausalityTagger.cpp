@@ -455,11 +455,16 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
     auto parse_with_depths = new GraphEnhancedParseTree(*sentence);
     corpus->sentence_parses[sentence_index].reset(parse_with_depths);
     sentence->tree = parse_with_depths;
+    unsigned missing_instances =
+        corpus->missing_instance_counts[sentence_index];
+    const vector<BecauseOracleTransitionCorpus::ExtrasententialArgs>&
+        missing_args = corpus->missing_arg_tokens[sentence_index];
     vector<CausalityRelation> predicted = Tag(*sentence, parse_with_depths);
     vector<CausalityRelation> gold = Decode(*sentence, gold_actions);
     evaluation += CausalityMetrics(
         gold, predicted, *corpus, *parse_with_depths,
-        SpanTokenFilter {compare_punct, *sentence, corpus->pos_is_punct});
+        SpanTokenFilter {compare_punct, *sentence, corpus->pos_is_punct},
+        missing_instances, missing_args);
   }
   return evaluation;
 }

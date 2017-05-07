@@ -370,7 +370,10 @@ public:
       const std::vector<RelationType>& sentence_gold,
       const std::vector<RelationType>& sentence_predicted,
       const BecauseOracleTransitionCorpus& source_corpus,
-      const GraphEnhancedParseTree& parse, const SpanTokenFilter& filter)
+      const GraphEnhancedParseTree& parse, const SpanTokenFilter& filter,
+      const unsigned missing_instances = 0,
+      const std::vector<BecauseOracleTransitionCorpus::ExtrasententialArgs>&
+          missing_args = {})
       : argument_metrics(NumArgs()) {
     // TODO: theoretically, we should maybe be concerned that the relation
     // objects get copied around inside the diff. In practice, I suspect it'll

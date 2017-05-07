@@ -5,6 +5,7 @@
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/multi_array.hpp>
 #include <cstddef>
 #include <cassert>
@@ -229,7 +230,8 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
   enum LineType {
     SENTENCE_START_LINE, STATE_LINE, RELS_LINE, ARC_LINE
   };
-  TrainingCorpus* training_corpus = static_cast<TrainingCorpus*>(corpus);
+  BecauseOracleTransitionCorpus* training_corpus =
+      static_cast<BecauseOracleTransitionCorpus*>(corpus);
 
   ifstream actions_file(file_name);
   string line;
@@ -248,7 +250,35 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
       &corpus->vocab->int_to_pos);
 
   while (getline(actions_file, line)) {
-    if (line.empty()) { // An empty line marks the end of a sentence.
+    if (boost::starts_with(line, "--")) { // extrasententials line
+      istringstream line_stream(line);
+      line_stream.get(); line_stream.get(); // skip the --
+      unsigned missing_instances;
+      line_stream >> missing_instances;
+      training_corpus->missing_instance_counts.push_back(missing_instances);
+
+      string missing_args_str;
+      vector<ExtrasententialArgs> sentence_missing_args;
+      while(getline(line_stream, missing_args_str, ' ')) {
+        if (!missing_args_str.empty()) {
+          size_t slash_pos_1 = missing_args_str.find('/');
+          size_t slash_pos_2 = missing_args_str.find('/', slash_pos_1 + 1);
+          assert(missing_args_str.find('/', slash_pos_2 + 1) == string::npos);
+          sentence_missing_args.push_back({
+            boost::lexical_cast<unsigned>(missing_args_str.data(), slash_pos_1),
+            boost::lexical_cast<unsigned>(
+                missing_args_str.data() + slash_pos_1 + 1,
+                slash_pos_2 - (slash_pos_1 + 1)),
+            boost::lexical_cast<unsigned>(
+                missing_args_str.c_str() + slash_pos_2 + 1)
+          });
+        }
+      }
+      training_corpus->missing_arg_tokens.push_back(sentence_missing_args);
+
+      getline(actions_file, line); // line break between sentences
+      assert(line.empty());
+
       if (!first) { // if first, first line is blank, but no sentence yet
         sentence[Corpus::ROOT_TOKEN_ID] = root_symbol;
         sentence_pos[Corpus::ROOT_TOKEN_ID] = root_pos_symbol;

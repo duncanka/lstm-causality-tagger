@@ -110,12 +110,21 @@ public:
   const static std::vector<std::string> PTB_NOUN_TAGS;
   const static std::vector<std::string> INCOMING_CLAUSE_EDGES;
 
+  struct ExtrasententialArgs {
+    unsigned cause_tokens;
+    unsigned effect_tokens;
+    unsigned means_tokens;
+  };
+
   BecauseOracleTransitionCorpus(lstm_parser::CorpusVocabulary* vocab,
                                 const std::string& file, bool is_training)
       : TrainingCorpus(vocab) {
     BecauseTransitionsReader(is_training).ReadSentences(file, this);
     sentence_parses.resize(sentences.size());
   }
+
+  std::vector<unsigned> missing_instance_counts;
+  std::vector<std::vector<ExtrasententialArgs>> missing_arg_tokens;
 
   // Cache of sentence parses for evaluation purposes
   std::vector<std::unique_ptr<GraphEnhancedParseTree>> sentence_parses;
