@@ -108,7 +108,7 @@ public:
   static const StringList ARG_NAMES;
   enum ArgumentType {CAUSE = 0, EFFECT = 1, MEANS = 2};
   static const StringList TYPE_NAMES;
-  enum CausationType {CONSEQUENCE = 0, MOTIVATION = 1, PURPOSE = 3};
+  enum CausationType {CONSEQUENCE = 0, MOTIVATION = 1, PURPOSE = 2};
 
   CausalityRelation(const lstm_parser::Sentence& sentence,
                     const unsigned relation_type = CONSEQUENCE,
