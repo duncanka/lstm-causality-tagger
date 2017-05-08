@@ -250,9 +250,9 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
       &corpus->vocab->int_to_pos);
 
   while (getline(actions_file, line)) {
-    if (boost::starts_with(line, "--")) { // extrasententials line
+    if (boost::starts_with(line, ">>>")) { // extrasententials line
       istringstream line_stream(line);
-      line_stream.get(); line_stream.get(); // skip the --
+      line_stream.get(); line_stream.get(); // skip the >>>
       unsigned missing_instances;
       line_stream >> missing_instances;
       training_corpus->missing_instance_counts.push_back(missing_instances);
