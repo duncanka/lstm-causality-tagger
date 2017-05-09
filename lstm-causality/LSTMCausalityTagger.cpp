@@ -314,17 +314,8 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       current_arg_token = lambda_4.front();
   };
 
-  auto EnsureCurrentRelation = [&]() {
-    if (!current_rel) {
-      relations.emplace_back(
-          sentence, CausalityRelation::CONSEQUENCE,
-          IndexList({current_conn_token}));
-      current_rel = &relations.back();
-    }
-  };
-
   auto AddArc = [&](unsigned action) {
-    EnsureCurrentRelation();
+    assert(current_rel);
     const string& arc_type = sentence.vocab.actions_to_arc_labels[action];
     vector<string> arg_names;
     boost::split(arg_names, arc_type, boost::is_any_of(","));
@@ -359,17 +350,21 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
         // action.
         assert(iter + 1 == end);
       }
+    } else if(action_name == "NEW-CONN") {
+      relations.emplace_back(sentence, CausalityRelation::CONSEQUENCE,
+                             IndexList({current_conn_token}));
+      current_rel = &relations.back();
     } else if (action_name == "NO-ARC-LEFT") {
-      EnsureCurrentRelation();
+      assert(current_rel);
       AdvanceArgTokenLeft();
     } else if (action_name == "NO-ARC-RIGHT") {
-      EnsureCurrentRelation();
+      assert(current_rel);
       AdvanceArgTokenRight();
     } /*else if (action_name == "CONN-FRAG-LEFT") {  // not currently possible
       EnsureCurrentRelation();
       current_rel->AddConnectiveToken(current_arg_token);
     } */ else if (action_name == "CONN-FRAG-RIGHT") {
-      EnsureCurrentRelation();
+      assert(current_rel);
       current_rel->AddConnectiveToken(current_arg_token);
       // Do NOT advance the argument token. It could still be part of an arg.
     } else if (starts_with(action_name, "RIGHT-ARC")) {
@@ -690,22 +685,13 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
       return !starts_with(action_name, "RIGHT")
           && !ends_with(action_name, "RIGHT");
     }
-  } else {  // not currently processing a relation
-    // NO-CONN is always legal when we're not processing a relation.
-    if (action_name[0] == 'N' && action_name[3] == 'C') {
+  } else {  // not currently processing a relation; only NO-CONN and NEW-CONN
+    if (action_name[0] == 'N'
+        && (action_name[3] == 'C' || action_name[4] == 'C')) {
       return false;
     }
 
-    // Even if we're not processing a relation, we still need to check whether
-    // we have any words to compare on the left. If we do, only leftward
-    // operations are allowed; if not, only rightward ones.
-    if (next_arg_token_is_left) {
-      return action_name[0] != 'L'              // LEFT-ARC
-          && !ends_with(action_name, "LEFT");   // NO-ARC-LEFT
-    } else {
-      return action_name[0] != 'R'              // RIGHT-ARC
-          && !ends_with(action_name, "RIGHT");  // NO-ARC-RIGHT
-    }
+    return true;
   }
 }
 
@@ -893,18 +879,8 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
     }
   };
 
-  auto EnsureRelationWithConnective = [&]() {
-    if (!cst->currently_processing_rel) {
-      // Don't start a new relation here...we should already have a blank one,
-      // either from initialization or from a previous SHIFT.
-      connective_lstm.add_input(current_conn_token);
-      cst->current_rel_conn_tokens.push_back(current_conn_token_i);
-      cst->currently_processing_rel = true;
-    }
-  };
-
   auto AddArc = [&](unsigned action) {
-    EnsureRelationWithConnective();
+    assert(cst->currently_processing_rel);
 
     const string& arc_type = vocab.actions_to_arc_labels[action];
     vector<string> arg_names;
@@ -932,11 +908,18 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
     DO_LIST_PUSH(L1, current_conn_token);
     DO_LIST_POP(L4);  // remove duplicate of current_conn_token
     SetNewConnectiveToken();
+  } else if (action_name == "NEW-CONN") {
+    assert(!cst->currently_processing_rel);
+    // Don't start a new relation here...we should already have a blank one,
+    // either from initialization or from a previous SHIFT.
+    connective_lstm.add_input(current_conn_token);
+    cst->current_rel_conn_tokens.push_back(current_conn_token_i);
+    cst->currently_processing_rel = true;
   } else if (action_name == "NO-ARC-LEFT") {
-    EnsureRelationWithConnective();
+    assert(cst->currently_processing_rel);
     AdvanceArgTokenLeft();
   } else if (action_name == "NO-ARC-RIGHT") {
-    EnsureRelationWithConnective();
+    assert(cst->currently_processing_rel);
     AdvanceArgTokenRight();
   } /* else if (action_name == "CONN-FRAG-LEFT") {  // not currently possible
     cst->current_rel_conn_tokens.push_back(current_arg_token_i);
