@@ -20,7 +20,8 @@ class CausalityOracleTransitionWriter(InstancesDocumentWriter):
         tokens = [token for token in sentence.tokens[1:]] # skip ROOT
 
         # Print sentence-initial line with tokens and POS tags.
-        print(u', '.join(u'/'.join([t.original_text.replace(' ', ''), t.pos])
+        print(u', '.join(u'/'.join([self._token_text_for_lstm(t),
+                                    self._pos_tag_for_lstm(t)])
                          for t in tokens),
               file=self._file_stream)
 
@@ -236,8 +237,7 @@ class CausalityOracleTransitionWriter(InstancesDocumentWriter):
         self._last_op = transition
 
     def _stringify_token(self, token):
-        return u'{}-{}'.format(token.original_text.replace(' ', ''),
-                               token.index)
+        return u'{}-{}'.format(self._token_text_for_lstm(token), token.index)
 
     def _stringify_token_list(self, token_list):
         token_strings = [self._stringify_token(t) for t in token_list]
@@ -262,16 +262,40 @@ class CausalityOracleTransitionWriter(InstancesDocumentWriter):
              extrasentential_args_str, u'\n\n']) # Include final blank line
         self._file_stream.write(extrasententials_line)
 
+    TOKEN_REMAPPINGS = {
+        '``': '"',
+        "''": '"',
+        '. . .': '...',
+        # "`", '"' # apparently LSTM parser expects LaTeX-format single quotes?
+    }
+    def _token_text_for_lstm(self, token):
+        text = self.TOKEN_REMAPPINGS.get(token.original_text,
+                                         token.original_text)
+        return text.replace(' ', '_')  # needed for tokens with fractions
+
+    POS_REMAPPINGS = {
+        "''": '"',
+        "``": '"',
+        '-LRB-': '(',
+        '-RRB-': ')',
+        '-LCB-': '(',
+        '-RCB-': ')',
+        '-LSB-': '(',
+        '-RSB-': ')',
+    }
+    def _pos_tag_for_lstm(self, token):
+        return self.POS_REMAPPINGS.get(token.pos, token.pos)
+
 
 def main(argv):
     FLAGS(argv) # To avoid complaints
     files_dir = argv[1]
-    
+
     reader = DirectoryReader((CausalityStandoffReader.FILE_PATTERN,),
                              CausalityStandoffReader(), True)
     reader.open(files_dir)
     documents = reader.get_all()
-    
+
     writer = CausalityOracleTransitionWriter()
     for doc in documents:
         writer.open(splitext(doc.filename)[0] + '.trans')
