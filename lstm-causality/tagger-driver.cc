@@ -71,6 +71,8 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Whether to include gated parse tree embedding in the overall state")
     ("dropout,D", po::value<float>()->default_value(0.0),
      "Dropout rate (no dropout is performed for a value of 0)")
+    ("new-conn-action,n", po::value<bool>()->default_value(false),
+     "Whether starting a relation should be a separate action")
     ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
      "How many training iterations to go between dev evaluations");
 
@@ -121,7 +123,8 @@ int main(int argc, char** argv) {
           conf["state-dim"].as<unsigned>(),
           conf["dropout"].as<float>(),
           conf["subtrees"].as<bool>(),
-          conf["gated-parse"].as<bool>()});
+          conf["gated-parse"].as<bool>(),
+          conf["new-conn-action"].as<bool>()});
   if (conf.count("train")) {
     double dev_pct = conf["dev-pct"].as<double>();
     if (dev_pct < 0.0 || dev_pct > 1.0) {
@@ -142,6 +145,13 @@ int main(int argc, char** argv) {
     unsigned dev_eval_period = conf["dev-eval-period"].as<unsigned>();
     unsigned folds = conf["folds"].as<unsigned>();
 
+    const string& training_path = conf["training-data"].as<string>();
+    BecauseOracleTransitionCorpus full_corpus(tagger.GetVocab(), training_path,
+                                              true);
+    tagger.FinalizeVocab();
+    unsigned num_sentences = full_corpus.sentences.size();
+    cerr << "Corpus size: " << num_sentences << " sentences" << endl;
+
     ostringstream os;
     os << "tagger_" << tagger.options.word_dim
        << '_' << tagger.options.lstm_layers
@@ -158,18 +168,13 @@ int main(int argc, char** argv) {
       os << "_subtrees";
     if (tagger.options.gated_parse)
       os << "_gated-parse";
+    if (tagger.options.new_conn_action)
+      os << "_new-conn";
     os << "__pid" << getpid() << ".params";
     const string fname = os.str();
     cerr << "Writing parameters to file: " << fname << endl;
 
-    const string& training_path = conf["training-data"].as<string>();
-    BecauseOracleTransitionCorpus full_corpus(tagger.GetVocab(), training_path,
-                                              true);
-    tagger.FinalizeVocab();
     signal(SIGINT, signal_callback_handler);
-
-    unsigned num_sentences = full_corpus.sentences.size();
-    cerr << "Corpus size: " << num_sentences << " sentences" << endl;
     vector<unsigned> all_sentence_indices(num_sentences);
     iota(all_sentence_indices.begin(), all_sentence_indices.end(), 0);
     random_shuffle(all_sentence_indices.begin(), all_sentence_indices.end());

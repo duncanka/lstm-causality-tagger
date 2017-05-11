@@ -32,6 +32,7 @@ public:
     double dropout;
     bool subtrees;
     bool gated_parse;
+    bool new_conn_action;
 
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version) {
@@ -48,6 +49,7 @@ public:
       ar & dropout;
       ar & subtrees;
       ar & gated_parse;
+      ar & new_conn_action;
     }
   };
 
@@ -86,7 +88,7 @@ public:
                                         true);
     *parse = GraphEnhancedParseTree(std::move(tree));
     std::vector<unsigned> actions = LogProbTagger(&cg, sentence, false);
-    return Decode(sentence, actions);
+    return Decode(sentence, actions, options.new_conn_action);
   }
 
   CausalityMetrics Evaluate(BecauseOracleTransitionCorpus* corpus,
@@ -95,7 +97,7 @@ public:
 
   static std::vector<CausalityRelation> Decode(
       const lstm_parser::Sentence& sentence,
-      const std::vector<unsigned> actions);
+      const std::vector<unsigned> actions, bool new_conn_is_action);
 
   void Reset() {
     model.release();

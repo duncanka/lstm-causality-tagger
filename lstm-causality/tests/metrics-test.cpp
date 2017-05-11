@@ -43,7 +43,8 @@ protected:
     for (unsigned i = 0; i < (*corpus)->sentences.size(); ++i) {
       const lstm_parser::Sentence& sentence = (*corpus)->sentences[i];
       const vector<unsigned>& actions = (*corpus)->correct_act_sent[i];
-      relations->push_back(LSTMCausalityTagger::Decode(sentence, actions));
+      relations->push_back(LSTMCausalityTagger::Decode(sentence, actions,
+                                                       false));
       /*
       cerr << sentence << endl;
       for (const auto& rel : relations->back()) {

@@ -5,7 +5,7 @@ from __future__ import absolute_import, print_function
 
 from collections import defaultdict, deque
 from copy import copy
-from gflags import FLAGS
+from gflags import FLAGS, DEFINE_bool, DuplicateFlagError
 import logging
 from nltk.util import flatten
 from os.path import splitext
@@ -13,6 +13,13 @@ import sys
 
 from causeway.because_data import CausalityStandoffReader, CausationInstance
 from nlpypline.data.io import DirectoryReader, InstancesDocumentWriter
+
+try:
+    DEFINE_bool('separate_new_conn', False,
+                'Whether a separate "NEW-CONN" transition should be generated'
+                ' at the start of each new relation')
+except DuplicateFlagError as e:
+    logging.warn(e)
 
 
 class CausalityOracleTransitionWriter(InstancesDocumentWriter):
@@ -162,14 +169,6 @@ class CausalityOracleTransitionWriter(InstancesDocumentWriter):
         other_connective_tokens -= set(conn_instance.connective)
         last_modified_arc_type = None
 
-        def start_new_instance():
-            self._write_transition(current_token, "NEW-CONN")
-            new_instance = CausationInstance(
-                conn_instance.sentence, cause=[], effect=[],
-                means=[], connective=[current_token])
-            self.rels.append(new_instance)
-            return new_instance
-
         while uncompared:
             token_to_compare = uncompared[first_uncompared_index]
 
@@ -204,20 +203,18 @@ class CausalityOracleTransitionWriter(InstancesDocumentWriter):
                         # interacting with a multiple-argument arc.
                         last_modified_arc_type = arc_type
                 if arcs_to_add:
-                    if instance_under_construction is None:
-                        instance_under_construction = start_new_instance()
                     trans = "{}-ARC({})".format(
                         arc_direction, ','.join(arc_type.title()
                                                 for arc_type in arcs_to_add))
-                    self._write_transition(current_token, trans)
+                    instance_under_construction = self._write_transition(
+                        current_token, trans, True, instance_under_construction)
                     for arc_type in arcs_to_add:
                         getattr(instance_under_construction, arc_type).append(
                             token_to_compare)
                 else:
-                    if instance_under_construction is None:
-                        instance_under_construction = start_new_instance()
-                    self._write_transition(current_token,
-                                           "NO-ARC-{}".format(arc_direction))
+                    instance_under_construction = self._write_transition(
+                        current_token, "NO-ARC-{}".format(arc_direction),
+                        True, instance_under_construction)
 
                 if dir_is_left:
                     compared.appendleft(uncompared.pop())
@@ -226,7 +223,22 @@ class CausalityOracleTransitionWriter(InstancesDocumentWriter):
 
         return instance_under_construction # make update visible
 
-    def _write_transition(self, current_token, transition):
+    def _write_transition(self, current_token, transition,
+                          can_generate_instance=False,
+                          instance_under_construction=None):
+        def create_new_instance():
+            new_instance = CausationInstance(
+                current_token.parent_sentence, cause=[], effect=[],
+                means=[], connective=[current_token])
+            self.rels.append(new_instance)
+            return new_instance
+
+        generate_new_instance = (can_generate_instance
+                                 and instance_under_construction is None)
+        if generate_new_instance and FLAGS.separate_new_conn:
+            self._write_transition(current_token, "NEW-CONN")
+            instance_under_construction = create_new_instance()
+
         stringified_lambdas = [self._stringify_token_list(l)
                                for l in self.lambdas]
         state_line = u"{} {} {token} {} {}".format(
@@ -235,6 +247,11 @@ class CausalityOracleTransitionWriter(InstancesDocumentWriter):
         for line in [state_line, rels_line, unicode(transition)]:
             print(line, file=self._file_stream)
         self._last_op = transition
+
+        if generate_new_instance and not FLAGS.separate_new_conn:
+            instance_under_construction = create_new_instance()
+
+        return instance_under_construction
 
     def _stringify_token(self, token):
         return u'{}-{}'.format(self._token_text_for_lstm(token), token.index)
@@ -288,18 +305,19 @@ class CausalityOracleTransitionWriter(InstancesDocumentWriter):
 
 
 def main(argv):
-    FLAGS(argv) # To avoid complaints
-    files_dir = argv[1]
+    FLAGS(argv)
+    print(["Not treating", "Treating"][FLAGS.separate_new_conn],
+          "new connectives as their own transition")
+    files_dir = argv[-1]
 
     reader = DirectoryReader((CausalityStandoffReader.FILE_PATTERN,),
                              CausalityStandoffReader(), True)
     reader.open(files_dir)
-    documents = reader.get_all()
 
     writer = CausalityOracleTransitionWriter()
-    for doc in documents:
-        writer.open(splitext(doc.filename)[0] + '.trans')
-        writer.write_all_instances(doc)
+    for document in reader:  # don't read whole corpus before outputting
+        writer.open(splitext(document.filename)[0] + '.trans')
+        writer.write_all_instances(document)
 
 if __name__ == '__main__':
     main(sys.argv)
