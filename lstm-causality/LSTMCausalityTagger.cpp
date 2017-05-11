@@ -246,13 +246,13 @@ double LSTMCausalityTagger::DoDevEvaluation(
                                              false, correct_actions,
                                              &correct_dev);
     llh_dev += as_scalar(cg.incremental_forward());
-    vector<CausalityRelation> predicted = Decode(*sentence, actions,
-                                                 options.new_conn_action);
+    vector<CausalityRelation> predicted = Decode(
+        *sentence, actions, options.new_conn_action, options.shift_action);
 
     const vector<unsigned>& gold_actions =
         corpus->correct_act_sent[sentence_index];
-    vector<CausalityRelation> gold = Decode(*sentence, gold_actions,
-                                            options.new_conn_action);
+    vector<CausalityRelation> gold = Decode(
+        *sentence, gold_actions, options.new_conn_action, options.shift_action);
 
     num_actions += actions.size();
     const GraphEnhancedParseTree& parse =
@@ -285,7 +285,7 @@ double LSTMCausalityTagger::DoDevEvaluation(
 
 vector<CausalityRelation> LSTMCausalityTagger::Decode(
     const Sentence& sentence, const vector<unsigned> actions,
-    bool new_conn_is_action) {
+    bool new_conn_is_action, bool shift_is_action) {
   // cerr << "Decoding sentence " << sentence << endl;
 
   vector<CausalityRelation> relations;
@@ -344,6 +344,32 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
   };
 
   for (auto iter = actions.begin(), end = actions.end(); iter != end; ++iter) {
+    auto CompleteRelation = [&]() {  // defined here to capture iterators
+      if (lambda_3.size() > 1) {  // contains more than just current token copy
+        assert(current_rel);
+        // Complete a relation.
+        assert(lambda_4.empty() && lambda_1.empty());  // processed all tokens?
+        while (!lambda_2.empty()) {  // move all of L2 back to L1
+          lambda_1.push_back(move(lambda_2.front()));
+          lambda_2.pop_front();
+        }
+        lambda_1.push_back(current_conn_token);
+        // Move L3 back to L4, skipping current token copy.
+        while (lambda_3.size() > 1) {
+          lambda_4.push_front(move(lambda_3.back()));
+          lambda_3.pop_back();
+        }
+        lambda_3.pop_back();  // current token copy
+        current_conn_token = lambda_4.front();
+        current_arg_token = lambda_1.back();
+      } else {
+        // If we have no more tokens to pull in, don't bother updating lambdas,
+        // but we'd better be on the last action.
+        assert(iter == end - 1);
+      }
+      current_rel = nullptr;
+    };
+
     unsigned action = *iter;
     const string& action_name = sentence.vocab.action_names[action];
     /*
@@ -424,29 +450,13 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       }
       // Don't advance the arg token.
     } else if (action_name == "SHIFT") {
-      if (lambda_3.size() > 1) {  // contains more than just current token copy
-        assert(current_rel);
-        // Complete a relation.
-        assert(lambda_4.empty() && lambda_1.empty());  // processed all tokens?
-        while (!lambda_2.empty()) {  // move all of L2 back to L1
-          lambda_1.push_back(move(lambda_2.front()));
-          lambda_2.pop_front();
-        }
-        lambda_1.push_back(current_conn_token);
-        // Move L3 back to L4, skipping current token copy.
-        while (lambda_3.size() > 1) {
-          lambda_4.push_front(move(lambda_3.back()));
-          lambda_3.pop_back();
-        }
-        lambda_3.pop_back();  // current token copy
-        current_conn_token = lambda_4.front();
-        current_arg_token = lambda_1.back();
-      } else {
-        // If we have no more tokens to pull in, don't bother updating lambdas,
-        // but we'd better be on the last action.
-        assert(iter == end - 1);
-      }
-      current_rel = nullptr;
+      assert(shift_is_action);
+      CompleteRelation();
+    }
+
+    // Don't wait for a SHIFT to complete the relation if we're not using SHIFTs.
+    if (!shift_is_action && lambda_4.empty() && lambda_1.empty()) {
+      CompleteRelation();
     }
   }
 
@@ -470,8 +480,8 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
     const vector<BecauseOracleTransitionCorpus::ExtrasententialArgCounts>&
         missing_args = corpus->missing_arg_tokens[sentence_index];
     vector<CausalityRelation> predicted = Tag(*sentence, parse_with_depths);
-    vector<CausalityRelation> gold = Decode(*sentence, gold_actions,
-                                            options.new_conn_action);
+    vector<CausalityRelation> gold = Decode(
+        *sentence, gold_actions, options.new_conn_action, options.shift_action);
     evaluation += CausalityMetrics(
         gold, predicted, *corpus, *parse_with_depths,
         SpanTokenFilter {compare_punct, *sentence, corpus->pos_is_punct},
@@ -661,8 +671,9 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
   bool next_arg_token_is_left = real_state.L1.size() > 1;
 
   if (real_state.currently_processing_rel) {
-    // SHIFT is mandatory if there are no more tokens to compare.
-    if (real_state.L1.size() <= 1 && real_state.L4.size() <= 1) {
+    // SHIFT is mandatory if it's available and no tokens are left to compare.
+    if (real_state.L1.size() <= 1 && real_state.L4.size() <= 1
+        && options.shift_action) {
       return action_name[0] != 'S' || action_name[1] != 'H';
     }
 
@@ -674,6 +685,7 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
     } else {  // processing right side
       // SHIFT is forbidden if some tokens have not yet been compared.
       if (action_name[0] == 'S' && action_name[1] == 'H') {
+        assert(options.shift_action);
         return real_state.L1.size() > 1 || real_state.L4.size() > 1;
       }
 
@@ -920,11 +932,33 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
     }
     if (!cst->currently_processing_rel) {
       // Don't start a new relation here...we should already have a blank one,
-      // either from initialization or from a previous SHIFT.
+      // either from initialization or from a previous end-of-relation.
       connective_lstm.add_input(current_conn_token);
       cst->current_rel_conn_tokens.push_back(current_conn_token_i);
       cst->currently_processing_rel = true;
     }
+  };
+
+  auto CompleteRelation = [&]() {
+    // Move L2 back to L1.
+    while (L2.size() > 1) {
+      MOVE_LIST_ITEM(L2, L1, to_push);
+    }
+    // Move L3 back to L4 -- except the last item, which we'll move to L1.
+    // (There has to be at least one item on L3.)
+    while (L3.size() > 2) {
+      MOVE_LIST_ITEM(L3, L4, to_push);
+    }
+    assert(L3.size() == 2);
+    MOVE_LIST_ITEM(L3, L1, to_push);
+    SetNewConnectiveToken();
+
+    cst->currently_processing_rel = false;
+    cst->current_rel_conn_tokens.clear();
+    cst->current_rel_cause_tokens.clear();
+    cst->current_rel_effect_tokens.clear();
+    cst->current_rel_means_tokens.clear();
+    StartNewRelation();  // relation LSTMs should be empty until next relation
   };
 
   auto AddArc = [&](unsigned action) {
@@ -1019,26 +1053,14 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
     connective_lstm.add_input(current_arg_token);
     cst->current_rel_conn_tokens.push_back(current_arg_token_i);
   } else if (action_name == "SHIFT") {
+    assert(options.shift_action);
     assert(L4.size() == 1 && L1.size() == 1);  // processed all tokens?
-    // Move L2 back to L1.
-    while (L2.size() > 1) {
-      MOVE_LIST_ITEM(L2, L1, to_push);
-    }
-    // Move L3 back to L4 -- except the last item, which we'll move to L1.
-    // (There has to be at least one item on L3.)
-    while (L3.size() > 2) {
-      MOVE_LIST_ITEM(L3, L4, to_push);
-    }
-    assert(L3.size() == 2);
-    MOVE_LIST_ITEM(L3, L1, to_push);
-    SetNewConnectiveToken();
+    CompleteRelation();
+  }
 
-    cst->currently_processing_rel = false;
-    cst->current_rel_conn_tokens.clear();
-    cst->current_rel_cause_tokens.clear();
-    cst->current_rel_effect_tokens.clear();
-    cst->current_rel_means_tokens.clear();
-    StartNewRelation();  // relation LSTMs should be empty until next relation
+  // Don't wait for a SHIFT to complete the relation if we're not using SHIFTs.
+  if (!options.shift_action && L4.size() == 1 && L1.size() == 1) {
+    CompleteRelation();
   }
 
   cst->prev_action = action;

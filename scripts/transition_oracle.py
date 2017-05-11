@@ -18,6 +18,9 @@ try:
     DEFINE_bool('separate_new_conn', False,
                 'Whether a separate "NEW-CONN" transition should be generated'
                 ' at the start of each new relation')
+    DEFINE_bool('separate_shift', False,
+                'Whether a separate "SHIFT" transition should be generated when'
+                ' a relation is completed')
 except DuplicateFlagError as e:
     logging.warn(e)
 
@@ -88,7 +91,8 @@ class CausalityOracleTransitionWriter(InstancesDocumentWriter):
                     instance_under_construction)
                 self._compare_with_conn(current_token, False, token_instances,
                                         instance_under_construction)
-                self._write_transition(current_token, 'SHIFT')
+                if FLAGS.separate_shift:
+                    self._write_transition(current_token, 'SHIFT')
 
             else:
                 self._write_transition(current_token, 'NO-CONN')
@@ -307,7 +311,9 @@ class CausalityOracleTransitionWriter(InstancesDocumentWriter):
 def main(argv):
     FLAGS(argv)
     print(["Not treating", "Treating"][FLAGS.separate_new_conn],
-          "new connectives as their own transition")
+          "starting a connective as its own transition")
+    print(["Not treating", "Treating"][FLAGS.separate_shift],
+          "completing a connective as its own transition")
     files_dir = argv[-1]
 
     reader = DirectoryReader((CausalityStandoffReader.FILE_PATTERN,),

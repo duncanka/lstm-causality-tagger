@@ -72,7 +72,9 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("dropout,D", po::value<float>()->default_value(0.0),
      "Dropout rate (no dropout is performed for a value of 0)")
     ("new-conn-action,n", po::value<bool>()->default_value(false),
-     "Whether starting a relation should be a separate action")
+     "Whether starting a relation is a separate action (must match data)")
+    ("shift-action,n", po::value<bool>()->default_value(false),
+     "Whether completing a relation is a separate action (must match data)")
     ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
      "How many training iterations to go between dev evaluations");
 
@@ -124,7 +126,8 @@ int main(int argc, char** argv) {
           conf["dropout"].as<float>(),
           conf["subtrees"].as<bool>(),
           conf["gated-parse"].as<bool>(),
-          conf["new-conn-action"].as<bool>()});
+          conf["new-conn-action"].as<bool>(),
+          conf["shift-action"].as<bool>()});
   if (conf.count("train")) {
     double dev_pct = conf["dev-pct"].as<double>();
     if (dev_pct < 0.0 || dev_pct > 1.0) {
@@ -170,6 +173,8 @@ int main(int argc, char** argv) {
       os << "_gated-parse";
     if (tagger.options.new_conn_action)
       os << "_new-conn";
+    if (tagger.options.shift_action)
+      os << "_shift";
     os << "__pid" << getpid() << ".params";
     const string fname = os.str();
     cerr << "Writing parameters to file: " << fname << endl;
