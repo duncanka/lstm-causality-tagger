@@ -767,10 +767,9 @@ Expression LSTMCausalityTagger::GetParsePathEmbedding(
 
       // TODO: is this a sensible way to handle left vs. right arc?
       // (In particular, SWAPs will screw up directions.)
-      bool is_left = arc.start < arc.end;
-      auto action_iter = GetActionIter(is_left);
+      auto action_iter = GetActionIter(!arc.reversed);
       if (action_iter == action_names.end()) {
-        action_iter = GetActionIter(!is_left);
+        action_iter = GetActionIter(arc.reversed);
       }
       if (action_iter == action_names.end()) {
         cerr << "Invalid arc label: " << arc.arc_label << endl;
@@ -779,9 +778,9 @@ Expression LSTMCausalityTagger::GetParsePathEmbedding(
       int action_id = action_iter - action_names.begin();
       ComputationGraph* cg = state.current_arg_token.pg;
       Expression relation = const_lookup(*cg, parser.p_r, action_id);
-      Expression back_edge = zeroes(*cg, {1}) + static_cast<cnn::real>(
+      Expression is_back_edge = zeroes(*cg, {1}) + static_cast<cnn::real>(
           arc.reversed);
-      parse_path_lstm.add_input(concatenate({relation, back_edge}));
+      parse_path_lstm.add_input(concatenate({relation, is_back_edge}));
     }
   }
 
