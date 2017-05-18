@@ -25,6 +25,10 @@ using namespace std;
 
 volatile sig_atomic_t requested_stop = false;
 
+auto POBooleanFlag(bool default_val) {
+  return po::value<bool>()->default_value(default_val)->implicit_value(true);
+}
+
 void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
   po::options_description opts("Configuration options");
   opts.add_options()
@@ -65,16 +69,18 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      " before stopping training on that fold (SIGINT always works to stop)")
     ("compare-punct,c",
      "Whether to count punctuation when comparing argument spans")
-    ("subtrees,u", po::value<bool>()->default_value(true),
+    ("subtrees,u", POBooleanFlag(true),
      "Whether to include embeddings of parse subtrees in token representations")
-    ("gated-parse,g", po::value<bool>()->default_value(true),
+    ("gated-parse,g", POBooleanFlag(true),
      "Whether to include gated parse tree embedding in the overall state")
     ("dropout,D", po::value<float>()->default_value(0.0),
      "Dropout rate (no dropout is performed for a value of 0)")
     ("new-conn-action,n", po::value<bool>()->default_value(false),
      "Whether starting a relation is a separate action (must match data)")
-    ("shift-action,n", po::value<bool>()->default_value(false),
+    ("shift-action,n", POBooleanFlag(false),
      "Whether completing a relation is a separate action (must match data)")
+    ("log-diffs,L", POBooleanFlag(false),
+     "Whether to log differences between correct and predicted")
     ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
      "How many training iterations to go between dev evaluations");
 
@@ -127,7 +133,8 @@ int main(int argc, char** argv) {
           conf["subtrees"].as<bool>(),
           conf["gated-parse"].as<bool>(),
           conf["new-conn-action"].as<bool>(),
-          conf["shift-action"].as<bool>()});
+          conf["shift-action"].as<bool>(),
+          conf["log-diffs"].as<bool>()});
   if (conf.count("train")) {
     double dev_pct = conf["dev-pct"].as<double>();
     if (dev_pct < 0.0 || dev_pct > 1.0) {

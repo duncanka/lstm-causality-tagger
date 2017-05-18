@@ -380,12 +380,10 @@ public:
       const BecauseOracleTransitionCorpus& source_corpus,
       const GraphEnhancedParseTree& parse, const SpanTokenFilter& filter,
       const unsigned missing_instances = 0,
-      const vector<BecauseOracleTransitionCorpus::ExtrasententialArgCounts>&
-          missing_args = {})
-      : argument_metrics(NumArgs()) {
-    // TODO: theoretically, we should maybe be concerned that the relation
-    // objects get copied around inside the diff. In practice, I suspect it'll
-    // just get optimized away.
+      const std::vector<
+          BecauseOracleTransitionCorpus::ExtrasententialArgCounts>&
+          missing_args = {},
+      bool log_differences = false) : argument_metrics(NumArgs()) {
     ConnectiveDiff diff(sentence_gold, sentence_predicted);
     unsigned tp = diff.LCS().size();
     unsigned fp = sentence_predicted.size() - tp;

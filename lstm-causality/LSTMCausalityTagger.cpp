@@ -485,7 +485,7 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
     evaluation += CausalityMetrics(
         gold, predicted, *corpus, *parse_with_depths,
         SpanTokenFilter {compare_punct, *sentence, corpus->pos_is_punct},
-        missing_instances, missing_args);
+        missing_instances, missing_args, options.log_differences);
   }
   return evaluation;
 }

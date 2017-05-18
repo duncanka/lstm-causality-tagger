@@ -34,6 +34,7 @@ public:
     bool gated_parse;
     bool new_conn_action;
     bool shift_action;
+    bool log_differences;
 
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version) {
