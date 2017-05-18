@@ -235,21 +235,21 @@ int main(int argc, char** argv) {
             all_sentence_indices.begin() + current_cutoff);
         CausalityMetrics evaluation = tagger.Evaluate(
             &full_corpus, fold_test_order, compare_punct);
-        cerr << "Evaluation for fold " << fold + 1 << " ("
+        cout << "Evaluation for fold " << fold + 1 << " ("
              << fold_test_order.size() << " test sentences)" << endl;
-        IndentingOStreambuf indent(cerr);
-        cerr << evaluation << endl << endl;
+        IndentingOStreambuf indent(cout);
+        cout << evaluation << '\n' << endl;
         evaluation_results.push_back(evaluation);
 
         requested_stop = false;
         previous_cutoff = current_cutoff;
-        tagger.Reset();
+        tagger.Reset();  // Reset for next fold
       }
 
-      cerr << "Average evaluation:" << endl;
-      IndentingOStreambuf indent(cerr);
+      cout << "Average evaluation:" << '\n';
+      IndentingOStreambuf indent(cout);
       auto evals_range = boost::make_iterator_range(evaluation_results);
-      cerr << AveragedCausalityMetrics(evals_range) << endl;
+      cout << AveragedCausalityMetrics(evals_range) << endl;
     }
   }
 
