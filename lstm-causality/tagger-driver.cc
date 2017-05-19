@@ -183,8 +183,8 @@ int main(int argc, char** argv) {
     if (tagger.options.shift_action)
       os << "_shift";
     os << "__pid" << getpid() << ".params";
-    const string fname = os.str();
-    cerr << "Writing parameters to file: " << fname << endl;
+    const string model_fname = os.str();
+    cerr << "Writing parameters to file: " << model_fname << endl;
 
     signal(SIGINT, signal_callback_handler);
     vector<unsigned> all_sentence_indices(num_sentences);
@@ -192,7 +192,8 @@ int main(int argc, char** argv) {
     random_shuffle(all_sentence_indices.begin(), all_sentence_indices.end());
     if (folds <= 1) {
        tagger.Train(&full_corpus, all_sentence_indices, dev_pct, compare_punct,
-                    fname, dev_eval_period, epochs_cutoff, &requested_stop);
+                    model_fname, dev_eval_period, epochs_cutoff,
+                    &requested_stop);
      } else {
       // For cutoffs, we use one *past* the index where the fold should stop.
       vector<unsigned> fold_cutoffs(folds);
@@ -226,10 +227,11 @@ int main(int argc, char** argv) {
                == num_sentences - (current_cutoff - previous_cutoff));
 
         tagger.Train(&full_corpus, fold_train_order, dev_pct, compare_punct,
-                     fname, dev_eval_period, epochs_cutoff, &requested_stop);
+                     model_fname, dev_eval_period, epochs_cutoff,
+                     &requested_stop);
 
         cerr << "Evaluating..." << endl;
-        tagger.LoadModel(fname);  // Reset to last saved state
+        tagger.LoadModel(model_fname);  // Reset to last saved state
         vector<unsigned> fold_test_order(
             all_sentence_indices.begin() + previous_cutoff,
             all_sentence_indices.begin() + current_cutoff);

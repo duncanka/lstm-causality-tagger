@@ -14,8 +14,9 @@
 #include <gtest/gtest_prod.h>
 #include <iostream>
 #include <memory>
-#include <vector>
+#include <tuple>
 #include <utility>
+#include <vector>
 
 #include "BecauseData.h"
 #include "BecauseOracleTransitionCorpus.h"
@@ -335,6 +336,61 @@ struct SpanTokenFilter {
   const std::vector<bool>& pos_is_punct;
 };
 
+
+template <typename RelationType>  // forward declaration
+class BecauseRelationMetrics;
+
+template <typename RelationType>
+inline std::ostream& operator<<(
+    std::ostream& s, const BecauseRelationMetrics<RelationType>& metrics) {
+  s << "Connectives:";
+  {
+    IndentingOStreambuf indent(s);
+    s << '\n' << *metrics.connective_metrics;
+  }
+  s << "\nArguments:";
+  {
+    IndentingOStreambuf indent(s);
+    for (unsigned argi :
+         boost::irange(0u, BecauseRelationMetrics<RelationType>::NumArgs())) {
+      s << '\n' << RelationType::ARG_NAMES[argi] << ':';
+      IndentingOStreambuf indent2(s);
+      s << '\n' << *metrics.argument_metrics[argi];
+    }
+  }
+
+  auto log_instances = [&s](
+      const std::vector<CausalityRelation>& instances,
+      const std::string& label) {
+    if (!instances.empty()) {
+      s << label << ":\n";
+      IndentingOStreambuf indent(s);
+      for (const CausalityRelation& instance : instances) {
+        s << instance << std::endl;
+      }
+    }
+  };
+
+  s << "\n\n";
+  log_instances(metrics.argument_matches, "Correct instances");
+  log_instances(metrics.fps, "False positives");
+  log_instances(metrics.fns, "False negatives");
+
+  if (!metrics.argument_mismatches.empty()) {
+    s << "\n\nArgument mismatches:\n";
+    IndentingOStreambuf indent(s);
+    for (const auto& instance_tuple : metrics.argument_mismatches) {
+      const unsigned arg_type = std::get<2>(instance_tuple);
+      s << RelationType::ARG_NAMES[arg_type] << " mismatch:\n"
+        << "  " << std::get<0>(instance_tuple)
+        << "\n  vs.  \n" << std::get<0>(instance_tuple) << std::endl;
+    }
+  }
+
+  return s;
+}
+
+
 // TODO: add partial matching?
 template <class RelationType>
 class BecauseRelationMetrics {
@@ -405,10 +461,11 @@ public:
       double jaccard_sum = 0.0;
       for (auto both_indices : boost::combine(matching_gold, matching_pred)) {
         boost::tie(gold_index, pred_index) = both_indices;
-        const auto& gold_span =
-            sentence_gold.at(gold_index).GetArgument(arg_num);
-        const auto& pred_span =
-            sentence_predicted.at(pred_index).GetArgument(arg_num);
+        const CausalityRelation& gold_instance = sentence_gold.at(gold_index);
+        const auto& gold_span = gold_instance.GetArgument(arg_num);
+        const CausalityRelation& pred_instance =
+            sentence_predicted.at(pred_index);
+        const auto& pred_span = pred_instance.GetArgument(arg_num);
         // We're going to need to copy over the spans anyway for Jaccard index
         // calculations (diff requires random access). So we'll just copy and
         // filter the copy.
@@ -422,25 +479,46 @@ public:
         // If we have any missing tokens for the argument, assume we got the
         // head and span wrong. (We definitely got the span wrong, and it's not
         // even clear what it'd mean to get the head right.)
+        bool mismatch = false;
         if (gold_arg_missing_tokens == 0) {
-          if (boost::equal(filtered_gold, filtered_pred))
+          if (boost::equal(filtered_gold, filtered_pred)) {
             ++spans_correct;
+            if (log_differences) {
+              argument_matches.push_back(gold_instance);
+            }
+          } else {
+            mismatch = true;
+          }
+
           if ((filtered_gold.empty() && filtered_pred.empty())
               || GetHead(gold_span, parse, source_corpus)
-                 == GetHead(pred_span, parse, source_corpus))
+                 == GetHead(pred_span, parse, source_corpus)) {
             ++heads_correct;
-        } else {
-          std::cerr << "WARNING: missing argument tokens for relation "
+          }
+        } else {  // We're missing some argument tokens (cross-sentence span)
+          std::cerr << "WARNING: assuming full mismatch for argument "
+                    << RelationType::ARG_NAMES[arg_num]
+                    << " of instance with missing argument tokens: "
                     << sentence_gold[gold_index] << std::endl;
+          mismatch = true;
+        }
+        if (log_differences && mismatch) {
+          argument_mismatches.push_back(
+              std::make_tuple(gold_instance, pred_instance, arg_num));
         }
         jaccard_sum += CalculateJaccard(filtered_gold, filtered_pred,
                                         gold_arg_missing_tokens);
       }
+
       auto current_arg_metrics = new ArgumentMetrics(
           spans_correct, num_matching_connectives - spans_correct,
           heads_correct, num_matching_connectives - heads_correct,
           jaccard_sum / num_matching_connectives, num_matching_connectives);
       argument_metrics[arg_num].reset(current_arg_metrics);
+    }
+
+    if (log_differences) {
+      RecordInstanceDifferences(diff, sentence_gold, sentence_predicted);
     }
   }
 
@@ -449,6 +527,36 @@ public:
     for (size_t i = 0; i < argument_metrics.size(); ++i) {
       *argument_metrics[i] += *other.argument_metrics[i];
     }
+
+    AppendToVector(other.argument_matches.begin(), other.argument_matches.end(),
+                   &argument_matches);
+    AppendToVector(other.argument_mismatches.begin(),
+                   other.argument_mismatches.end(), &argument_mismatches);
+    AppendToVector(other.fps.begin(), other.fps.end(), &fps);
+    AppendToVector(other.fns.begin(), other.fns.end(), &fns);
+  }
+
+  void operator+=(BecauseRelationMetrics<RelationType>&& other) {
+    using std::make_move_iterator;
+    *connective_metrics += *other.connective_metrics;
+    for (size_t i = 0; i < argument_metrics.size(); ++i) {
+      *argument_metrics[i] += *other.argument_metrics[i];
+    }
+
+    // TODO: Why the @#$% doesn't vector<T>::insert() work here?? (and above)
+    AppendToVector(make_move_iterator(other.argument_matches.begin()),
+                   make_move_iterator(other.argument_matches.end()),
+                   &argument_matches);
+    AppendToVector(
+        make_move_iterator(other.argument_mismatches.begin()),
+        make_move_iterator(other.argument_mismatches.end()),
+        &argument_mismatches);
+    AppendToVector(make_move_iterator(other.fps.begin()),
+                   make_move_iterator(other.fps.end()),
+                   &fps);
+    AppendToVector(make_move_iterator(other.fns.begin()),
+                   make_move_iterator(other.fns.end()),
+                   &fns);
   }
 
   BecauseRelationMetrics<RelationType> operator+(
@@ -550,6 +658,36 @@ public:
   }
 
   static unsigned NumArgs() { return RelationType::ARG_NAMES.size(); }
+
+protected:
+  std::vector<CausalityRelation> argument_matches;
+  std::vector<std::tuple<CausalityRelation, CausalityRelation, unsigned>>
+      argument_mismatches;
+  std::vector<CausalityRelation> fps;
+  std::vector<CausalityRelation> fns;
+
+  friend std::ostream& operator<< <>(
+      std::ostream& s, const BecauseRelationMetrics<RelationType>& metrics);
+
+  template <typename Iterator, typename VectorType>
+  void AppendToVector(Iterator start, Iterator end, VectorType* vector) {
+    vector->reserve(vector->size() + (end - start));
+    for (; start != end; ++start) {
+      vector->push_back(*start);
+    }
+  }
+
+  void RecordInstanceDifferences(
+      const ConnectiveDiff& diff,
+      const std::vector<RelationType>& sentence_gold,
+      const std::vector<RelationType>& sentence_predicted) {
+    for (unsigned gold_only_index : diff.OrigOnlyIndices()) {
+      fns.push_back(sentence_gold[gold_only_index]);
+    }
+    for (unsigned pred_only_index : diff.NewOnlyIndices()) {
+      fps.push_back(sentence_predicted[pred_only_index]);
+    }
+  }
 };
 
 template <class RelationType>
@@ -572,28 +710,6 @@ public:
     }
   }
 };
-
-template <typename RelationType>
-inline std::ostream& operator<<(
-    std::ostream& s, const BecauseRelationMetrics<RelationType>& metrics) {
-  s << "Connectives:";
-  {
-    IndentingOStreambuf indent(s);
-    s << '\n' << *metrics.connective_metrics;
-  }
-  s << "\nArguments:";
-  {
-    IndentingOStreambuf indent(s);
-    for (unsigned argi :
-         boost::irange(0u, BecauseRelationMetrics<RelationType>::NumArgs())) {
-      s << '\n' << RelationType::ARG_NAMES[argi] << ':';
-      IndentingOStreambuf indent2(s);
-      s << '\n' << *metrics.argument_metrics[argi];
-    }
-  }
-
-  return s;
-}
 
 
 typedef BecauseRelationMetrics<CausalityRelation> CausalityMetrics;

@@ -20,6 +20,20 @@ public:
   typedef std::vector<unsigned> IndexList;
   typedef std::vector<std::string> StringList;
 
+  BecauseRelation(const BecauseRelation& other)
+      : arg_names(other.arg_names), type_names(other.type_names),
+        sentence(other.sentence), vocab(other.vocab),
+        relation_type(other.relation_type),
+        connective_indices(other.connective_indices),
+        arguments(other.arguments) {}
+
+  BecauseRelation(BecauseRelation&& other)
+      : arg_names(other.arg_names), type_names(other.type_names),
+        sentence(other.sentence), vocab(other.vocab),
+        relation_type(other.relation_type),
+        connective_indices(std::move(other.connective_indices)),
+        arguments(std::move(other.arguments)) {}
+
   const IndexList& GetConnectiveIndices() const { return connective_indices; }
 
   IndexList* GetConnectiveIndices() { return &connective_indices; }
