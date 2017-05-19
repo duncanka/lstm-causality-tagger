@@ -25,7 +25,7 @@ using namespace std;
 
 volatile sig_atomic_t requested_stop = false;
 
-auto POBooleanFlag(bool default_val) {
+po::typed_value<bool>* POBooleanFlag(bool default_val) {
   return po::value<bool>()->default_value(default_val)->implicit_value(true);
 }
 
@@ -75,7 +75,7 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Whether to include gated parse tree embedding in the overall state")
     ("dropout,D", po::value<float>()->default_value(0.0),
      "Dropout rate (no dropout is performed for a value of 0)")
-    ("new-conn-action,n", po::value<bool>()->default_value(false),
+    ("new-conn-action,n", POBooleanFlag(false),
      "Whether starting a relation is a separate action (must match data)")
     ("shift-action,n", POBooleanFlag(false),
      "Whether completing a relation is a separate action (must match data)")
