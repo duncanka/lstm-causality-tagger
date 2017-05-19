@@ -373,17 +373,19 @@ inline std::ostream& operator<<(
 
   s << "\n\n";
   log_instances(metrics.argument_matches, "Correct instances");
+  s << '\n';
   log_instances(metrics.fps, "False positives");
+  s << '\n';
   log_instances(metrics.fns, "False negatives");
 
   if (!metrics.argument_mismatches.empty()) {
-    s << "\n\nArgument mismatches:\n";
+    s << "\nArgument mismatches:\n";
     IndentingOStreambuf indent(s);
     for (const auto& instance_tuple : metrics.argument_mismatches) {
       const unsigned arg_type = std::get<2>(instance_tuple);
       s << RelationType::ARG_NAMES[arg_type] << " mismatch:\n"
         << "  " << std::get<0>(instance_tuple)
-        << "\n  vs.  \n" << std::get<0>(instance_tuple) << std::endl;
+        << "\n  vs.\n  " << std::get<1>(instance_tuple) << std::endl;
     }
   }
 
