@@ -51,11 +51,11 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Dimension for vector representation of words")
     ("state-dim,s", po::value<unsigned>()->default_value(72),
      "Dimension for overall tagger state")
-    ("token-dim,i", po::value<unsigned>()->default_value(48),
+    ("token-dim,i", po::value<unsigned>()->default_value(40),
      "Dimension for representation of tokens as input to span or lambda LSTMs")
-    ("lambda-hidden-dim,h", po::value<unsigned>()->default_value(48),
+    ("lambda-hidden-dim,h", po::value<unsigned>()->default_value(40),
      "Dimension of the hidden state of each lambda LSTM")
-    ("actions-hidden-dim,A", po::value<unsigned>()->default_value(32),
+    ("actions-hidden-dim,A", po::value<unsigned>()->default_value(20),
      "Dimension of the hidden state of the action history LSTM")
     ("parse-path-hidden-dim,p", po::value<unsigned>()->default_value(12),
      "Dimension of the hidden state of the parse path embedding LSTM. If 0,"
