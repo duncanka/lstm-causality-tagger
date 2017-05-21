@@ -161,7 +161,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
       const vector<unsigned>& correct_actions =
           corpus->correct_act_sent[sentence_index];
 
-      // cerr << "Starting sentence " << sentence << endl;
+      // cerr << "Starting sentence " << *sentence << endl;
 
       ComputationGraph cg;
       vector<unsigned> parse_actions = parser.LogProbTagger(
@@ -649,7 +649,9 @@ Expression LSTMCausalityTagger::GetTokenEmbedding(ComputationGraph* cg,
                                                   unsigned word_id,
                                                   unsigned pos_id) {
   Expression word = lookup(*cg, p_w, word_id);
-  Expression pretrained = const_lookup(*cg, parser.p_t, word_id);
+  unsigned pretrained_id =
+      parser.pretrained.count(word_id) ? word_id : parser.GetVocab()->kUNK;
+  Expression pretrained = const_lookup(*cg, parser.p_t, pretrained_id);
   Expression pos = const_lookup(*cg, parser.p_p, pos_id);
   // TODO: add in the token index directly as an input?
   vector<Expression> args = {

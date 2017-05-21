@@ -130,7 +130,6 @@ protected:
 
   // Lookup parameters
   cnn::LookupParameters* p_w;    // word embeddings
-  cnn::LookupParameters* p_t;    // pretrained word embeddings (not updated)
   cnn::LookupParameters* p_a;    // action embeddings (for action_history_lstm)
 
   // Parameters for overall tagger state
