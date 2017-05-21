@@ -32,6 +32,8 @@ using namespace cnn::expr;
 using namespace lstm_parser;
 typedef BecauseRelation::IndexList IndexList;
 
+#undef NDEBUG  // Keep asserts
+
 
 LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
                                          const TaggerOptions& options)
@@ -344,7 +346,8 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
     }
   };
 
-  for (auto iter = actions.begin(), end = actions.end(); iter != end; ++iter) {
+  for (auto iter = actions.begin(), actions_end = actions.end();
+       iter != actions_end; ++iter) {
     auto CompleteRelation = [&]() {  // defined here to capture iterators
       if (lambda_3.size() > 1) {  // contains more than just current token copy
         assert(current_rel);
@@ -366,7 +369,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       } else {
         // If we have no more tokens to pull in, don't bother updating lambdas,
         // but we'd better be on the last action.
-        assert(iter + 1 == end);
+        assert(iter + 1 == actions_end);
       }
 
       // Transitions can scramble argument order; make sure order is fixed.
@@ -399,7 +402,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       } else {
         // If we have no more tokens to pull in, don't bother updating lambdas,
         // but we'd better be on the last action.
-        assert(iter + 1 == end);
+        assert(iter + 1 == actions_end);
       }
     } else if(action_name == "NEW-CONN") {
       assert(new_conn_is_action);  // otherwise this action shouldn't exist
@@ -411,11 +414,9 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
     } else if (action_name == "NO-ARC-RIGHT") {
       EnsureCurrentRelation();
       AdvanceArgTokenRight();
-    } /*else if (action_name == "CONN-FRAG-LEFT") {  // not currently possible
-      EnsureCurrentRelation();
-      current_rel->AddConnectiveToken(current_arg_token);
-    } */ else if (action_name == "CONN-FRAG-RIGHT") {
-      assert(current_rel);
+    } else if (action_name == "CONN-FRAG-RIGHT"  // LEFT not currently possible
+               /*|| action_name == "CONN-FRAG-LEFT"*/) {
+      assert(current_rel && current_arg_token != current_conn_token);
       current_rel->AddConnectiveToken(current_arg_token);
       // Do NOT advance the argument token. It could still be part of an arg.
     } else if (starts_with(action_name, "RIGHT-ARC")) {
@@ -711,10 +712,14 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
       }
 
       // Another special case: forbid CONN-FRAG after SPLIT or CONN-FRAG.
-      if (action_name[0] == 'C'
-          && ((last_action_name[0] == 'S' && last_action_name[1] == 'P')
-              || last_action_name[0] == 'C'))
-        return true;
+      // Also forbid making the primary connective word (or any word before it)
+      // a connective fragment.
+      if (action_name[0] == 'C') {
+        if (starts_with(last_action_name, "SP") || last_action_name[0] == 'C'
+            || (real_state.current_arg_token_i <=
+                real_state.current_conn_token_i))
+          return true;
+      }
 
       // If it's not a split, a shift, or a forbidden post-split operation,
       // forbid any operation that doesn't act on arg tokens to the right.
@@ -722,7 +727,7 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
           && !ends_with(action_name, "RIGHT");
     }
   } else {
-    // ; NO-CONN and NEW-CONN never forbidden if we're not processing a relation
+    // NO-CONN and NEW-CONN never forbidden if we're not processing a relation
     if (action_name[0] == 'N'
         && (action_name[3] == 'C' || action_name[4] == 'C')) {
       return false;
@@ -733,9 +738,16 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
       // is forbidden if we're not processing a relation yet.
       return true;
     } else {
+      // Don't allow starting a relation with a CONN-FRAG. That would mean
+      // either that we're adding a left fragment or that we're adding the
+      // primary connective word itself as a fragment.
+      if (action_name[0] == 'C') {
+          return true;
+      }
+
       // Even if we're not processing a relation, we still need to check whether
       // we have any words to compare on the left. If we do, only leftward
-      // operations are allowed; if not, only rightward ones.
+      // relation-starting operations are allowed; if not, only rightward ones.
       if (next_arg_token_is_left) {
         return action_name[0] != 'L'              // LEFT-ARC
             && !ends_with(action_name, "FT");     // NO-ARC-LEFT
@@ -1005,10 +1017,10 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
   } else if (action_name == "NO-ARC-RIGHT") {
     EnsureRelationWithConnective();
     AdvanceArgTokenRight();
-  } /* else if (action_name == "CONN-FRAG-LEFT") {  // not currently possible
-    cst->current_rel_conn_tokens.push_back(current_arg_token_i);
-    connective_lstm.add_input(current_arg_token);
-  } */ else if (action_name == "CONN-FRAG-RIGHT") {
+  } else if (action_name == "CONN-FRAG-RIGHT"  // LEFT is not currently possible
+             /* || action_name == "CONN-FRAG-LEFT"*/) {
+    assert(cst->currently_processing_rel);
+    assert(cst->current_arg_token_i != cst->current_conn_token_i);
     cst->current_rel_conn_tokens.push_back(current_arg_token_i);
     connective_lstm.add_input(current_arg_token);
     // Do NOT advance the argument token. It could still be part of an arg.
