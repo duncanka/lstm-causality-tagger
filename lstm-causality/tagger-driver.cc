@@ -45,8 +45,6 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("train", "Whether to train the tagger")
     ("action-dim,a", po::value<unsigned>()->default_value(8),
      "Dimension for vector representation of actions")
-    ("pos-dim,P", po::value<unsigned>()->default_value(12),
-     "Dimension for vector representation of parts of speech")
     ("word-dim,w", po::value<unsigned>()->default_value(10),
      "Dimension for vector representation of words")
     ("state-dim,s", po::value<unsigned>()->default_value(72),
@@ -127,7 +125,6 @@ int main(int argc, char** argv) {
           conf["parse-path-hidden-dim"].as<unsigned>(),
           conf["span-hidden-dim"].as<unsigned>(),
           conf["action-dim"].as<unsigned>(),
-          conf["pos-dim"].as<unsigned>(),
           conf["state-dim"].as<unsigned>(),
           conf["dropout"].as<float>(),
           conf["subtrees"].as<bool>(),
@@ -171,7 +168,6 @@ int main(int argc, char** argv) {
        << '_' << tagger.options.parse_path_hidden_dim
        << '_' << tagger.options.span_hidden_dim
        << '_' << tagger.options.action_dim
-       << '_' << tagger.options.pos_dim
        << '_' << tagger.options.state_dim
        << '_' << tagger.options.dropout;
     if (tagger.options.subtrees)

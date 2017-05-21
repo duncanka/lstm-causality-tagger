@@ -502,28 +502,24 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
 
 void LSTMCausalityTagger::InitializeNetworkParameters() {
   const unsigned action_size = vocab.CountActions() + 1;
-  const unsigned pos_size = vocab.CountPOS() + 10; // bad way to handle new POS
   const unsigned vocab_size = vocab.CountWords() + 1;
+  const unsigned pos_dim = parser.p_p->dim.size(0);
   const unsigned pretrained_dim = parser.pretrained.begin()->second.size();
-  const unsigned parser_state_size = parser.options.hidden_dim;
+  const unsigned parser_state_dim = parser.options.hidden_dim;
 
   assert(!parser.pretrained.empty());
   assert(parser.options.use_pos);
 
   // Parameters for token representation
   p_w = model->add_lookup_parameters(vocab_size, {options.word_dim});
-  p_t = model->add_lookup_parameters(vocab_size, {pretrained_dim});
-  for (const auto& it : parser.pretrained)
-    p_t->Initialize(it.first, it.second);
   p_a = model->add_lookup_parameters(action_size, {options.action_dim});
-  p_pos = model->add_lookup_parameters(pos_size, {options.pos_dim});
   p_tbias = model->add_parameters({options.token_dim});
   p_w2t = model->add_parameters({options.token_dim, options.word_dim});
   p_v2t = model->add_parameters({options.token_dim, pretrained_dim});
-  p_p2t = model->add_parameters({options.token_dim, options.pos_dim});
+  p_p2t = model->add_parameters({options.token_dim, pos_dim});
   if (options.subtrees) {
     // Parameters for incorporating parse info into token representation
-    p_subtree2t = model->add_parameters({options.token_dim, parser_state_size});
+    p_subtree2t = model->add_parameters({options.token_dim, parser_state_dim});
   }
 
   // Parameters for overall state representation
@@ -549,14 +545,14 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
       {options.state_dim, options.span_hidden_dim});
   if (options.gated_parse) {
     // Parameters for incorporating parse info into state
-    p_parse_sel_bias = model->add_parameters({parser_state_size});
+    p_parse_sel_bias = model->add_parameters({parser_state_dim});
     p_state_to_parse_sel = model->add_parameters(
-        {parser_state_size, options.state_dim});
+        {parser_state_dim, options.state_dim});
     p_parse2sel = model->add_parameters(
-        {parser_state_size, parser_state_size});
+        {parser_state_dim, parser_state_dim});
     p_full_state_bias = model->add_parameters({options.state_dim});
     p_parse2pstate = model->add_parameters(
-        {options.state_dim, parser_state_size});
+        {options.state_dim, parser_state_dim});
     p_state2pstate = model->add_parameters(
         {options.state_dim, options.state_dim});
   }
@@ -652,8 +648,8 @@ Expression LSTMCausalityTagger::GetTokenEmbedding(ComputationGraph* cg,
                                                   unsigned word_id,
                                                   unsigned pos_id) {
   Expression word = lookup(*cg, p_w, word_id);
-  Expression pretrained = const_lookup(*cg, p_t, word_id);
-  Expression pos = lookup(*cg, p_pos, pos_id);
+  Expression pretrained = const_lookup(*cg, parser.p_t, word_id);
+  Expression pos = const_lookup(*cg, parser.p_p, pos_id);
   // TODO: add in the token index directly as an input?
   vector<Expression> args = {
       GetParamExpr(p_tbias),
