@@ -162,7 +162,7 @@ protected:
   cnn::Parameters* p_tbias;         // LSTM input bias
   cnn::Parameters* p_subtree2t;     // node subtree parse info to token
 
-  // LSTM guards (create biases for different LSTMs)
+  // LSTM guards
   cnn::Parameters* p_L1_guard;
   cnn::Parameters* p_L2_guard;
   cnn::Parameters* p_L3_guard;
@@ -326,7 +326,9 @@ private:
   Expression GetTokenEmbedding(cnn::ComputationGraph* cg, unsigned word_index,
                                unsigned word_id, unsigned pos_id);
 
-  Expression GetParsePathEmbedding(const CausalityTaggerState& state);
+  Expression GetParsePathEmbedding(const CausalityTaggerState& state,
+                                   unsigned source_token_id,
+                                   unsigned dest_token_id);
 
   CachedExpressionMap* GetCachedParserStates() {
     return (options.gated_parse || options.subtrees) ? &parser_states : nullptr;

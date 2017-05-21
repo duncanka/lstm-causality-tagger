@@ -629,8 +629,7 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     const unsigned token_index = index_and_word_id.first;
     const unsigned word_id = index_and_word_id.second;
     const unsigned pos_id = raw_sent.poses.at(token_index);
-    Expression token_repr = GetTokenEmbedding(cg, token_index, word_id,
-                                              pos_id);
+    Expression token_repr = GetTokenEmbedding(cg, token_index, word_id, pos_id);
 
     state->L4.push_back(token_repr);
     state->L4i.push_back(token_index);
@@ -638,8 +637,10 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     state->all_tokens[token_index] = token_repr;
   }
 
-  state->current_conn_token = state->L4.back();
-  state->current_arg_token = state->L4.back();
+  state->current_conn_token_i = state->L4i.back();
+  state->current_arg_token_i = state->L4i.back();
+  state->current_conn_token = state->all_tokens[state->current_conn_token_i];
+  state->current_arg_token = state->all_tokens[state->current_arg_token_i];
 
   return state;
 }
@@ -699,7 +700,7 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
       }
 
       // We should never end up processing a relation after 0 actions.
-      assert(real_state.prev_action != static_cast<unsigned>(-1));
+      assert(real_state.prev_action != UNSIGNED_NEG_1);
       // If there was a last action, check that this one is compatible.
       const string& last_action_name =
           vocab.action_names[real_state.prev_action];
@@ -764,18 +765,17 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
 
 
 Expression LSTMCausalityTagger::GetParsePathEmbedding(
-    const CausalityTaggerState& state) {
+    const CausalityTaggerState& state, unsigned source_token_id,
+    unsigned dest_token_id) {
   assert(options.parse_path_hidden_dim > 0);
 
   parse_path_lstm.start_new_sequence();
   parse_path_lstm.add_input(GetParamExpr(p_parse_path_start));
 
-  if (state.currently_processing_rel
-      && state.current_arg_token_i != static_cast<unsigned>(-1)) {
+  if (source_token_id != UNSIGNED_NEG_1 && dest_token_id != UNSIGNED_NEG_1) {
     const GraphEnhancedParseTree* tree = static_cast<GraphEnhancedParseTree*>(
         state.raw_sentence.tree);
-    auto parse_path = tree->GetParsePath(state.current_conn_token_i,
-                                         state.current_arg_token_i);
+    auto parse_path = tree->GetParsePath(source_token_id, dest_token_id);
 
     for (const GraphEnhancedParseTree::ParsePathLink& arc : parse_path) {
       const vector<string>& action_names = parser.GetVocab()->action_names;
@@ -827,7 +827,14 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
       GetParamExpr(p_L4toS), L4_lstm.back()};
   if (options.parse_path_hidden_dim > 0) {
     state_args.push_back(GetParamExpr(p_parsepath2S));
-    state_args.push_back(GetParsePathEmbedding(real_state));
+    if (real_state.currently_processing_rel) {
+      state_args.push_back(
+          GetParsePathEmbedding(real_state, real_state.current_conn_token_i,
+                                real_state.current_arg_token_i));
+    } else {
+      state_args.push_back(
+          GetParsePathEmbedding(real_state, UNSIGNED_NEG_1, UNSIGNED_NEG_1));
+    }
   }
   Expression state_repr = RectifyWithDropout(affine_transform(state_args));
 
@@ -908,7 +915,7 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
   cerr << "Performing action " << action_name << " on connective word \""
        << vocab.int_to_words.at(
            cst->raw_sentence.words.at(current_conn_token_i)) << '"';
-  if (current_arg_token_i != static_cast<unsigned>(-1)) {
+  if (current_arg_token_i != UNSIGNED_NEG_1) {
     cerr << " and argument word \"" << vocab.int_to_words.at(
              cst->raw_sentence.words.at(current_arg_token_i)) << '"';
   }
