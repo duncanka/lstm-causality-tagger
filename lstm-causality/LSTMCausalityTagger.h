@@ -162,7 +162,7 @@ protected:
   cnn::Parameters* p_tbias;         // LSTM input bias
   cnn::Parameters* p_subtree2t;     // node subtree parse info to token
 
-  // LSTM guards
+  // LSTM guards (create biases for different LSTMs)
   cnn::Parameters* p_L1_guard;
   cnn::Parameters* p_L2_guard;
   cnn::Parameters* p_L3_guard;
