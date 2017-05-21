@@ -245,7 +245,7 @@ NO-CONN
 [A-1, very-2, large-3, part-4, of-5, our-6, problem-7, is-8, that-9, we-10, have-11, not-12, yet-13, found-14, sufficient-15, replacement-16, for-17, the-18, discipline-19, of-20, a-21, lender-22, not-23, lending-24, to-25, a-26, borrower-27, unless-28, the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40] [] .-41 [] [.-41]
 {unless-28([the-29, lender-30, is-31, sure-32, that-33, the-34, borrower-35, will-36, be-37, able-38, to-39, repay-40], [borrower-27, a-26, to-25, lending-24, not-23, lender-22, a-21], [])}
 NO-CONN
->>0 0/0/0
+>>>0 0/0/0
 
 Something/NN, that/RB, simple/JJ, causes/VBZ, problems/NNS, in/IN, subprime/NN, ,/,, and/CC, it/PRP, has/VBZ, caused/VBN, problems/NNS, elsewhere/RB, ./.
 [] [] Something-1 [] [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14, .-15]
@@ -383,7 +383,7 @@ NO-CONN
 [Something-1, that-2, simple-3, causes-4, problems-5, in-6, subprime-7, ,-8, and-9, it-10, has-11, caused-12, problems-13, elsewhere-14] [] .-15 [] [.-15]
 {causes-4([simple-3, that-2, Something-1], [problems-5, in-6, subprime-7], []), caused-12([it-10], [problems-13, elsewhere-14], [])}
 NO-CONN
->>0 0/0/0 0/0/0
+>>>0 0/0/0 0/0/0
 
 If/IN, properly/RB, done/VBN, ,/,, a/DT, market/NN, sensitive/JJ, regulatory/JJ, authority/NN, not/RB, only/JJ, prevents/VBZ, some/DT, of/IN, the/DT, problems/NNS, ,/,, but/CC, is/VBZ, pro-market/JJ, ,/,, because/IN, we/PRP, have/VBP, investors/NNS, now/RB, who/WP, are/VBP, unwilling/JJ, to/TO, invest/VB, even/RB, in/IN, things/NNS, they/PRP, should/MD, ./.
 [] [] If-1 [] [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36, .-37]
@@ -830,7 +830,7 @@ NO-CONN
 [If-1, properly-2, done-3, ,-4, a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36] [] .-37 [] [.-37]
 {If-1([properly-2, done-3, a-5, market-6, sensitive-7, regulatory-8, authority-9], [a-5, market-6, sensitive-7, regulatory-8, authority-9, not-10, only-11, prevents-12, some-13, of-14, the-15, problems-16, ,-17, but-18, is-19, pro-market-20, ,-21, because-22, we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], []), prevents-12([authority-9, regulatory-8, sensitive-7, market-6, a-5], [some-13, of-14, the-15, problems-16], []), because-22([we-23, have-24, investors-25, now-26, who-27, are-28, unwilling-29, to-30, invest-31, even-32, in-33, things-34, they-35, should-36], [pro-market-20, is-19, authority-9, regulatory-8, sensitive-7, market-6, a-5], [])}
 NO-CONN
->>0 0/0/0 0/0/0 0/0/0
+>>>0 0/0/0 0/0/0 0/0/0
 
 To/TO, cause/VB, harm/NN, is/VBZ, bad/JJ, ./.
 [] [] To-1 [] [To-1, cause-2, harm-3, is-4, bad-5, .-6]
@@ -869,5 +869,5 @@ NO-CONN
 [To-1, cause-2, harm-3, is-4, bad-5] [] .-6 [] [.-6]
 {cause-2([], [harm-3], [])}
 NO-CONN
->>0 0/0/0
+>>>0 0/0/0
 

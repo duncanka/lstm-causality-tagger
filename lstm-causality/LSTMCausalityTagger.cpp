@@ -366,7 +366,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       } else {
         // If we have no more tokens to pull in, don't bother updating lambdas,
         // but we'd better be on the last action.
-        assert(iter == end - 1);
+        assert(iter + 1 == end);
       }
 
       // Transitions can scramble argument order; make sure order is fixed.
@@ -383,9 +383,10 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
     const string& action_name = sentence.vocab.action_names[action];
     /*
     cerr << "Decoding action " << action_name << " on connective word \""
-         << vocab.int_to_words.at(sentence.words.at(current_conn_token))
-         << "\" and argument word \"" << vocab.int_to_words.at(
-               sentence.words.at(current_arg_token)) << '"' << endl;
+         << sentence.vocab.int_to_words.at(
+                sentence.words.at(current_conn_token))
+         << "\" and argument word \"" << sentence.vocab.int_to_words.at(
+                sentence.words.at(current_arg_token)) << '"' << endl;
     //*/
     if (action_name == "NO-CONN") {
       // At a minimum, L4 should have the current token duplicate
@@ -396,8 +397,8 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
         current_conn_token = lambda_4.front();
         current_arg_token = lambda_1.back();
       } else {
-        // If we have no more tokens to pull in, we'd better be on the last
-        // action.
+        // If we have no more tokens to pull in, don't bother updating lambdas,
+        // but we'd better be on the last action.
         assert(iter + 1 == end);
       }
     } else if(action_name == "NEW-CONN") {
