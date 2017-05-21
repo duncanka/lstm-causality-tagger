@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -367,6 +368,14 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
         // but we'd better be on the last action.
         assert(iter == end - 1);
       }
+
+      // Transitions can scramble argument order; make sure order is fixed.
+      for (unsigned arg_num = 0; arg_num < CausalityRelation::ARG_NAMES.size();
+           ++arg_num) {
+        CausalityRelation::IndexList* arg = current_rel->GetArgument(arg_num);
+        sort(arg->begin(), arg->end());
+      }
+
       current_rel = nullptr;
     };
 
