@@ -94,10 +94,10 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
 
 void signal_callback_handler(int /* signum */) {
   if (requested_stop) {
-    cerr << "\nReceived SIGINT again, quitting.\n";
-    _exit(1);
+    cerr << "\nReceived SIGINT again; quitting.\n";
+    exit(1);
   }
-  cerr << "\nReceived SIGINT terminating optimization early...\n";
+  cerr << "\nReceived SIGINT. Terminating optimization early...\n";
   requested_stop = true;
 }
 
