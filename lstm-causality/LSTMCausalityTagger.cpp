@@ -33,6 +33,7 @@ using namespace lstm_parser;
 typedef BecauseRelation::IndexList IndexList;
 
 #undef NDEBUG  // Keep asserts
+#include <cassert>
 
 
 LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
@@ -588,7 +589,7 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     const vector<unsigned>& correct_actions) {
   CausalityTaggerState* state = new CausalityTaggerState(raw_sent, sentence);
 
-  for (reference_wrapper<LSTMBuilder> builder : sentence_lstms) {
+  for (reference_wrapper<LSTMBuilder>& builder : sentence_lstms) {
     builder.get().new_graph(*cg);
   }
   if (options.parse_path_hidden_dim > 0) {
@@ -596,7 +597,7 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
   }
 
   // Non-persistent sentence LSTMs get sequences started in StartNewRelation.
-  for (reference_wrapper<LSTMBuilder> builder : persistent_lstms) {
+  for (reference_wrapper<LSTMBuilder>& builder : persistent_lstms) {
     builder.get().start_new_sequence();
   }
 
@@ -619,10 +620,10 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
   state->L4.push_back(GetParamExpr(p_L4_guard));
   state->L4i.push_back(-1);
   L4_lstm.add_input(GetParamExpr(p_L4_guard));
-  // TODO: do we need to do anything special to handle OOV words?
   // Add words to L4 in reversed order: other than the initial guard entry,
   // the back of the L4 vector is conceptually the front, contiguous with the
   // back of L3.
+  // TODO: do we need to do anything special to handle OOV words?
   auto reversed_sentence = sentence | boost::adaptors::reversed;
   reversed_sentence.advance_begin(1);  // Skip ROOT
   for (const auto& index_and_word_id : reversed_sentence) {
@@ -757,7 +758,6 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
             && !ends_with(action_name, "HT");     // NO-ARC-RIGHT
       }
     }
-
 
     return true;
   }
