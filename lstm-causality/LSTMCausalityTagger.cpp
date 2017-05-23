@@ -675,9 +675,9 @@ Expression LSTMCausalityTagger::GetTokenEmbedding(ComputationGraph* cg,
 
 // TODO: forbid punctuation tokens as part of connectives?
 bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
-                                            const TaggerState& state) const {
+                                            TaggerState* state) const {
   const CausalityTaggerState& real_state =
-      static_cast<const CausalityTaggerState&>(state);
+      static_cast<const CausalityTaggerState&>(*state);
   const string& action_name = vocab.action_names[action];
   bool next_arg_token_is_left = real_state.L1.size() > 1;
 
@@ -765,7 +765,7 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
 
 
 Expression LSTMCausalityTagger::GetParsePathEmbedding(
-    const CausalityTaggerState& state, unsigned source_token_id,
+    CausalityTaggerState* state, unsigned source_token_id,
     unsigned dest_token_id) {
   assert(options.parse_path_hidden_dim > 0);
 
@@ -774,7 +774,7 @@ Expression LSTMCausalityTagger::GetParsePathEmbedding(
 
   if (source_token_id != UNSIGNED_NEG_1 && dest_token_id != UNSIGNED_NEG_1) {
     const GraphEnhancedParseTree* tree = static_cast<GraphEnhancedParseTree*>(
-        state.raw_sentence.tree);
+        state->raw_sentence.tree);
     auto parse_path = tree->GetParsePath(source_token_id, dest_token_id);
 
     for (const GraphEnhancedParseTree::ParsePathLink& arc : parse_path) {
@@ -796,7 +796,7 @@ Expression LSTMCausalityTagger::GetParsePathEmbedding(
         abort();
       }
       int action_id = action_iter - action_names.begin();
-      ComputationGraph* cg = state.current_arg_token.pg;
+      ComputationGraph* cg = state->current_arg_token.pg;
       Expression relation = const_lookup(*cg, parser.p_r, action_id);
       Expression is_back_edge = zeroes(*cg, {1}) + static_cast<cnn::real>(
           arc.reversed);
@@ -809,9 +809,8 @@ Expression LSTMCausalityTagger::GetParsePathEmbedding(
 
 
 Expression LSTMCausalityTagger::GetActionProbabilities(
-    const TaggerState& state) {
-  const CausalityTaggerState& real_state =
-      static_cast<const CausalityTaggerState&>(state);
+    TaggerState* state) {
+  CausalityTaggerState* real_state = static_cast<CausalityTaggerState*>(state);
   // sbias + actions2S * actions_lstm + (\sum_i rel_cmpt_i2S * rel_cmpt_i)
   //       + current2S * current_token + (\sum_i LToS_i * L_i)
   vector<Expression> state_args = {GetParamExpr(p_sbias),
@@ -820,17 +819,17 @@ Expression LSTMCausalityTagger::GetActionProbabilities(
       GetParamExpr(p_cause2S), cause_lstm.back(),
       GetParamExpr(p_effect2S), effect_lstm.back(),
       GetParamExpr(p_means2S), means_lstm.back(),
-      GetParamExpr(p_current2S), real_state.current_conn_token,
+      GetParamExpr(p_current2S), real_state->current_conn_token,
       GetParamExpr(p_L1toS), L1_lstm.back(),
       GetParamExpr(p_L2toS), L2_lstm.back(),
       GetParamExpr(p_L3toS), L3_lstm.back(),
       GetParamExpr(p_L4toS), L4_lstm.back()};
   if (options.parse_path_hidden_dim > 0) {
     state_args.push_back(GetParamExpr(p_parsepath2S));
-    if (real_state.currently_processing_rel) {
+    if (real_state->currently_processing_rel) {
       state_args.push_back(
-          GetParsePathEmbedding(real_state, real_state.current_conn_token_i,
-                                real_state.current_arg_token_i));
+          GetParsePathEmbedding(real_state, real_state->current_conn_token_i,
+                                real_state->current_arg_token_i));
     } else {
       state_args.push_back(
           GetParsePathEmbedding(real_state, UNSIGNED_NEG_1, UNSIGNED_NEG_1));

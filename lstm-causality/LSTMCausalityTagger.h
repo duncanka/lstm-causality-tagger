@@ -234,9 +234,9 @@ protected:
 
   virtual void InitializeNetworkParameters() override;
 
-  virtual bool ShouldTerminate(const TaggerState& state) const override {
+  virtual bool ShouldTerminate(TaggerState* state) const override {
     const CausalityTaggerState& real_state =
-        static_cast<const CausalityTaggerState&>(state);
+        static_cast<const CausalityTaggerState&>(*state);
     // We're done when we're looking at the last word, and we're no longer
     // processing a relation, i.e., either the last word wasn't the start of a
     // connective or we already SHIFTed it off.
@@ -246,9 +246,9 @@ protected:
   }
 
   virtual bool IsActionForbidden(const unsigned action,
-                                 const TaggerState& state) const override;
+                                 TaggerState* state) const override;
 
-  virtual cnn::expr::Expression GetActionProbabilities(const TaggerState& state)
+  virtual cnn::expr::Expression GetActionProbabilities(TaggerState* state)
       override;
 
   virtual void DoAction(
@@ -326,7 +326,7 @@ private:
   Expression GetTokenEmbedding(cnn::ComputationGraph* cg, unsigned word_index,
                                unsigned word_id, unsigned pos_id);
 
-  Expression GetParsePathEmbedding(const CausalityTaggerState& state,
+  Expression GetParsePathEmbedding(CausalityTaggerState* state,
                                    unsigned source_token_id,
                                    unsigned dest_token_id);
 
