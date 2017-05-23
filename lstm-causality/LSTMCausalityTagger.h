@@ -204,28 +204,7 @@ protected:
       current_arg_token_i(sentence.begin()->first) {}
   };
 
-  virtual std::vector<cnn::Parameters*> GetParameters() override {
-    std::vector<cnn::Parameters*> params = {
-        p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_current2S, p_actions2S,
-        p_s2a, p_abias,
-        p_connective2S, p_cause2S, p_effect2S, p_means2S,
-        p_w2t, p_p2t, p_v2t, p_tbias,
-        p_action_start, p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard,
-        p_connective_guard, p_cause_guard, p_effect_guard, p_means_guard};
-    if (options.gated_parse) {
-      auto to_add = {p_parse_sel_bias, p_state_to_parse_sel, p_parse2sel,
-                     p_full_state_bias, p_parse2pstate, p_state2pstate};
-      params.insert(params.end(), to_add.begin(), to_add.end());
-    }
-    if (options.subtrees) {
-      params.push_back(p_subtree2t);
-    }
-    if (options.parse_path_hidden_dim > 0) {
-      params.push_back(p_parse_path_start);
-      params.push_back(p_parsepath2S);
-    }
-    return params;
-  }
+  virtual std::vector<cnn::Parameters*> GetParameters() override;
 
   virtual TaggerState* InitializeParserState(
       cnn::ComputationGraph* cg, const lstm_parser::Sentence& raw_sent,
