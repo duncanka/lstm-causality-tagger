@@ -832,8 +832,7 @@ Expression LSTMCausalityTagger::GetParsePathEmbedding(
 }
 
 
-Expression LSTMCausalityTagger::GetActionProbabilities(
-    TaggerState* state) {
+Expression LSTMCausalityTagger::GetActionProbabilities(TaggerState* state) {
   CausalityTaggerState* real_state = static_cast<CausalityTaggerState*>(state);
   // sbias + actions2S * actions_lstm + (\sum_i rel_cmpt_i2S * rel_cmpt_i)
   //       + current2S * current_token + (\sum_i LToS_i * L_i)
