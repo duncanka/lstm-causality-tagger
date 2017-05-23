@@ -503,8 +503,8 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
 }
 
 
-std::vector<cnn::Parameters*> LSTMCausalityTagger::GetParameters() {
-  std::vector<cnn::Parameters*> params = {
+vector<Parameters*> LSTMCausalityTagger::GetParameters() {
+  vector<Parameters*> params = {
       p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_current2S, p_actions2S,
       p_s2a, p_abias,
       p_connective2S, p_cause2S, p_effect2S, p_means2S,
