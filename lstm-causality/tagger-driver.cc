@@ -80,7 +80,11 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("log-diffs,L", POBooleanFlag(false),
      "Whether to log differences between correct and predicted")
     ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
-     "How many training iterations to go between dev evaluations");
+     "How many training iterations to go between dev evaluations")
+    ("cv-start-at", po::value<unsigned>()->default_value(1),
+     "Cross-validation fold to start at (useful for debugging/parallelizing")
+    ("cv-end-at", po::value<unsigned>()->default_value(-1),
+     "Cross-validation fold to end on (useful for debugging/parallelizing");
 
   po::options_description dcmdline_options;
   dcmdline_options.add(opts);
@@ -209,7 +213,12 @@ int main(int argc, char** argv) {
       unsigned previous_cutoff = 0;
       vector<CausalityMetrics> evaluation_results;
       evaluation_results.reserve(folds);
-      for (unsigned fold = 0; fold < folds; ++fold) {
+      // Folds are 1-indexed, so subtract 1 from CL params to get indices.
+      unsigned last_fold = conf["cv-end-at"].as<unsigned>();
+      if (last_fold == UNSIGNED_NEG_1)
+        last_fold = folds + 1;
+      for (unsigned fold = conf["cv-start-at"].as<unsigned>() - 1;
+           fold < min(last_fold - 1, folds); ++fold) {
         cerr << "Starting fold " << fold + 1 << " of " << folds << endl;
         size_t current_cutoff = fold_cutoffs[fold];
         auto training_range = join(
