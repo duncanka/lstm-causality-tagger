@@ -2,6 +2,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/circular_buffer.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/range/combine.hpp>
 #include <chrono>
@@ -108,8 +109,9 @@ void LSTMCausalityTagger::InitializeModelAndBuilders() {
 void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
                                 vector<unsigned> selections, double dev_pct,
                                 bool compare_punct, const string& model_fname,
-                                unsigned periods_between_evals,
+                                unsigned update_groups_between_evals,
                                 double epochs_cutoff,
+                                double recent_improvements_cutoff,
                                 const volatile sig_atomic_t* requested_stop) {
   const unsigned num_sentences = selections.size();
   // selections gives us the subcorpus to use for training at all. But we'll
@@ -135,12 +137,17 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
     }
   }
 
-  double sentences_seen = 0;
-  double best_f1 = -numeric_limits<double>::infinity();
-  double last_epoch_saved = nan("");
-
   unsigned num_sentences_dev = round(dev_pct * num_sentences);
   unsigned num_sentences_train = num_sentences - num_sentences_dev;
+
+  unsigned sentences_seen = 0;
+  double best_f1 = -numeric_limits<double>::infinity();
+  double last_epoch_saved = nan("");
+  double last_f1 = best_f1;  // -inf
+  double evaluations_per_epoch = num_sentences_train / static_cast<double>(
+      status_every_i_iterations * update_groups_between_evals);
+  boost::circular_buffer<bool> recent_evals_improved(
+      evaluations_per_epoch * epochs_cutoff);
 
   unsigned sentence_i = num_sentences_train;
   for (unsigned update_group_num = 0; !requested_stop || !(*requested_stop);
@@ -192,22 +199,37 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
     sgd.status();
     time_t time_now = chrono::system_clock::to_time_t(
         chrono::system_clock::now());
-    double epoch = sentences_seen / num_sentences_train;
+    double epoch = sentences_seen / static_cast<double>(num_sentences_train);
     cerr << "update #" << update_group_num << " (epoch " << epoch
          << " | time=" << put_time(localtime(&time_now), "%c %Z") << ")\tllh: "
          << llh << " ppl: " << exp(llh / actions_seen) << " err: "
          << (actions_seen - correct) / actions_seen << endl;
 
-    if (update_group_num % periods_between_evals == 0) {
-      best_f1 = DoDevEvaluation(corpus, selections, compare_punct,
-                                num_sentences_train, update_group_num,
-                                sentences_seen, best_f1, model_fname,
-                                &last_epoch_saved);
+    if (update_group_num % update_groups_between_evals == 0) {
+      double f1 = DoDevEvaluation(corpus, selections, compare_punct,
+                                  num_sentences_train, update_group_num,
+                                  sentences_seen);
+      // TODO: should we take into account action-level error, too?
+      if (f1 > best_f1) {
+        best_f1 = f1;
+        SaveModel(model_fname, !isnan(last_epoch_saved));
+        last_epoch_saved = epoch;
+      }
+
+      recent_evals_improved.push_back(f1 > last_f1);
+      last_f1 = f1;
+
       if (epoch - last_epoch_saved > epochs_cutoff && best_f1 > 0) {
-        cerr << "Reached cutoff for epochs with no increase in max dev F1: "
-             << epoch - last_epoch_saved << " > " << epochs_cutoff
-             << "; terminating training" << endl;
-        break;
+        unsigned num_recent_evals_improved = accumulate(
+            recent_evals_improved.begin(), recent_evals_improved.end(), 0);
+        double pct_recent_increases = num_recent_evals_improved
+            / static_cast<double>(recent_evals_improved.size());
+        if (pct_recent_increases < recent_improvements_cutoff) {
+          cerr << "Reached cutoff for epochs with no increase in max dev F1: "
+               << epoch - last_epoch_saved << " > " << epochs_cutoff
+               << "; terminating training" << endl;
+          break;
+        }
       } else if (best_f1 >= 0.999) {
         cerr << "Reached maximal F1; terminating training" << endl;
         break;
@@ -226,8 +248,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
 double LSTMCausalityTagger::DoDevEvaluation(
     BecauseOracleTransitionCorpus* corpus,
     const vector<unsigned>& selections, bool compare_punct,
-    unsigned num_sentences_train, unsigned iteration, unsigned sentences_seen,
-    double best_f1, const string& model_fname, double* last_epoch_saved) {
+    unsigned num_sentences_train, unsigned iteration, unsigned sentences_seen) {
   // report on dev set
   const unsigned num_sentences = selections.size();
   double llh_dev = 0;
@@ -276,14 +297,7 @@ double LSTMCausalityTagger::DoDevEvaluation(
        << chrono::duration<double, milli>(t_end - t_start).count() << " ms]"
        << endl;
 
-  // TODO: should we take into account action-level error, too?
-  if (evaluation.connective_metrics->GetF1() > best_f1) {
-    best_f1 = evaluation.connective_metrics->GetF1();
-    SaveModel(model_fname, !isnan(*last_epoch_saved));
-    *last_epoch_saved = epoch;
-  }
-
-  return best_f1;
+  return evaluation.connective_metrics->GetF1();
 }
 
 

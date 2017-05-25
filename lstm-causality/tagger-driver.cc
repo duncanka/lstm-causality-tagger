@@ -64,7 +64,8 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Number of layers for each stack LSTM")
     ("epochs-cutoff,e", po::value<double>()->default_value(5),
      "Number of training epochs without an improvement in the best F1 to allow"
-     " before stopping training on that fold (SIGINT always works to stop)")
+     " before stopping training on that fold (SIGINT always works to stop; see"
+     " also --recent-improvements-cutoff)")
     ("compare-punct,c",
      "Whether to count punctuation when comparing argument spans")
     ("subtrees,u", POBooleanFlag(true),
@@ -81,6 +82,9 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Whether to log differences between correct and predicted")
     ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
      "How many training iterations to go between dev evaluations")
+    ("recent-improvements-cutoff,I", po::value<double>()->default_value(0.85),
+     "Don't stop training yet if this % of evaluations in last --epochs-cutoff"
+     " epochs have been an increase from the immediately prior evaluation")
     ("cv-start-at", po::value<unsigned>()->default_value(1),
      "Cross-validation fold to start at (useful for debugging/parallelizing")
     ("cv-end-at", po::value<unsigned>()->default_value(-1),
@@ -152,6 +156,8 @@ int main(int argc, char** argv) {
       abort();
     }
     double epochs_cutoff = conf["epochs-cutoff"].as<double>();
+    double recent_improvements_cutoff =
+        conf["recent-improvements-cutoff"].as<double>();
     bool compare_punct = conf.count("compare-punct");
     unsigned dev_eval_period = conf["dev-eval-period"].as<unsigned>();
     unsigned folds = conf["folds"].as<unsigned>();
@@ -193,7 +199,7 @@ int main(int argc, char** argv) {
     if (folds <= 1) {
        tagger.Train(&full_corpus, all_sentence_indices, dev_pct, compare_punct,
                     model_fname, dev_eval_period, epochs_cutoff,
-                    &requested_stop);
+                    recent_improvements_cutoff, &requested_stop);
      } else {
       // For cutoffs, we use one *past* the index where the fold should stop.
       vector<unsigned> fold_cutoffs(folds);
@@ -233,7 +239,7 @@ int main(int argc, char** argv) {
 
         tagger.Train(&full_corpus, fold_train_order, dev_pct, compare_punct,
                      model_fname, dev_eval_period, epochs_cutoff,
-                     &requested_stop);
+                     recent_improvements_cutoff, &requested_stop);
 
         cerr << "Evaluating..." << endl;
         tagger.LoadModel(model_fname);  // Reset to last saved state

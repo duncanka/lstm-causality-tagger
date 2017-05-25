@@ -75,7 +75,8 @@ public:
   void Train(BecauseOracleTransitionCorpus* corpus,
              std::vector<unsigned> selections, double dev_pct,
              bool compare_punct, const std::string& model_fname,
-             unsigned periods_between_evals = 25,
+             unsigned update_groups_between_evals = 25,
+             double recent_improvements_cutoff = 0.85,
              double epochs_cutoff = std::numeric_limits<double>::infinity(),
              const volatile sig_atomic_t* requested_stop = nullptr);
 
@@ -241,9 +242,7 @@ protected:
   double DoDevEvaluation(BecauseOracleTransitionCorpus* corpus,
                          const std::vector<unsigned>& selections,
                          bool compare_punct, unsigned num_sentences_train,
-                         unsigned iteration, unsigned sentences_seen,
-                         double best_f1, const std::string& model_fname,
-                         double* last_epoch_saved);
+                         unsigned iteration, unsigned sentences_seen);
 
   void CacheParse(lstm_parser::Sentence* sentence,
                   BecauseOracleTransitionCorpus* corpus,
