@@ -58,7 +58,8 @@ protected:
       const BecauseOracleTransitionCorpus& corpus1,
       const BecauseOracleTransitionCorpus& corpus2,
       const vector<vector<CausalityRelation>>& rels1,
-      const vector<vector<CausalityRelation>>& rels2) {
+      const vector<vector<CausalityRelation>>& rels2,
+      bool record_differences = false) {
     CausalityMetrics total_metrics;
 
     for (unsigned i = 0; i < corpus1.sentences.size(); ++i) {
@@ -69,7 +70,8 @@ protected:
       SpanTokenFilter filter = {false, sentence, corpus1.pos_is_punct};
       GraphEnhancedParseTree pseudo_parse(sentence);
       CausalityMetrics sentence_metrics(original_rels, modified_rels, corpus1,
-                                        pseudo_parse, filter);
+                                        pseudo_parse, filter, 0, {},
+                                        record_differences);
       total_metrics += sentence_metrics;
     }
 
@@ -216,4 +218,25 @@ TEST_F(DataMetricsTest, AveragingMetricsWorks) {
 
   TEST_METRICS(averaged_metrics, *correct_conn_metrics,
                *correct_cause_metrics, *correct_effect_metrics);
+}
+
+
+TEST_F(DataMetricsTest, CorrectNumberOfDifferencesRecorded) {
+  CausalityMetrics self_metrics = CompareCorpora(
+      *original_corpus, *original_corpus, original_relations,
+      original_relations, true);
+  EXPECT_EQ(7, self_metrics.GetArgumentMatches().size());
+  EXPECT_EQ(0, self_metrics.GetArgumentMismatches().size());
+  EXPECT_EQ(0, self_metrics.GetFPs().size());
+  EXPECT_EQ(0, self_metrics.GetFNs().size());
+
+  CausalityMetrics modified_metrics = CompareCorpora(
+      *original_corpus, *modified_corpus, original_relations,
+      modified_relations, true);
+  // 2 totally correct; 2 FPs; 2 FNs; 2 correct connectives with incorrect
+  // arguments, with 3 incorrect arguments between them.
+  EXPECT_EQ(2, modified_metrics.GetArgumentMatches().size());
+  EXPECT_EQ(3, modified_metrics.GetArgumentMismatches().size());
+  EXPECT_EQ(2, modified_metrics.GetFPs().size());
+  EXPECT_EQ(2, modified_metrics.GetFNs().size());
 }

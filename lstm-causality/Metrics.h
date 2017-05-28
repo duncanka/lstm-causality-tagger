@@ -455,6 +455,8 @@ public:
     unsigned num_matching_connectives = matching_gold.size();
     connective_metrics.reset(new ClassificationMetrics(tp, fp, fn));
 
+    vector<bool> gold_args_match_if_tp(  // Entries for non-TP will all be true.
+        sentence_gold.size(), true);
     for (unsigned arg_num : boost::irange(0u, NumArgs())) {
       unsigned spans_correct = 0;
       unsigned heads_correct = 0;
@@ -481,15 +483,12 @@ public:
         // If we have any missing tokens for the argument, assume we got the
         // head and span wrong. (We definitely got the span wrong, and it's not
         // even clear what it'd mean to get the head right.)
-        bool mismatch = false;
+        bool args_match = true;
         if (gold_arg_missing_tokens == 0) {
           if (boost::equal(filtered_gold, filtered_pred)) {
             ++spans_correct;
-            if (log_differences) {
-              argument_matches.push_back(gold_instance);
-            }
           } else {
-            mismatch = true;
+            args_match = false;
           }
 
           if ((filtered_gold.empty() && filtered_pred.empty())
@@ -502,14 +501,16 @@ public:
                     << RelationType::ARG_NAMES[arg_num]
                     << " of instance with missing argument tokens: "
                     << sentence_gold[gold_index] << std::endl;
-          mismatch = true;
+          args_match = false;
         }
-        if (log_differences && mismatch) {
+        if (log_differences && !args_match) {
           argument_mismatches.push_back(
               std::make_tuple(gold_instance, pred_instance, arg_num));
         }
         jaccard_sum += CalculateJaccard(filtered_gold, filtered_pred,
                                         gold_arg_missing_tokens);
+        gold_args_match_if_tp[gold_index] =
+            gold_args_match_if_tp[gold_index] && args_match;
       }
 
       auto current_arg_metrics = new ArgumentMetrics(
@@ -521,6 +522,11 @@ public:
 
     if (log_differences) {
       RecordInstanceDifferences(diff, sentence_gold, sentence_predicted);
+      for (const unsigned gold_index : matching_gold) {
+        if (gold_args_match_if_tp[gold_index]) {
+          argument_matches.push_back(sentence_gold[gold_index]);
+        }
+      }
     }
   }
 
@@ -658,6 +664,14 @@ public:
       return true;
     return false;
   }
+
+  const auto& GetArgumentMatches() const { return argument_matches; }
+
+  const auto& GetArgumentMismatches() const { return argument_mismatches; }
+
+  const auto& GetFPs() const { return fps; }
+
+  const auto& GetFNs() const { return fns; }
 
   static unsigned NumArgs() { return RelationType::ARG_NAMES.size(); }
 
