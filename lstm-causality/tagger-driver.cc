@@ -76,7 +76,7 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Dropout rate (no dropout is performed for a value of 0)")
     ("new-conn-action,n", POBooleanFlag(false),
      "Whether starting a relation is a separate action (must match data)")
-    ("shift-action,n", POBooleanFlag(false),
+    ("shift-action,H", POBooleanFlag(false),
      "Whether completing a relation is a separate action (must match data)")
     ("log-diffs,L", POBooleanFlag(false),
      "Whether to log differences between correct and predicted")
