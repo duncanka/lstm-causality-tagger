@@ -96,7 +96,7 @@ public:
 
   CausalityMetrics Evaluate(BecauseOracleTransitionCorpus* corpus,
                             const std::vector<unsigned>& selections,
-                            bool compare_punct = false);
+                            bool compare_punct = false, bool pairwise = false);
 
   static std::vector<CausalityRelation> Decode(
       const lstm_parser::Sentence& sentence,

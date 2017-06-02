@@ -68,6 +68,8 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      " also --recent-improvements-cutoff)")
     ("compare-punct,c",
      "Whether to count punctuation when comparing argument spans")
+    ("eval-pairwise,P", POBooleanFlag(true),
+     "Whether to also evaluate on only instances with both cause and effect")
     ("subtrees,u", POBooleanFlag(true),
      "Whether to include embeddings of parse subtrees in token representations")
     ("gated-parse,g", POBooleanFlag(true),
@@ -159,6 +161,7 @@ int main(int argc, char** argv) {
     double recent_improvements_cutoff =
         conf["recent-improvements-cutoff"].as<double>();
     bool compare_punct = conf.count("compare-punct");
+    bool eval_pairwise = conf.count("eval-pairwise");
     unsigned dev_eval_period = conf["dev-eval-period"].as<unsigned>();
     unsigned folds = conf["folds"].as<unsigned>();
 
@@ -218,7 +221,11 @@ int main(int argc, char** argv) {
 
       unsigned previous_cutoff = 0;
       vector<CausalityMetrics> evaluation_results;
+      vector<CausalityMetrics> pairwise_eval_results;
       evaluation_results.reserve(folds);
+      if (eval_pairwise) {
+        pairwise_eval_results.reserve(folds);
+      }
       // Folds are 1-indexed, so subtract 1 from CL params to get indices.
       unsigned last_fold = conf["cv-end-at"].as<unsigned>();
       if (last_fold == UNSIGNED_NEG_1)
@@ -246,23 +253,41 @@ int main(int argc, char** argv) {
         vector<unsigned> fold_test_order(
             all_sentence_indices.begin() + previous_cutoff,
             all_sentence_indices.begin() + current_cutoff);
-        CausalityMetrics evaluation = tagger.Evaluate(
-            &full_corpus, fold_test_order, compare_punct);
         cout << "Evaluation for fold " << fold + 1 << " ("
              << fold_test_order.size() << " test sentences)" << endl;
+        CausalityMetrics evaluation = tagger.Evaluate(
+            &full_corpus, fold_test_order, compare_punct);
         IndentingOStreambuf indent(cout);
         cout << evaluation << '\n' << endl;
         evaluation_results.push_back(evaluation);
+
+        if (eval_pairwise) {
+          CausalityMetrics pairwise_evaluation = tagger.Evaluate(
+              &full_corpus, fold_test_order, compare_punct, eval_pairwise);
+          cout << "\nPairwise evaluation:";
+          IndentingOStreambuf indent(cout);
+          cout << '\n' << pairwise_evaluation << '\n' << endl;
+          pairwise_eval_results.push_back(pairwise_evaluation);
+        }
 
         requested_stop = false;
         previous_cutoff = current_cutoff;
         tagger.Reset();  // Reset for next fold
       }
 
-      cout << "Average evaluation:" << '\n';
-      IndentingOStreambuf indent(cout);
-      auto evals_range = boost::make_iterator_range(evaluation_results);
-      cout << AveragedCausalityMetrics(evals_range) << endl;
+      {
+        cout << "Average evaluation:\n";
+        IndentingOStreambuf indent(cout);
+        auto evals_range = boost::make_iterator_range(evaluation_results);
+        cout << AveragedCausalityMetrics(evals_range) << endl;
+      }
+
+      if (eval_pairwise) {
+        cout << "Average pairwise evaluation:" << '\n';
+        IndentingOStreambuf indent(cout);
+        auto evals_range = boost::make_iterator_range(pairwise_eval_results);
+        cout << AveragedCausalityMetrics(evals_range) << endl;
+      }
     }
   }
 

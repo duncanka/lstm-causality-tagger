@@ -22,15 +22,13 @@ public:
 
   BecauseRelation(const BecauseRelation& other)
       : arg_names(other.arg_names), type_names(other.type_names),
-        sentence(other.sentence), vocab(other.vocab),
-        relation_type(other.relation_type),
+        sentence(other.sentence), relation_type(other.relation_type),
         connective_indices(other.connective_indices),
         arguments(other.arguments) {}
 
   BecauseRelation(BecauseRelation&& other)
       : arg_names(other.arg_names), type_names(other.type_names),
-        sentence(other.sentence), vocab(other.vocab),
-        relation_type(other.relation_type),
+        sentence(other.sentence), relation_type(other.relation_type),
         connective_indices(std::move(other.connective_indices)),
         arguments(std::move(other.arguments)) {}
 
@@ -44,7 +42,7 @@ public:
 
   void AddToArgument(const unsigned arg_num, const unsigned index) {
     // Make sure index < max token ID (that isn't ROOT)
-    assert(index <= (++sentence.words.rbegin())->first);
+    assert(index <= (++sentence->words.rbegin())->first);
     arguments[arg_num].push_back(index);
   }
 
@@ -61,7 +59,7 @@ public:
   template <typename IndexListType>
   void SetArgument(unsigned arg_num, const IndexListType& indices) {
     for (unsigned i : indices) {
-      assert(i < sentence.Size());
+      assert(i < sentence->Size());
     }
     arguments[arg_num] = indices;
   }
@@ -70,8 +68,7 @@ protected:
   const StringList& arg_names;
   const StringList& type_names;
 
-  const lstm_parser::Sentence& sentence;
-  const lstm_parser::CorpusVocabulary& vocab;
+  const lstm_parser::Sentence* sentence;
 
   unsigned relation_type;
   IndexList connective_indices;
@@ -84,9 +81,9 @@ protected:
                   const unsigned relation_type,
                   const IndexList& connective_indices,
                   const std::vector<IndexList>& arguments = {{}})
-      : arg_names(arg_names), type_names(type_names), sentence(sentence),
-        vocab(sentence.vocab), relation_type(relation_type),
-        connective_indices(connective_indices), arguments(arguments) {
+      : arg_names(arg_names), type_names(type_names), sentence(&sentence),
+        relation_type(relation_type), connective_indices(connective_indices),
+        arguments(arguments) {
     assert(arguments.size() < arg_names.size());
     // Make sure all arguments are created, even if they weren't yet specified.
     this->arguments.resize(arg_names.size());
@@ -95,11 +92,11 @@ protected:
   TokenList GetTokensForIndices(const IndexList& indices) const {
     TokenList tokens;
     tokens.reserve(indices.size());
-    unsigned unk = vocab.GetWord(vocab.UNK);
+    unsigned unk = sentence->vocab.GetWord(sentence->vocab.UNK);
     for (unsigned index : indices) {
-      unsigned word_id = sentence.words.at(index);
-      tokens.push_back(word_id == unk ? sentence.unk_surface_forms.at(index)
-                                      : vocab.int_to_words[word_id]);
+      unsigned word_id = sentence->words.at(index);
+      tokens.push_back(word_id == unk ? sentence->unk_surface_forms.at(index)
+                                      : sentence->vocab.int_to_words[word_id]);
     }
     return tokens;
   }
@@ -130,6 +127,16 @@ public:
                     const std::vector<IndexList>& arguments = {{}})
       : BecauseRelation(ARG_NAMES, TYPE_NAMES, sentence, relation_type,
                         connective_indices, arguments) {}
+
+  CausalityRelation(const CausalityRelation& other) = default;
+
+  CausalityRelation& operator=(CausalityRelation&& other) {
+    sentence = other.sentence;
+    relation_type = other.relation_type;
+    connective_indices = std::move(other.connective_indices);
+    arguments = std::move(other.arguments);
+    return *this;
+  }
 
   void SetCause(const IndexList& indices) {
     SetArgument(CAUSE, indices);

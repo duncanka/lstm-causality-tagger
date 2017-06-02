@@ -402,14 +402,14 @@ public:
       return i1.GetConnectiveIndices() == i2.GetConnectiveIndices();
     }
   };
-
-  std::unique_ptr<ClassificationMetrics> connective_metrics;
-  std::vector<std::unique_ptr<ArgumentMetrics>> argument_metrics;
   typedef Diff<RandomAccessSequence<
       typename std::vector<RelationType>::const_iterator>, ConnectivesEqual>
       ConnectiveDiff;
   typedef Diff<RandomAccessSequence<
       typename BecauseRelation::IndexList::const_iterator>> IndexDiff;
+
+  std::unique_ptr<ClassificationMetrics> connective_metrics;
+  std::vector<std::unique_ptr<ArgumentMetrics>> argument_metrics;
 
   // Default constructor: initialize metrics with zero instances, and prepare
   // argument metrics to contain the correct number of entries for the relation

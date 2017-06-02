@@ -492,7 +492,8 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
 
 CausalityMetrics LSTMCausalityTagger::Evaluate(
     BecauseOracleTransitionCorpus* corpus,
-    const vector<unsigned>& sentence_selections, bool compare_punct) {
+    const vector<unsigned>& sentence_selections, bool compare_punct,
+    bool pairwise) {
   CausalityMetrics evaluation;
 
   for (unsigned sentence_index : sentence_selections) {
@@ -514,6 +515,13 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
     vector<CausalityRelation> predicted = Tag(*sentence, parse_with_depths);
     vector<CausalityRelation> gold = Decode(
         *sentence, gold_actions, options.new_conn_action, options.shift_action);
+    if (pairwise) {
+      auto not_pairwise = [](const CausalityRelation& rel) {
+        return rel.GetCause().empty() || rel.GetEffect().empty();
+      };
+      ReallyDeleteIf(&predicted, not_pairwise);
+      ReallyDeleteIf(&gold, not_pairwise);
+    }
     evaluation += CausalityMetrics(
         gold, predicted, *corpus, *parse_with_depths,
         SpanTokenFilter {compare_punct, *sentence, corpus->pos_is_punct},
