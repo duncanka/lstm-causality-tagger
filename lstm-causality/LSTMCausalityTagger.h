@@ -54,8 +54,6 @@ public:
     }
   };
 
-  TaggerOptions options;
-
   LSTMCausalityTagger(const std::string& parser_model_path,
                       const TaggerOptions& options);
 
@@ -81,18 +79,7 @@ public:
              const volatile sig_atomic_t* requested_stop = nullptr);
 
   std::vector<CausalityRelation> Tag(const lstm_parser::Sentence& sentence,
-                                     GraphEnhancedParseTree* parse) {
-    cnn::ComputationGraph cg;
-    vector<unsigned> parse_actions = parser.LogProbTagger(
-        &cg, sentence, true, GetCachedParserStates());
-    double parser_lp = as_scalar(cg.incremental_forward());
-    auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp,
-                                        true);
-    *parse = GraphEnhancedParseTree(std::move(tree));
-    std::vector<unsigned> actions = LogProbTagger(&cg, sentence, false);
-    return Decode(sentence, actions, options.new_conn_action,
-                  options.shift_action);
-  }
+                                     GraphEnhancedParseTree* parse);
 
   CausalityMetrics Evaluate(BecauseOracleTransitionCorpus* corpus,
                             const std::vector<unsigned>& selections,
@@ -112,70 +99,9 @@ public:
 
   void LoadModel(const std::string& model_path);
 
+  TaggerOptions options;
+
 protected:
-  lstm_parser::LSTMParser parser;
-  cnn::AlignedMemoryPool::PoolState initial_param_pool_state;
-
-  cnn::LSTMBuilder L1_lstm;  // unprocessed words to left of current word
-  cnn::LSTMBuilder L2_lstm;  // processed words to left of current word
-  cnn::LSTMBuilder L3_lstm;  // unprocessed words to right of current word
-  cnn::LSTMBuilder L4_lstm;  // processed words to left of current word
-
-  cnn::LSTMBuilder action_history_lstm;
-  cnn::LSTMBuilder parse_path_lstm;  // path btw current word and current conn.
-
-  cnn::LSTMBuilder connective_lstm;
-  cnn::LSTMBuilder cause_lstm;
-  cnn::LSTMBuilder effect_lstm;
-  cnn::LSTMBuilder means_lstm;
-
-  // Lookup parameters
-  cnn::LookupParameters* p_w;    // word embeddings
-  cnn::LookupParameters* p_a;    // action embeddings (for action_history_lstm)
-
-  // Parameters for overall tagger state
-  cnn::Parameters* p_sbias;         // tagger state bias
-  cnn::Parameters* p_L1toS;         // lambda 1 lstm to tagger state
-  cnn::Parameters* p_L2toS;         // lambda 2 lstm to tagger state
-  cnn::Parameters* p_L3toS;         // lambda 3 lstm to tagger state
-  cnn::Parameters* p_L4toS;         // lambda 4 lstm to tagger state
-  cnn::Parameters* p_current2S;     // current token to tagger state
-  cnn::Parameters* p_actions2S;     // action history lstm to tagger state
-  cnn::Parameters* p_s2a;           // parser state to action
-  cnn::Parameters* p_abias;         // bias for final action output
-  cnn::Parameters* p_connective2S;  // connective to relation embedding
-  cnn::Parameters* p_cause2S;       // cause to relation embedding
-  cnn::Parameters* p_effect2S;      // effect to relation embedding
-  cnn::Parameters* p_means2S;       // means to relation embedding
-  cnn::Parameters* p_parsepath2S;   // parse path to tagger state
-  // Parameters for mixing in parse info (only used with --gated-parse)
-  cnn::Parameters* p_parse_sel_bias;
-  cnn::Parameters* p_state_to_parse_sel;
-  cnn::Parameters* p_parse2sel;
-  cnn::Parameters* p_full_state_bias;
-  cnn::Parameters* p_parse2pstate;
-  cnn::Parameters* p_state2pstate;
-
-  // Parameters for LSTM input for stacks containing tokens
-  cnn::Parameters* p_w2t;           // word to token representation
-  cnn::Parameters* p_p2t;           // POS to token representation
-  cnn::Parameters* p_v2t;           // pretrained word embeddings to token repr
-  cnn::Parameters* p_tbias;         // LSTM input bias
-  cnn::Parameters* p_subtree2t;     // node subtree parse info to token
-
-  // LSTM guards
-  cnn::Parameters* p_L1_guard;
-  cnn::Parameters* p_L2_guard;
-  cnn::Parameters* p_L3_guard;
-  cnn::Parameters* p_L4_guard;
-  cnn::Parameters* p_action_start;      // action bias
-  cnn::Parameters* p_parse_path_start;  // parse path bias
-  // Guards for per-instance LSTMs
-  cnn::Parameters* p_connective_guard;
-  cnn::Parameters* p_cause_guard;
-  cnn::Parameters* p_effect_guard;
-  cnn::Parameters* p_means_guard;
-
   struct CausalityTaggerState : public TaggerState {
     std::map<unsigned, Expression> all_tokens;
     std::vector<Expression> L1; // unprocessed tokens to the left
@@ -260,6 +186,69 @@ protected:
 
   void InitializeModelAndBuilders();
 
+  lstm_parser::LSTMParser parser;
+  cnn::AlignedMemoryPool::PoolState initial_param_pool_state;
+
+  cnn::LSTMBuilder L1_lstm;  // unprocessed words to left of current word
+  cnn::LSTMBuilder L2_lstm;  // processed words to left of current word
+  cnn::LSTMBuilder L3_lstm;  // unprocessed words to right of current word
+  cnn::LSTMBuilder L4_lstm;  // processed words to left of current word
+
+  cnn::LSTMBuilder action_history_lstm;
+  cnn::LSTMBuilder parse_path_lstm;  // path btw current word and current conn.
+
+  cnn::LSTMBuilder connective_lstm;
+  cnn::LSTMBuilder cause_lstm;
+  cnn::LSTMBuilder effect_lstm;
+  cnn::LSTMBuilder means_lstm;
+
+  // Lookup parameters
+  cnn::LookupParameters* p_w;    // word embeddings
+  cnn::LookupParameters* p_a;    // action embeddings (for action_history_lstm)
+
+  // Parameters for overall tagger state
+  cnn::Parameters* p_sbias;         // tagger state bias
+  cnn::Parameters* p_L1toS;         // lambda 1 lstm to tagger state
+  cnn::Parameters* p_L2toS;         // lambda 2 lstm to tagger state
+  cnn::Parameters* p_L3toS;         // lambda 3 lstm to tagger state
+  cnn::Parameters* p_L4toS;         // lambda 4 lstm to tagger state
+  cnn::Parameters* p_current2S;     // current token to tagger state
+  cnn::Parameters* p_actions2S;     // action history lstm to tagger state
+  cnn::Parameters* p_s2a;           // parser state to action
+  cnn::Parameters* p_abias;         // bias for final action output
+  cnn::Parameters* p_connective2S;  // connective to relation embedding
+  cnn::Parameters* p_cause2S;       // cause to relation embedding
+  cnn::Parameters* p_effect2S;      // effect to relation embedding
+  cnn::Parameters* p_means2S;       // means to relation embedding
+  cnn::Parameters* p_parsepath2S;   // parse path to tagger state
+  // Parameters for mixing in parse info (only used with --gated-parse)
+  cnn::Parameters* p_parse_sel_bias;
+  cnn::Parameters* p_state_to_parse_sel;
+  cnn::Parameters* p_parse2sel;
+  cnn::Parameters* p_full_state_bias;
+  cnn::Parameters* p_parse2pstate;
+  cnn::Parameters* p_state2pstate;
+
+  // Parameters for LSTM input for stacks containing tokens
+  cnn::Parameters* p_w2t;           // word to token representation
+  cnn::Parameters* p_p2t;           // POS to token representation
+  cnn::Parameters* p_v2t;           // pretrained word embeddings to token repr
+  cnn::Parameters* p_tbias;         // LSTM input bias
+  cnn::Parameters* p_subtree2t;     // node subtree parse info to token
+
+  // LSTM guards
+  cnn::Parameters* p_L1_guard;
+  cnn::Parameters* p_L2_guard;
+  cnn::Parameters* p_L3_guard;
+  cnn::Parameters* p_L4_guard;
+  cnn::Parameters* p_action_start;      // action bias
+  cnn::Parameters* p_parse_path_start;  // parse path bias
+  // Guards for per-instance LSTMs
+  cnn::Parameters* p_connective_guard;
+  cnn::Parameters* p_cause_guard;
+  cnn::Parameters* p_effect_guard;
+  cnn::Parameters* p_means_guard;
+
 private:
   friend class boost::serialization::access;
   typedef std::map<std::string, cnn::expr::Expression> CachedExpressionMap;
@@ -289,17 +278,7 @@ private:
   }
   BOOST_SERIALIZATION_SPLIT_MEMBER();
 
-  void StartNewRelation() {
-    connective_lstm.start_new_sequence();
-    cause_lstm.start_new_sequence();
-    effect_lstm.start_new_sequence();
-    means_lstm.start_new_sequence();
-
-    connective_lstm.add_input(GetParamExpr(p_connective_guard));
-    cause_lstm.add_input(GetParamExpr(p_cause_guard));
-    effect_lstm.add_input(GetParamExpr(p_effect_guard));
-    means_lstm.add_input(GetParamExpr(p_means_guard));
-  }
+  void StartNewRelation();
 
   Expression GetTokenEmbedding(cnn::ComputationGraph* cg, unsigned word_index,
                                unsigned word_id, unsigned pos_id);

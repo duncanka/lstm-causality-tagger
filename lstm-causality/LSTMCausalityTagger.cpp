@@ -490,6 +490,21 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
 }
 
 
+vector<CausalityRelation> LSTMCausalityTagger::Tag(
+    const Sentence& sentence, GraphEnhancedParseTree* parse) {
+  ComputationGraph cg;
+  vector<unsigned> parse_actions = parser.LogProbTagger(
+      &cg, sentence, true, GetCachedParserStates());
+  double parser_lp = as_scalar(cg.incremental_forward());
+  auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp,
+                                      true);
+  *parse = GraphEnhancedParseTree(move(tree));
+  vector<unsigned> actions = LogProbTagger(&cg, sentence, false);
+  return Decode(sentence, actions, options.new_conn_action,
+                options.shift_action);
+}
+
+
 CausalityMetrics LSTMCausalityTagger::Evaluate(
     BecauseOracleTransitionCorpus* corpus,
     const vector<unsigned>& sentence_selections, bool compare_punct,
@@ -911,6 +926,19 @@ Expression LSTMCausalityTagger::GetActionProbabilities(TaggerState* state) {
   Expression p_a = affine_transform({GetParamExpr(p_abias), GetParamExpr(p_s2a),
                                      full_state_repr});
   return p_a;
+}
+
+
+void LSTMCausalityTagger::StartNewRelation() {
+  connective_lstm.start_new_sequence();
+  cause_lstm.start_new_sequence();
+  effect_lstm.start_new_sequence();
+  means_lstm.start_new_sequence();
+
+  connective_lstm.add_input(GetParamExpr(p_connective_guard));
+  cause_lstm.add_input(GetParamExpr(p_cause_guard));
+  effect_lstm.add_input(GetParamExpr(p_effect_guard));
+  means_lstm.add_input(GetParamExpr(p_means_guard));
 }
 
 

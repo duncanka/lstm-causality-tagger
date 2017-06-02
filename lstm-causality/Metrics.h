@@ -29,11 +29,6 @@ constexpr unsigned UNSIGNED_NEG_1 = static_cast<unsigned>(-1);
 
 class ClassificationMetrics {
 public:
-  unsigned tp;
-  unsigned fp;
-  unsigned fn;
-  unsigned tn;
-
   // Often there is no well-defined concept of a true negative, so it
   // defaults to undefined.
   ClassificationMetrics(unsigned tp = 0, unsigned fp = 0, unsigned fn = 0,
@@ -100,6 +95,11 @@ public:
       return 0;
     return (2 * precision * recall) / (precision + recall);
   }
+
+  unsigned tp;
+  unsigned fp;
+  unsigned fn;
+  unsigned tn;
 };
 
 class AveragedClassificationMetrics : public ClassificationMetrics {
@@ -160,10 +160,6 @@ inline std::ostream& operator<<(std::ostream& s,
 
 class AccuracyMetrics {
 public:
-  // Store as floats to make averages work
-  double correct;
-  double incorrect;
-
   AccuracyMetrics(unsigned correct, unsigned incorrect) :
       correct(correct), incorrect(incorrect) {}
 
@@ -188,6 +184,10 @@ public:
     return AccuracyMetrics(correct + other.correct,
                            incorrect + other.incorrect);
   }
+
+  // Store as floats to make averages work
+  double correct;
+  double incorrect;
 
 private:
   AccuracyMetrics(double correct, double incorrect) :
@@ -232,11 +232,6 @@ inline std::ostream& operator<<(std::ostream& s,
 
 
 struct ArgumentMetrics {
-  std::unique_ptr<AccuracyMetrics> spans;
-  std::unique_ptr<AccuracyMetrics> heads;
-  double jaccard_index;
-  unsigned instance_count;
-
   ArgumentMetrics(unsigned correct_spans = 0, unsigned incorrect_spans = 0,
                   unsigned heads_correct = 0, unsigned heads_incorrect = 0,
                   double jaccard_index = 0, unsigned instance_count = 0)
@@ -280,6 +275,11 @@ struct ArgumentMetrics {
     return *spans == *other.spans && *heads == *other.heads
         && FloatsAlmostSame(jaccard_index, other.jaccard_index);
   }
+
+  std::unique_ptr<AccuracyMetrics> spans;
+  std::unique_ptr<AccuracyMetrics> heads;
+  double jaccard_index;
+  unsigned instance_count;
 };
 
 class AveragedArgumentMetrics : public ArgumentMetrics {
@@ -407,9 +407,6 @@ public:
       ConnectiveDiff;
   typedef Diff<RandomAccessSequence<
       typename BecauseRelation::IndexList::const_iterator>> IndexDiff;
-
-  std::unique_ptr<ClassificationMetrics> connective_metrics;
-  std::vector<std::unique_ptr<ArgumentMetrics>> argument_metrics;
 
   // Default constructor: initialize metrics with zero instances, and prepare
   // argument metrics to contain the correct number of entries for the relation
@@ -675,13 +672,10 @@ public:
 
   static unsigned NumArgs() { return RelationType::ARG_NAMES.size(); }
 
-protected:
-  std::vector<CausalityRelation> argument_matches;
-  std::vector<std::tuple<CausalityRelation, CausalityRelation, unsigned>>
-      argument_mismatches;
-  std::vector<CausalityRelation> fps;
-  std::vector<CausalityRelation> fns;
+  std::unique_ptr<ClassificationMetrics> connective_metrics;
+  std::vector<std::unique_ptr<ArgumentMetrics>> argument_metrics;
 
+protected:
   friend std::ostream& operator<< <>(
       std::ostream& s, const BecauseRelationMetrics<RelationType>& metrics);
 
@@ -704,6 +698,12 @@ protected:
       fps.push_back(sentence_predicted[pred_only_index]);
     }
   }
+
+  std::vector<CausalityRelation> argument_matches;
+  std::vector<std::tuple<CausalityRelation, CausalityRelation, unsigned>>
+      argument_mismatches;
+  std::vector<CausalityRelation> fps;
+  std::vector<CausalityRelation> fns;
 };
 
 template <class RelationType>

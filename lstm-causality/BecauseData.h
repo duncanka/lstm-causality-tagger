@@ -65,15 +65,6 @@ public:
   }
 
 protected:
-  const StringList& arg_names;
-  const StringList& type_names;
-
-  const lstm_parser::Sentence* sentence;
-
-  unsigned relation_type;
-  IndexList connective_indices;
-  std::vector<IndexList> arguments;
-
   friend std::ostream& operator<<(std::ostream& os, const BecauseRelation& rel);
 
   BecauseRelation(const StringList& arg_names, const StringList& type_names,
@@ -110,6 +101,14 @@ protected:
       type_id = relation_type;
     return type_names[type_id];
   }
+
+  const StringList& arg_names;
+  const StringList& type_names;
+
+  const lstm_parser::Sentence* sentence;
+  unsigned relation_type;
+  IndexList connective_indices;
+  std::vector<IndexList> arguments;
 };
 
 

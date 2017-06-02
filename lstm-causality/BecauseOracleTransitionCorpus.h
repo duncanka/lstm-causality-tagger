@@ -73,15 +73,6 @@ public:
   std::vector<ParsePathLink> GetParsePath(unsigned source, unsigned dest) const;
 
 protected:
-  Graph sentence_graph;
-  std::map<Vertex, unsigned> token_depths;
-
-  // Row i of the predecessor matrix contains information on the shortest paths
-  // from point i: each entry predecessors[i][j] gives the index of the previous
-  // node in the path from point i to point j. If no path exists between point i
-  // and j, then predecessors[i][j] = -1.
-  PredecessorMatrix path_predecessors;
-
   void BuildAndAnalyzeGraph();
 
   void ComputeDepthsAndShortestPaths();
@@ -100,6 +91,14 @@ protected:
       return token_id == lstm_parser::Corpus::ROOT_TOKEN_ID ? 0 : token_id;
   };
 
+  Graph sentence_graph;
+  std::map<Vertex, unsigned> token_depths;
+
+  // Row i of the predecessor matrix contains information on the shortest paths
+  // from point i: each entry predecessors[i][j] gives the index of the previous
+  // node in the path from point i to point j. If no path exists between point i
+  // and j, then predecessors[i][j] = -1.
+  PredecessorMatrix path_predecessors;
 };
 
 class BecauseOracleTransitionCorpus: public lstm_parser::TrainingCorpus {
