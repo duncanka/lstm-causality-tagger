@@ -32,6 +32,8 @@ public:
         connective_indices(std::move(other.connective_indices)),
         arguments(std::move(other.arguments)) {}
 
+  const lstm_parser::Sentence& GetSentence() const { return *sentence; }
+
   const IndexList& GetConnectiveIndices() const { return connective_indices; }
 
   IndexList* GetConnectiveIndices() { return &connective_indices; }
