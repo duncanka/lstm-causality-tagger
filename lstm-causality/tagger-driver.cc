@@ -146,6 +146,102 @@ const string GetModelFileName(const LSTMCausalityTagger& tagger) {
   return os.str();
 }
 
+void DoTrain(LSTMCausalityTagger* tagger,
+             BecauseOracleTransitionCorpus* full_corpus, unsigned folds,
+             double dev_pct, bool compare_punct, const string& model_fname,
+             unsigned dev_eval_period, double epochs_cutoff,
+             double recent_improvements_cutoff, bool eval_pairwise,
+             unsigned cv_start_at, unsigned cv_end_at) {
+  unsigned num_sentences = full_corpus->sentences.size();
+  vector<unsigned> all_sentence_indices(num_sentences);
+  iota(all_sentence_indices.begin(), all_sentence_indices.end(), 0);
+  random_shuffle(all_sentence_indices.begin(), all_sentence_indices.end());
+  if (folds <= 1) {
+    tagger->Train(full_corpus, all_sentence_indices, dev_pct, compare_punct,
+                  model_fname, dev_eval_period, epochs_cutoff,
+                  recent_improvements_cutoff, &requested_stop);
+  } else {
+    // For cutoffs, we use one *past* the index where the fold should stop.
+    vector<unsigned> fold_cutoffs(folds);
+    unsigned uneven_sentences_to_distribute = num_sentences % folds;
+    unsigned next_cutoff = num_sentences / folds;
+    // TODO: merge this loop with the one below?
+    for (unsigned i = 0; i < folds; ++i, next_cutoff += num_sentences / folds) {
+      if (uneven_sentences_to_distribute > 0) {
+        ++next_cutoff;
+        --uneven_sentences_to_distribute;
+      }
+      fold_cutoffs[i] = next_cutoff;
+    }
+    assert(fold_cutoffs.back() == all_sentence_indices.size());
+    unsigned previous_cutoff = 0;
+    vector<CausalityMetrics> evaluation_results;
+    vector<CausalityMetrics> pairwise_eval_results;
+    evaluation_results.reserve(folds);
+    if (eval_pairwise) {
+      pairwise_eval_results.reserve(folds);
+    }
+    // Folds are 1-indexed, so subtract 1 from CL params to get indices.
+    unsigned last_fold = cv_end_at;
+    if (last_fold == UNSIGNED_NEG_1)
+      last_fold = folds + 1;
+
+    for (unsigned fold = cv_start_at - 1;
+        fold < min(last_fold - 1, folds); ++fold) {
+      cerr << "Starting fold " << fold + 1 << " of " << folds << endl;
+      size_t current_cutoff = fold_cutoffs[fold];
+      auto training_range = join(
+          all_sentence_indices | ad::sliced(0u, previous_cutoff),
+          all_sentence_indices
+              | ad::sliced(current_cutoff, all_sentence_indices.size()));
+      vector<unsigned> fold_train_order(training_range.begin(),
+                                        training_range.end());
+      assert(
+          fold_train_order.size()
+              == num_sentences - (current_cutoff - previous_cutoff));
+      tagger->Train(full_corpus, fold_train_order, dev_pct, compare_punct,
+                    model_fname, dev_eval_period, epochs_cutoff,
+                    recent_improvements_cutoff, &requested_stop);
+      cerr << "Evaluating..." << endl;
+      tagger->LoadModel(model_fname);  // Reset to last saved state
+      vector<unsigned> fold_test_order(
+          all_sentence_indices.begin() + previous_cutoff,
+          all_sentence_indices.begin() + current_cutoff);
+      cout << "Evaluation for fold " << fold + 1 << " ("
+           << fold_test_order.size() << " test sentences)" << endl;
+      CausalityMetrics evaluation = tagger->Evaluate(
+          full_corpus, fold_test_order, compare_punct);
+      IndentingOStreambuf indent(cout);
+      cout << evaluation << '\n' << endl;
+      evaluation_results.push_back(evaluation);
+      if (eval_pairwise) {
+        CausalityMetrics pairwise_evaluation = tagger->Evaluate(
+            full_corpus, fold_test_order, compare_punct, eval_pairwise);
+        cout << "Pairwise evaluation:";
+        IndentingOStreambuf indent(cout);
+        cout << '\n' << pairwise_evaluation << '\n' << endl;
+        pairwise_eval_results.push_back(pairwise_evaluation);
+      }
+      requested_stop = false;
+      previous_cutoff = current_cutoff;
+      tagger->Reset();  // Reset for next fold
+    }
+
+    {
+      cout << "Average evaluation:\n";
+      IndentingOStreambuf indent(cout);
+      auto evals_range = boost::make_iterator_range(evaluation_results);
+      cout << AveragedCausalityMetrics(evals_range) << endl;
+    }
+    if (eval_pairwise) {
+      cout << "Average pairwise evaluation:" << '\n';
+      IndentingOStreambuf indent(cout);
+      auto evals_range = boost::make_iterator_range(pairwise_eval_results);
+      cout << AveragedCausalityMetrics(evals_range) << endl;
+    }
+  }
+}
+
 int main(int argc, char** argv) {
   cerr << "COMMAND:";
   for (unsigned i = 0; i < static_cast<unsigned>(argc); ++i)
@@ -178,6 +274,7 @@ int main(int argc, char** argv) {
           conf["known-conns-only"].as<bool>(),
           conf["train-pairwise"].as<bool>(),
           conf["log-diffs"].as<bool>()});
+
   if (conf.count("train")) {
     double dev_pct = conf["dev-pct"].as<double>();
     if (dev_pct < 0.0 || dev_pct > 1.0) {
@@ -205,106 +302,17 @@ int main(int argc, char** argv) {
     BecauseOracleTransitionCorpus full_corpus(tagger.GetVocab(), training_path,
                                               true);
     tagger.FinalizeVocab();
-    unsigned num_sentences = full_corpus.sentences.size();
-    cerr << "Corpus size: " << num_sentences << " sentences" << endl;
+    cerr << "Corpus size: " << full_corpus.sentences.size() << " sentences"
+         << endl;
 
     const string model_fname = GetModelFileName(tagger);
     cerr << "Writing parameters to file: " << model_fname << endl;
 
     signal(SIGINT, signal_callback_handler);
-    vector<unsigned> all_sentence_indices(num_sentences);
-    iota(all_sentence_indices.begin(), all_sentence_indices.end(), 0);
-    random_shuffle(all_sentence_indices.begin(), all_sentence_indices.end());
-    if (folds <= 1) {
-       tagger.Train(&full_corpus, all_sentence_indices, dev_pct, compare_punct,
-                    model_fname, dev_eval_period, epochs_cutoff,
-                    recent_improvements_cutoff, &requested_stop);
-    } else {
-      // For cutoffs, we use one *past* the index where the fold should stop.
-      vector<unsigned> fold_cutoffs(folds);
-      unsigned uneven_sentences_to_distribute = num_sentences % folds;
-      unsigned next_cutoff = num_sentences / folds;
-      // TODO: merge this loop with the one below?
-      for (unsigned i = 0; i < folds;
-           ++i, next_cutoff += num_sentences / folds) {
-        if (uneven_sentences_to_distribute > 0) {
-          ++next_cutoff;
-          --uneven_sentences_to_distribute;
-        }
-        fold_cutoffs[i] = next_cutoff;
-      }
-      assert(fold_cutoffs.back() == all_sentence_indices.size());
-
-      unsigned previous_cutoff = 0;
-      vector<CausalityMetrics> evaluation_results;
-      vector<CausalityMetrics> pairwise_eval_results;
-      evaluation_results.reserve(folds);
-      if (eval_pairwise) {
-        pairwise_eval_results.reserve(folds);
-      }
-      // Folds are 1-indexed, so subtract 1 from CL params to get indices.
-      unsigned last_fold = conf["cv-end-at"].as<unsigned>();
-      if (last_fold == UNSIGNED_NEG_1)
-        last_fold = folds + 1;
-      for (unsigned fold = conf["cv-start-at"].as<unsigned>() - 1;
-           fold < min(last_fold - 1, folds); ++fold) {
-        cerr << "Starting fold " << fold + 1 << " of " << folds << endl;
-        size_t current_cutoff = fold_cutoffs[fold];
-        auto training_range = join(
-            all_sentence_indices | ad::sliced(0u, previous_cutoff),
-            all_sentence_indices | ad::sliced(current_cutoff,
-                                              all_sentence_indices.size()));
-        vector<unsigned> fold_train_order(training_range.begin(),
-                                          training_range.end());
-
-        assert(fold_train_order.size()
-               == num_sentences - (current_cutoff - previous_cutoff));
-
-        tagger.Train(&full_corpus, fold_train_order, dev_pct, compare_punct,
-                     model_fname, dev_eval_period, epochs_cutoff,
-                     recent_improvements_cutoff, &requested_stop);
-
-        cerr << "Evaluating..." << endl;
-        tagger.LoadModel(model_fname);  // Reset to last saved state
-        vector<unsigned> fold_test_order(
-            all_sentence_indices.begin() + previous_cutoff,
-            all_sentence_indices.begin() + current_cutoff);
-        cout << "Evaluation for fold " << fold + 1 << " ("
-             << fold_test_order.size() << " test sentences)" << endl;
-        CausalityMetrics evaluation = tagger.Evaluate(
-            &full_corpus, fold_test_order, compare_punct);
-        IndentingOStreambuf indent(cout);
-        cout << evaluation << '\n' << endl;
-        evaluation_results.push_back(evaluation);
-
-        if (eval_pairwise) {
-          CausalityMetrics pairwise_evaluation = tagger.Evaluate(
-              &full_corpus, fold_test_order, compare_punct, eval_pairwise);
-          cout << "Pairwise evaluation:";
-          IndentingOStreambuf indent(cout);
-          cout << '\n' << pairwise_evaluation << '\n' << endl;
-          pairwise_eval_results.push_back(pairwise_evaluation);
-        }
-
-        requested_stop = false;
-        previous_cutoff = current_cutoff;
-        tagger.Reset();  // Reset for next fold
-      }
-
-      {
-        cout << "Average evaluation:\n";
-        IndentingOStreambuf indent(cout);
-        auto evals_range = boost::make_iterator_range(evaluation_results);
-        cout << AveragedCausalityMetrics(evals_range) << endl;
-      }
-
-      if (eval_pairwise) {
-        cout << "Average pairwise evaluation:" << '\n';
-        IndentingOStreambuf indent(cout);
-        auto evals_range = boost::make_iterator_range(pairwise_eval_results);
-        cout << AveragedCausalityMetrics(evals_range) << endl;
-      }
-    }
+    DoTrain(&tagger, &full_corpus, folds, dev_pct, compare_punct, model_fname,
+            dev_eval_period, epochs_cutoff, recent_improvements_cutoff,
+            eval_pairwise, conf["cv-start-at"].as<unsigned>(),
+            conf["cv-end-at"].as<unsigned>());
   }
 
 
