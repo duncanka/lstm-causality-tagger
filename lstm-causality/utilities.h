@@ -2,8 +2,10 @@
 #define LSTM_CAUSALITY_UTILITIES_H_
 
 #include <algorithm>
+#include <boost/spirit/home/support/container.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <ostream>
+#include <string>
 
 
 template <class T, class Cmp>
@@ -116,6 +118,28 @@ void Reorder(std::vector<T> *v, const std::vector<size_t>& order) {
       while (d = order[d], d != s)
         swap((*v)[s], (*v)[d]);
   }
+}
+
+
+// Generic output function for containers. Disabled for non-container types or
+// variants of std::basic_string.
+template<class Container,
+         typename std::enable_if<
+           boost::spirit::traits::is_container<Container>::value
+             && !std::is_same<std::basic_string<typename Container::value_type>,
+                              Container>::value,
+           int>::type = 0>
+std::ostream& operator<<(std::ostream& os, const Container& c) {
+  os << '[';
+  for (auto iter = c.begin(), end = c.end(); iter != end; ++iter) {
+    os << *iter;
+    auto next_iter = iter;
+    ++next_iter;
+    if (next_iter != end)
+      os << ", ";
+  }
+  os << ']';
+  return os;
 }
 
 #endif /* LSTM_CAUSALITY_UTILITIES_H_ */
