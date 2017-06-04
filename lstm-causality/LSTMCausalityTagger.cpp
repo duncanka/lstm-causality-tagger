@@ -357,7 +357,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
 
   auto AddArc = [&](unsigned action) {
     EnsureCurrentRelation();
-    const string& arc_type = sentence.vocab.actions_to_arc_labels[action];
+    const string& arc_type = sentence.vocab->actions_to_arc_labels[action];
     vector<string> arg_names;
     boost::split(arg_names, arc_type, boost::is_any_of(","));
     for (const string& arg_name : arg_names) {
@@ -406,7 +406,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
     };
 
     unsigned action = *iter;
-    const string& action_name = sentence.vocab.action_names[action];
+    const string& action_name = sentence.vocab->action_names[action];
     /*
     cerr << "Decoding action " << action_name << " on connective word \""
          << sentence.vocab.int_to_words.at(

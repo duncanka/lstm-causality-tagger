@@ -179,6 +179,37 @@ vector<GraphEnhancedParseTree::ParsePathLink>
 }
 
 
+BecauseOracleTransitionCorpus::BecauseOracleTransitionCorpus(
+    CorpusVocabulary* vocab, const string& file, bool is_training,
+    bool sort_by_sentence)
+    : TrainingCorpus(vocab) {
+  BecauseTransitionsReader(is_training).ReadSentences(file, this);
+  sentence_parses.resize(sentences.size());
+
+  if (sort_by_sentence) {
+    // Reconstruct the sentence strings.
+    vector<string> sentence_texts;
+    sentence_texts.reserve(sentences.size());
+    for (const Sentence& sentence : sentences) {
+      ostringstream os;
+      for (const auto& index_and_word : sentence.words) {
+        unsigned word = index_and_word.second;
+        if (word == vocab->kUNK) {
+          cerr << "Can't sort on unknown word" << endl;
+          abort();
+        }
+        os << vocab->int_to_words.at(word) << ' ';
+      }
+      sentence_texts.push_back(os.str());
+    }
+    // Now get the sort order of those strings and apply it to the sentences.
+    vector<size_t> sort_order = SortIndices(sentence_texts);
+    Reorder(&sentences, sort_order);
+  }
+}
+
+
+
 void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadSentences(
     const string& directory_path, Corpus* corpus) const {
   BecauseOracleTransitionCorpus* training_corpus =

@@ -95,7 +95,10 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("cv-start-at", po::value<unsigned>()->default_value(1),
      "Cross-validation fold to start at (useful for debugging/parallelizing")
     ("cv-end-at", po::value<unsigned>()->default_value(-1),
-     "Cross-validation fold to end on (useful for debugging/parallelizing");
+     "Cross-validation fold to end on (useful for debugging/parallelizing")
+    ("sort-sentences,o", POBooleanFlag(false),
+     "Forces the corpus to sort its sentences alphabetically for easier"
+     " comparison of indices against other systems");
 
   po::options_description dcmdline_options;
   dcmdline_options.add(opts);
@@ -181,11 +184,11 @@ void DoTrain(LSTMCausalityTagger* tagger,
     if (eval_pairwise) {
       pairwise_eval_results.reserve(folds);
     }
+
     // Folds are 1-indexed, so subtract 1 from CL params to get indices.
     unsigned last_fold = cv_end_at;
     if (last_fold == UNSIGNED_NEG_1)
       last_fold = folds + 1;
-
     for (unsigned fold = cv_start_at - 1;
         fold < min(last_fold - 1, folds); ++fold) {
       cerr << "Starting fold " << fold + 1 << " of " << folds << endl;
@@ -202,6 +205,7 @@ void DoTrain(LSTMCausalityTagger* tagger,
       tagger->Train(full_corpus, fold_train_order, dev_pct, compare_punct,
                     model_fname, dev_eval_period, epochs_cutoff,
                     recent_improvements_cutoff, &requested_stop);
+
       cerr << "Evaluating..." << endl;
       tagger->LoadModel(model_fname);  // Reset to last saved state
       vector<unsigned> fold_test_order(
@@ -222,6 +226,7 @@ void DoTrain(LSTMCausalityTagger* tagger,
         cout << '\n' << pairwise_evaluation << '\n' << endl;
         pairwise_eval_results.push_back(pairwise_evaluation);
       }
+
       requested_stop = false;
       previous_cutoff = current_cutoff;
       tagger->Reset();  // Reset for next fold
@@ -299,8 +304,9 @@ int main(int argc, char** argv) {
     unsigned folds = conf["folds"].as<unsigned>();
 
     const string& training_path = conf["training-data"].as<string>();
-    BecauseOracleTransitionCorpus full_corpus(tagger.GetVocab(), training_path,
-                                              true);
+    BecauseOracleTransitionCorpus full_corpus(
+        tagger.GetVocab(), training_path, true,
+        conf["sort-sentences"].as<bool>());
     tagger.FinalizeVocab();
     cerr << "Corpus size: " << full_corpus.sentences.size() << " sentences"
          << endl;

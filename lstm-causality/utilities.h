@@ -91,4 +91,31 @@ bool Contains(const Container& container,
 }
 
 
+// Based on https://stackoverflow.com/a/12399290
+template <typename T, typename Comparator=std::less<T>>
+std::vector<size_t> SortIndices(const std::vector<T> &v) {
+  // initialize original index locations
+  std::vector<size_t> indices(v.size());
+  std::iota(indices.begin(), indices.end(), 0);
+
+  // sort indexes based on comparing values in v
+  std::sort(indices.begin(), indices.end(),
+            [&v](size_t i1, size_t i2) {return Comparator()(v[i1], v[i2]);});
+
+  return indices;
+}
+
+
+// From https://stackoverflow.com/a/1267878
+template<class T>
+void Reorder(std::vector<T> *v, const std::vector<size_t>& order) {
+  for (unsigned s = 1; s < order.size(); ++s) {
+    unsigned d;
+    for (d = order[s]; d < s; d = order[d]);
+    if (d == s)
+      while (d = order[d], d != s)
+        swap((*v)[s], (*v)[d]);
+  }
+}
+
 #endif /* LSTM_CAUSALITY_UTILITIES_H_ */

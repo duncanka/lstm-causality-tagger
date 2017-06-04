@@ -85,11 +85,11 @@ protected:
   TokenList GetTokensForIndices(const IndexList& indices) const {
     TokenList tokens;
     tokens.reserve(indices.size());
-    unsigned unk = sentence->vocab.GetWord(sentence->vocab.UNK);
+    unsigned unk = sentence->vocab->GetWord(sentence->vocab->UNK);
     for (unsigned index : indices) {
       unsigned word_id = sentence->words.at(index);
       tokens.push_back(word_id == unk ? sentence->unk_surface_forms.at(index)
-                                      : sentence->vocab.int_to_words[word_id]);
+                                      : sentence->vocab->int_to_words[word_id]);
     }
     return tokens;
   }

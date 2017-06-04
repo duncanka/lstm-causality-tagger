@@ -112,11 +112,8 @@ public:
   const static std::vector<std::string> INCOMING_CLAUSE_EDGES;
 
   BecauseOracleTransitionCorpus(lstm_parser::CorpusVocabulary* vocab,
-                                const std::string& file, bool is_training)
-      : TrainingCorpus(vocab) {
-    BecauseTransitionsReader(is_training).ReadSentences(file, this);
-    sentence_parses.resize(sentences.size());
-  }
+                                const std::string& file, bool is_training,
+                                bool sort_by_sentence);
 
   std::vector<unsigned> missing_instance_counts;
   // Sentence x instance x argument
