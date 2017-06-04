@@ -214,7 +214,7 @@ int main(int argc, char** argv) {
        tagger.Train(&full_corpus, all_sentence_indices, dev_pct, compare_punct,
                     model_fname, dev_eval_period, epochs_cutoff,
                     recent_improvements_cutoff, &requested_stop);
-     } else {
+    } else {
       // For cutoffs, we use one *past* the index where the fold should stop.
       vector<unsigned> fold_cutoffs(folds);
       unsigned uneven_sentences_to_distribute = num_sentences % folds;
@@ -275,7 +275,7 @@ int main(int argc, char** argv) {
         if (eval_pairwise) {
           CausalityMetrics pairwise_evaluation = tagger.Evaluate(
               &full_corpus, fold_test_order, compare_punct, eval_pairwise);
-          cout << "\nPairwise evaluation:";
+          cout << "Pairwise evaluation:";
           IndentingOStreambuf indent(cout);
           cout << '\n' << pairwise_evaluation << '\n' << endl;
           pairwise_eval_results.push_back(pairwise_evaluation);
