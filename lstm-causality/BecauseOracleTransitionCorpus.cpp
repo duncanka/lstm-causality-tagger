@@ -205,6 +205,7 @@ BecauseOracleTransitionCorpus::BecauseOracleTransitionCorpus(
     // Now get the sort order of those strings and apply it to the sentences.
     vector<size_t> sort_order = SortIndices(sentence_texts);
     Reorder(&sentences, sort_order);
+    Reorder(&correct_act_sent, sort_order);
   }
 }
 

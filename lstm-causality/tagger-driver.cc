@@ -106,7 +106,7 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
   po::store(parse_command_line(argc, argv, dcmdline_options), *conf);
   if (conf->count("help")) {
     cerr << dcmdline_options << endl;
-    exit(0);
+    std::exit(0);
   }
 }
 
@@ -114,7 +114,7 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
 void signal_callback_handler(int /* signum */) {
   if (requested_stop) {
     cerr << "\nReceived SIGINT again; quitting.\n";
-    exit(1);
+    std::exit(1);
   }
   cerr << "\nReceived SIGINT. Terminating optimization early...\n";
   requested_stop = true;
@@ -216,7 +216,7 @@ void DoTrain(LSTMCausalityTagger* tagger,
                     recent_improvements_cutoff, &requested_stop);
       cerr << "Evaluating..." << endl;
       if (folds_for_comparison) {
-        cout << "Fold " << fold + 1 << " sentences:" << endl;
+        cout << "Fold " << fold + 1 << " test sentences:" << endl;
         IndentingOStreambuf indent(cout);
         for (unsigned sentence_index : fold_test_order) {
           cout << full_corpus->sentences[sentence_index] << '\n';
