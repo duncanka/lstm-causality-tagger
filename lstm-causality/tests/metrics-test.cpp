@@ -39,7 +39,7 @@ protected:
                           unique_ptr<BecauseOracleTransitionCorpus>* corpus,
                           vector<vector<CausalityRelation>>* relations) {
     corpus->reset(
-        new BecauseOracleTransitionCorpus(&vocab, data_path, true));
+        new BecauseOracleTransitionCorpus(&vocab, data_path, true, false));
     for (unsigned i = 0; i < (*corpus)->sentences.size(); ++i) {
       const lstm_parser::Sentence& sentence = (*corpus)->sentences[i];
       const vector<unsigned>& actions = (*corpus)->correct_act_sent[i];

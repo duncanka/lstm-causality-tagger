@@ -96,9 +96,10 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Cross-validation fold to start at (useful for debugging/parallelizing")
     ("cv-end-at", po::value<unsigned>()->default_value(-1),
      "Cross-validation fold to end on (useful for debugging/parallelizing")
-    ("sort-sentences,o", POBooleanFlag(false),
-     "Forces the corpus to sort its sentences alphabetically for easier"
-     " comparison of indices against other systems");
+    ("folds-for-comparison,C", POBooleanFlag(false),
+     "Whether we'll be comparing outputs against a system with different"
+     " randomization (prints order of folds and test sentences, and forces the"
+     " corpus to sort its sentences alphabetically for easier comparison)");
 
   po::options_description dcmdline_options;
   dcmdline_options.add(opts);
@@ -154,7 +155,8 @@ void DoTrain(LSTMCausalityTagger* tagger,
              double dev_pct, bool compare_punct, const string& model_fname,
              unsigned dev_eval_period, double epochs_cutoff,
              double recent_improvements_cutoff, bool eval_pairwise,
-             unsigned cv_start_at, unsigned cv_end_at) {
+             unsigned cv_start_at, unsigned cv_end_at,
+             bool folds_for_comparison) {
   unsigned num_sentences = full_corpus->sentences.size();
   vector<unsigned> all_sentence_indices(num_sentences);
   iota(all_sentence_indices.begin(), all_sentence_indices.end(), 0);
@@ -202,15 +204,26 @@ void DoTrain(LSTMCausalityTagger* tagger,
       assert(
           fold_train_order.size()
               == num_sentences - (current_cutoff - previous_cutoff));
-      tagger->Train(full_corpus, fold_train_order, dev_pct, compare_punct,
-                    model_fname, dev_eval_period, epochs_cutoff,
-                    recent_improvements_cutoff, &requested_stop);
-
-      cerr << "Evaluating..." << endl;
-      tagger->LoadModel(model_fname);  // Reset to last saved state
       vector<unsigned> fold_test_order(
           all_sentence_indices.begin() + previous_cutoff,
           all_sentence_indices.begin() + current_cutoff);
+      if (folds_for_comparison) {
+        cerr << "Testing order: " << fold_test_order << endl;
+      }
+
+      tagger->Train(full_corpus, fold_train_order, dev_pct, compare_punct,
+                    model_fname, dev_eval_period, epochs_cutoff,
+                    recent_improvements_cutoff, &requested_stop);
+      cerr << "Evaluating..." << endl;
+      if (folds_for_comparison) {
+        cout << "Fold " << fold + 1 << " sentences:" << endl;
+        IndentingOStreambuf indent(cout);
+        for (unsigned sentence_index : fold_test_order) {
+          cout << full_corpus->sentences[sentence_index] << '\n';
+        }
+        cout << endl;
+      }
+      tagger->LoadModel(model_fname);  // Reset to last saved state
       cout << "Evaluation for fold " << fold + 1 << " ("
            << fold_test_order.size() << " test sentences)" << endl;
       CausalityMetrics evaluation = tagger->Evaluate(
@@ -304,9 +317,9 @@ int main(int argc, char** argv) {
     unsigned folds = conf["folds"].as<unsigned>();
 
     const string& training_path = conf["training-data"].as<string>();
+    bool folds_for_comparison = conf["folds-for-comparison"].as<bool>();
     BecauseOracleTransitionCorpus full_corpus(
-        tagger.GetVocab(), training_path, true,
-        conf["sort-sentences"].as<bool>());
+        tagger.GetVocab(), training_path, true, folds_for_comparison);
     tagger.FinalizeVocab();
     cerr << "Corpus size: " << full_corpus.sentences.size() << " sentences"
          << endl;
@@ -318,7 +331,7 @@ int main(int argc, char** argv) {
     DoTrain(&tagger, &full_corpus, folds, dev_pct, compare_punct, model_fname,
             dev_eval_period, epochs_cutoff, recent_improvements_cutoff,
             eval_pairwise, conf["cv-start-at"].as<unsigned>(),
-            conf["cv-end-at"].as<unsigned>());
+            conf["cv-end-at"].as<unsigned>(), folds_for_comparison);
   }
 
 
