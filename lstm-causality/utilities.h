@@ -108,16 +108,15 @@ std::vector<size_t> SortIndices(const std::vector<T> &v) {
 }
 
 
-// From https://stackoverflow.com/a/1267878
-template<class T>
-void Reorder(std::vector<T> *v, const std::vector<size_t>& order) {
-  for (unsigned s = 1; s < order.size(); ++s) {
-    unsigned d;
-    for (d = order[s]; d < s; d = order[d]);
-    if (d == s)
-      while (d = order[d], d != s)
-        swap((*v)[s], (*v)[d]);
+// Based on https://stackoverflow.com/a/21378639
+template<typename T>
+void Reorder(std::vector<T>* data, const std::vector<std::size_t>& order) {
+  std::vector<T> tmp;
+  tmp.reserve(data->size());  // ensure memory and avoid moves within the vector
+  for (std::size_t i = 0; i < order.size(); ++i) {
+    tmp.push_back(std::move((*data)[order[i]]));  // move constructor
   }
+  data->swap(tmp);           // swap vector contents
 }
 
 
