@@ -116,6 +116,35 @@ void signal_callback_handler(int /* signum */) {
   requested_stop = true;
 }
 
+const string GetModelFileName(const LSTMCausalityTagger& tagger) {
+  ostringstream os;
+  os << "tagger_" << tagger.options.word_dim
+     << '_' << tagger.options.lstm_layers
+     << '_' << tagger.options.token_dim
+     << '_' << tagger.options.lambda_hidden_dim
+     << '_' << tagger.options.actions_hidden_dim
+     << '_' << tagger.options.parse_path_hidden_dim
+     << '_' << tagger.options.span_hidden_dim
+     << '_' << tagger.options.action_dim
+     << '_' << tagger.options.state_dim
+     << '_' << tagger.options.dropout;
+
+  if (tagger.options.subtrees)
+    os << "_subtrees";
+  if (tagger.options.gated_parse)
+    os << "_gated-parse";
+  if (tagger.options.new_conn_action)
+    os << "_new-conn";
+  if (tagger.options.shift_action)
+    os << "_shift";
+  if (tagger.options.known_conns_only)
+    os << "_known";
+  if (tagger.options.train_pairwise)
+    os << "_pairwise";
+  os << "__pid" << getpid() << ".params";
+
+  return os.str();
+}
 
 int main(int argc, char** argv) {
   cerr << "COMMAND:";
@@ -179,31 +208,7 @@ int main(int argc, char** argv) {
     unsigned num_sentences = full_corpus.sentences.size();
     cerr << "Corpus size: " << num_sentences << " sentences" << endl;
 
-    ostringstream os;
-    os << "tagger_" << tagger.options.word_dim
-       << '_' << tagger.options.lstm_layers
-       << '_' << tagger.options.token_dim
-       << '_' << tagger.options.lambda_hidden_dim
-       << '_' << tagger.options.actions_hidden_dim
-       << '_' << tagger.options.parse_path_hidden_dim
-       << '_' << tagger.options.span_hidden_dim
-       << '_' << tagger.options.action_dim
-       << '_' << tagger.options.state_dim
-       << '_' << tagger.options.dropout;
-    if (tagger.options.subtrees)
-      os << "_subtrees";
-    if (tagger.options.gated_parse)
-      os << "_gated-parse";
-    if (tagger.options.new_conn_action)
-      os << "_new-conn";
-    if (tagger.options.shift_action)
-      os << "_shift";
-    if (tagger.options.known_conns_only)
-      os << "_known";
-    if (tagger.options.train_pairwise)
-      os << "_pairwise";
-    os << "__pid" << getpid() << ".params";
-    const string model_fname = os.str();
+    const string model_fname = GetModelFileName(tagger);
     cerr << "Writing parameters to file: " << model_fname << endl;
 
     signal(SIGINT, signal_callback_handler);
