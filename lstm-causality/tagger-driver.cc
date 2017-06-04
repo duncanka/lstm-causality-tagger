@@ -69,7 +69,9 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("compare-punct,c",
      "Whether to count punctuation when comparing argument spans")
     ("eval-pairwise,P", POBooleanFlag(true),
-     "Whether to also evaluate on only instances with both cause and effect")
+     "Whether to also evaluate on just instances with both cause and effect")
+    ("train-pairwise,r", POBooleanFlag(false),
+     "Whether to train on just instances with both cause and effect")
     ("subtrees,u", POBooleanFlag(true),
      "Whether to include embeddings of parse subtrees in token representations")
     ("gated-parse,g", POBooleanFlag(true),
@@ -145,6 +147,7 @@ int main(int argc, char** argv) {
           conf["new-conn-action"].as<bool>(),
           conf["shift-action"].as<bool>(),
           conf["known-conns-only"].as<bool>(),
+          conf["train-pairwise"].as<bool>(),
           conf["log-diffs"].as<bool>()});
   if (conf.count("train")) {
     double dev_pct = conf["dev-pct"].as<double>();
@@ -197,6 +200,8 @@ int main(int argc, char** argv) {
       os << "_shift";
     if (tagger.options.known_conns_only)
       os << "_known";
+    if (tagger.options.train_pairwise)
+      os << "_pairwise";
     os << "__pid" << getpid() << ".params";
     const string model_fname = os.str();
     cerr << "Writing parameters to file: " << model_fname << endl;

@@ -539,11 +539,8 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
     vector<CausalityRelation> gold = Decode(
         *sentence, gold_actions, options.new_conn_action, options.shift_action);
     if (pairwise) {
-      auto not_pairwise = [](const CausalityRelation& rel) {
-        return rel.GetCause().empty() || rel.GetEffect().empty();
-      };
-      ReallyDeleteIf(&predicted, not_pairwise);
-      ReallyDeleteIf(&gold, not_pairwise);
+      FilterToPairwise(&predicted);
+      FilterToPairwise(&gold);
     }
     evaluation += CausalityMetrics(
         gold, predicted, *corpus, *parse_with_depths,
@@ -1233,8 +1230,11 @@ const vector<CausalityRelation>& LSTMCausalityTagger::GetDecodedGoldRelations(
     const Sentence& sentence, const vector<unsigned>& actions) {
   auto decoded_iter = training_decoded_cache.find(&sentence);
   if (decoded_iter == training_decoded_cache.end()) {
-    auto decoded = Decode(sentence, actions, options.new_conn_action,
-                          options.shift_action);
+    vector<CausalityRelation> decoded = Decode(
+        sentence, actions, options.new_conn_action, options.shift_action);
+    if (options.train_pairwise) {
+      FilterToPairwise(&decoded);
+    }
     RecordKnownConnectives(decoded);
     auto insert_result =
         training_decoded_cache.insert({&sentence, std::move(decoded)});

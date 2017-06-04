@@ -40,6 +40,7 @@ public:
     bool new_conn_action;
     bool shift_action;
     bool known_conns_only;
+    bool train_pairwise;
 
     bool log_differences;
 
@@ -60,6 +61,7 @@ public:
       ar & new_conn_action;
       ar & shift_action;
       ar & known_conns_only;
+      ar & train_pairwise;
 
       // log_differences is a runtime option, not a model option.
     }
@@ -313,6 +315,13 @@ private:
   }
 
   void RecordKnownConnectives(const std::vector<CausalityRelation>& rels);
+
+  void FilterToPairwise(std::vector<CausalityRelation>* rels) {
+    auto not_pairwise = [](const CausalityRelation& rel) {
+      return rel.GetCause().empty() || rel.GetEffect().empty();
+    };
+    ReallyDeleteIf(rels, not_pairwise);
+  }
 
   const std::vector<CausalityRelation>& GetDecodedGoldRelations(
       const lstm_parser::Sentence& sentence,
