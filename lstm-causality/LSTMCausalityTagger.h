@@ -1,11 +1,17 @@
 #ifndef LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_
 #define LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_
 
+#include <boost/functional/hash.hpp>
+#include <boost/serialization/set.hpp>
 #include <boost/serialization/split_member.hpp>
+#include <boost/serialization/unordered_set.hpp>
 #include <csignal>
 #include <limits>
 #include <map>
+#include <set>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "parser/neural-transition-tagger.h"
@@ -33,6 +39,8 @@ public:
     bool gated_parse;
     bool new_conn_action;
     bool shift_action;
+    bool known_conns_only;
+
     bool log_differences;
 
     template<class Archive>
@@ -51,6 +59,9 @@ public:
       ar & gated_parse;
       ar & new_conn_action;
       ar & shift_action;
+      ar & known_conns_only;
+
+      // log_differences is a runtime option, not a model option.
     }
   };
 
@@ -256,6 +267,7 @@ private:
   template<class Archive>
   void save(Archive& ar, const unsigned int version) const {
     ar & options;
+    ar & known_connectives;
     ar & vocab;
     ar & *model;
   }
@@ -265,6 +277,7 @@ private:
     finalized = false; // we'll need to re-finalize after resetting the network.
 
     ar & options;
+    ar & known_connectives;
     ar & vocab;
     // Don't finalize yet...we want to finalize once our model is initialized.
 
@@ -299,10 +312,22 @@ private:
     }
   }
 
+  void RecordKnownConnectives(const std::vector<CausalityRelation>& rels);
+
+  const std::vector<CausalityRelation>& GetDecodedGoldRelations(
+      const lstm_parser::Sentence& sentence,
+      const std::vector<unsigned>& actions);
+
   CachedExpressionMap parser_states;  // internal cache of parser NN states
+  // Sets of word IDs that can go together in connectives.
+  std::unordered_set<std::set<unsigned>,
+                     boost::hash<std::set<unsigned>>> known_connectives;
+  // Lists of LSTMs for convenience of iteration.
   std::vector<std::reference_wrapper<cnn::LSTMBuilder>> sentence_lstms;
   // LSTMs that persist across causal instances within a sentence.
   std::vector<std::reference_wrapper<cnn::LSTMBuilder>> persistent_lstms;
+  std::unordered_map<const lstm_parser::Sentence*,
+                     std::vector<CausalityRelation>> training_decoded_cache;
 };
 
 #endif /* LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_ */

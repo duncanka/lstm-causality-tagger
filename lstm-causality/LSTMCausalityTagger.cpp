@@ -3,6 +3,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/circular_buffer.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/range/combine.hpp>
 #include <chrono>
@@ -170,6 +171,9 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
       Sentence* sentence = &corpus->sentences[sentence_index];
       const vector<unsigned>& correct_actions =
           corpus->correct_act_sent[sentence_index];
+      // Cache the decoded gold relations, if not already cached, and record
+      // the corresponding sets of connective words.
+      GetDecodedGoldRelations(*sentence, correct_actions);
 
       // cerr << "Starting sentence " << *sentence << endl;
 
@@ -237,6 +241,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
     }
   }
 
+  training_decoded_cache.clear();
   if (options.dropout) {
     for (auto &builder : sentence_lstms) {
       builder.get().disable_dropout();
@@ -276,8 +281,11 @@ double LSTMCausalityTagger::DoDevEvaluation(
 
     const vector<unsigned>& gold_actions =
         corpus->correct_act_sent[sentence_index];
-    vector<CausalityRelation> gold = Decode(
-        *sentence, gold_actions, options.new_conn_action, options.shift_action);
+    // NOTE: this assumes that gold relations from dev eval should be counted
+    // for what's been seen. In current setup, that's definitely, true, since
+    // they'll eventually come round and be used as training in a future epoch.
+    const vector<CausalityRelation>& gold = GetDecodedGoldRelations(
+        *sentence, gold_actions);
 
     num_actions += actions.size();
     const GraphEnhancedParseTree& parse =
@@ -751,9 +759,24 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
 
   if (real_state.currently_processing_rel) {
     // SHIFT is mandatory if it's available and no tokens are left to compare.
-    if (real_state.L1.size() <= 1 && real_state.L4.size() <= 1
-        && options.shift_action) {
+    if (options.shift_action
+        && real_state.L1.size() <= 1 && real_state.L4.size() <= 1) {
       return action_name[0] != 'S' || action_name[1] != 'H';
+    }
+
+    // Check for unknown connective word set.
+    if (!in_training && options.known_conns_only
+        && action_name[0] == 'C' && action_name[5] == 'F') {  // CONN-FRAG
+      unsigned word_id = real_state.sentence.at(real_state.current_arg_token_i);
+      if (word_id != vocab.kUNK) {  // UNK is always OK in a connective
+        set<unsigned> conn_words({word_id});
+        for (unsigned token_index : real_state.current_rel_conn_tokens) {
+          conn_words.insert(real_state.sentence.at(token_index));
+        }
+        if (!known_connectives.count(conn_words)) {
+          return true;
+        }
+      }
     }
 
     if (next_arg_token_is_left) {
@@ -797,10 +820,19 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
           && !ends_with(action_name, "RIGHT");
     }
   } else {
-    // NO-CONN and NEW-CONN never forbidden if we're not processing a relation
-    if (action_name[0] == 'N'
-        && (action_name[3] == 'C' || action_name[4] == 'C')) {
+    if (action_name[0] == 'N' && action_name[3] == 'C') {
+      // NO-CONN never forbidden if we're not processing a relation
       return false;
+    } else if (action_name[0] == 'N' && action_name[4] == 'C') {  // NEW-CONN
+      // Check for forbidden connective word, if needed.
+      if (!in_training && options.known_conns_only) {
+        unsigned word_id =
+            real_state.sentence.at(real_state.current_conn_token_i);
+        // Unk is never forbidden. If not UNK, forbidden if it's an unseen word.
+        return word_id != vocab.kUNK && !known_connectives.count({word_id});
+      } else {         // If we're not checking for forbidden connectives,
+        return false;  // NEW-CONN is always OK (i.e., not forbidden).
+      }
     }
 
     if (options.new_conn_action) {
@@ -1172,4 +1204,42 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
   assert(!L1i.empty() && !L2i.empty() && !L3i.empty() && !L4i.empty());
   assert(L1.size() == L1i.size() && L2.size() == L2i.size() &&
          L3.size() == L3i.size() && L4.size() == L4i.size());
+}
+
+
+void LSTMCausalityTagger::RecordKnownConnectives(
+    const vector<CausalityRelation>& rels) {
+  for (const auto& rel : rels) {
+    const auto& conn_indices = rel.GetConnectiveIndices();
+    // Record all subsets of the connective words.
+    unsigned num_subsets = 1 << conn_indices.size();  // 2^n, 1 bit per word
+    for (unsigned i = 1; i < num_subsets; ++i) {  // don't process empty subset
+      boost::dynamic_bitset<> conn_subset_mask(conn_indices.size(), i);
+      set<unsigned> word_ids;
+      for (unsigned index_into_conn = 0; index_into_conn < conn_subset_mask.size();
+           ++index_into_conn) {
+        if (conn_subset_mask.test(index_into_conn)) {
+          unsigned conn_token_index = conn_indices[index_into_conn];
+          word_ids.insert(rel.GetSentence().words.at(conn_token_index));
+        }
+      }
+      known_connectives.insert(word_ids);
+    }
+  }
+}
+
+
+const vector<CausalityRelation>& LSTMCausalityTagger::GetDecodedGoldRelations(
+    const Sentence& sentence, const vector<unsigned>& actions) {
+  auto decoded_iter = training_decoded_cache.find(&sentence);
+  if (decoded_iter == training_decoded_cache.end()) {
+    auto decoded = Decode(sentence, actions, options.new_conn_action,
+                          options.shift_action);
+    RecordKnownConnectives(decoded);
+    auto insert_result =
+        training_decoded_cache.insert({&sentence, std::move(decoded)});
+    return insert_result.first->second;
+  } else {
+    return decoded_iter->second;
+  }
 }

@@ -76,10 +76,13 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Whether to include gated parse tree embedding in the overall state")
     ("dropout,D", po::value<float>()->default_value(0.0),
      "Dropout rate (no dropout is performed for a value of 0)")
-    ("new-conn-action,n", POBooleanFlag(false),
+    ("new-conn-action,n", POBooleanFlag(true),
      "Whether starting a relation is a separate action (must match data)")
     ("shift-action,H", POBooleanFlag(false),
      "Whether completing a relation is a separate action (must match data)")
+    ("known-conns-only,K", POBooleanFlag(false),
+     "Whether to restrict the possible transitions at test time to allow only"
+     " known connectives")
     ("log-diffs,L", POBooleanFlag(false),
      "Whether to log differences between correct and predicted")
     ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
@@ -141,6 +144,7 @@ int main(int argc, char** argv) {
           conf["gated-parse"].as<bool>(),
           conf["new-conn-action"].as<bool>(),
           conf["shift-action"].as<bool>(),
+          conf["known-conns-only"].as<bool>(),
           conf["log-diffs"].as<bool>()});
   if (conf.count("train")) {
     double dev_pct = conf["dev-pct"].as<double>();
@@ -191,6 +195,8 @@ int main(int argc, char** argv) {
       os << "_new-conn";
     if (tagger.options.shift_action)
       os << "_shift";
+    if (tagger.options.known_conns_only)
+      os << "_known";
     os << "__pid" << getpid() << ".params";
     const string model_fname = os.str();
     cerr << "Writing parameters to file: " << model_fname << endl;
