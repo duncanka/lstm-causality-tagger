@@ -816,7 +816,7 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
       return !starts_with(action_name, "RIGHT")
           && !ends_with(action_name, "RIGHT");
     }
-  } else {
+  } else {  // not processing a relation
     if (action_name[0] == 'N' && action_name[3] == 'C') {
       // NO-CONN never forbidden if we're not processing a relation
       return false;
