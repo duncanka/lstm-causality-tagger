@@ -1213,8 +1213,8 @@ void LSTMCausalityTagger::RecordKnownConnectives(
     for (unsigned i = 1; i < num_subsets; ++i) {  // don't process empty subset
       boost::dynamic_bitset<> conn_subset_mask(conn_indices.size(), i);
       set<unsigned> word_ids;
-      for (unsigned index_into_conn = 0; index_into_conn < conn_subset_mask.size();
-           ++index_into_conn) {
+      for (unsigned index_into_conn = 0;
+          index_into_conn < conn_subset_mask.size(); ++index_into_conn) {
         if (conn_subset_mask.test(index_into_conn)) {
           unsigned conn_token_index = conn_indices[index_into_conn];
           word_ids.insert(rel.GetSentence().words.at(conn_token_index));
