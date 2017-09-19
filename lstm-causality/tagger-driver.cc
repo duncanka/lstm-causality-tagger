@@ -32,6 +32,7 @@ po::typed_value<bool>* POBooleanFlag(bool default_val) {
 void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
   po::options_description opts("Configuration options");
   opts.add_options()
+    ("help", "Print these usage instructions and exit")
     ("parser-model,M",
       po::value<string>()->default_value(
           "lstm-parser/english_pos_2_32_100_20_100_12_20.params"),
