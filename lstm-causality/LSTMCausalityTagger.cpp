@@ -409,9 +409,9 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
     const string& action_name = sentence.vocab->action_names[action];
     /*
     cerr << "Decoding action " << action_name << " on connective word \""
-         << sentence.vocab.int_to_words.at(
+         << sentence.vocab->int_to_words.at(
                 sentence.words.at(current_conn_token))
-         << "\" and argument word \"" << sentence.vocab.int_to_words.at(
+         << "\" and argument word \"" << sentence.vocab->int_to_words.at(
                 sentence.words.at(current_arg_token)) << '"' << endl;
     //*/
     if (action_name == "NO-CONN") {
@@ -797,7 +797,7 @@ bool LSTMCausalityTagger::IsActionForbidden(const unsigned action,
       // CONN-FRAG. Also, we can't have less than two connective words.
       if (action_name[0] == 'S' && action_name[1] == 'P') {
         return real_state.current_rel_conn_tokens.size() < 2
-            || (last_action_name[0] == 'S' && last_action_name[1] == 'P')
+            || starts_with(last_action_name, "SP")
             || last_action_name[0] == 'C';
       }
 
