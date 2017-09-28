@@ -877,21 +877,18 @@ Expression LSTMCausalityTagger::GetParsePathEmbedding(
     for (const GraphEnhancedParseTree::ParsePathLink& arc : parse_path) {
       const vector<string>& action_names = parser.GetVocab()->action_names;
       auto GetParseActionIter = [&arc, &action_names](bool is_left) {
-        string action_name = (is_left ? "RIGHT-ARC(" : "LEFT-ARC(")
+        string action_name = (is_left ? "LEFT-ARC(" : "RIGHT-ARC(")
             + arc.arc_label + ")";
         return find(action_names.begin(), action_names.end(), action_name);
       };
 
-      // TODO: is this a sensible way to handle left vs. right arc?
-      // (In particular, SWAPs will screw up directions.)
-      auto action_iter = GetParseActionIter(!arc.reversed);
+      // Default to LEFT-ARC for parse relation unless it doesn't exist.
+      auto action_iter = GetParseActionIter(true);
       if (action_iter == action_names.end()) {
-        action_iter = GetParseActionIter(arc.reversed);
+        action_iter = GetParseActionIter(false);
       }
-      if (action_iter == action_names.end()) {
-        cerr << "Invalid arc label: " << arc.arc_label << endl;
-        abort();
-      }
+      assert(action_iter != action_names.end());
+
       int action_id = action_iter - action_names.begin();
       ComputationGraph* cg = state->current_arg_token.pg;
       Expression relation = const_lookup(*cg, parser.p_r, action_id);
