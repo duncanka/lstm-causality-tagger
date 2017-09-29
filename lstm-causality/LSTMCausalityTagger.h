@@ -30,6 +30,7 @@ public:
     unsigned token_dim;
     unsigned lambda_hidden_dim;
     unsigned actions_hidden_dim;
+    unsigned parse_path_arc_dim;
     unsigned parse_path_hidden_dim;
     unsigned span_hidden_dim;
     unsigned action_dim;
@@ -117,6 +118,7 @@ public:
 protected:
   struct CausalityTaggerState : public TaggerState {
     std::map<unsigned, Expression> all_tokens;
+    std::map<unsigned, Expression> all_subtreeless_tokens;
     std::vector<Expression> L1; // unprocessed tokens to the left
     std::vector<Expression> L2; // processed tokens to the left (reverse order)
     std::vector<Expression> L3; // unprocessed tokens to the right
@@ -249,6 +251,11 @@ protected:
   cnn::Parameters* p_tbias;         // LSTM input bias
   cnn::Parameters* p_subtree2t;     // node subtree parse info to token
 
+  // Parameters for parse path embedding
+  cnn::Parameters* p_pp_bias;
+  cnn::Parameters* p_parse2pp;
+  cnn::Parameters* p_token2pp;
+
   // LSTM guards
   cnn::Parameters* p_L1_guard;
   cnn::Parameters* p_L2_guard;
@@ -296,7 +303,8 @@ private:
   void StartNewRelation();
 
   Expression GetTokenEmbedding(cnn::ComputationGraph* cg, unsigned word_index,
-                               unsigned word_id, unsigned pos_id);
+                               unsigned word_id, unsigned pos_id,
+                               bool no_subtrees=false);
 
   Expression GetParsePathEmbedding(CausalityTaggerState* state,
                                    unsigned source_token_id,

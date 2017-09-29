@@ -56,6 +56,9 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Dimension of the hidden state of each lambda LSTM")
     ("actions-hidden-dim,A", po::value<unsigned>()->default_value(32),
      "Dimension of the hidden state of the action history LSTM")
+    ("parse-path-arc-dim,R", po::value<unsigned>()->default_value(0),
+     "Dimension for embedding parse relation + POS + word vector for input to"
+     " parse path. If 0, the raw parse relation embedding is used.")
     ("parse-path-hidden-dim,p", po::value<unsigned>()->default_value(12),
      "Dimension of the hidden state of the parse path embedding LSTM. If 0,"
      " parse paths are not used.")
@@ -281,6 +284,7 @@ int main(int argc, char** argv) {
           conf["token-dim"].as<unsigned>(),
           conf["lambda-hidden-dim"].as<unsigned>(),
           conf["actions-hidden-dim"].as<unsigned>(),
+          conf["parse-path-arc-dim"].as<unsigned>(),
           conf["parse-path-hidden-dim"].as<unsigned>(),
           conf["span-hidden-dim"].as<unsigned>(),
           conf["action-dim"].as<unsigned>(),

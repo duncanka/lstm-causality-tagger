@@ -91,9 +91,12 @@ void LSTMCausalityTagger::InitializeModelAndBuilders() {
   action_history_lstm = LSTMBuilder(options.lstm_layers, options.action_dim,
                                     options.actions_hidden_dim, model.get());
   if (options.parse_path_hidden_dim > 0) {
+    unsigned pp_input_dim =
+        options.parse_path_arc_dim > 0 ?
+            // If using relations directly, add a bit to rel_dim for edge dir
+            options.parse_path_arc_dim : parser.options.rel_dim + 1;
     parse_path_lstm = LSTMBuilder(options.lstm_layers,
-                                  // Add bit to rel_dim for forward vs back edge
-                                  parser.options.rel_dim + 1,
+                                  pp_input_dim,
                                   options.parse_path_hidden_dim, model.get());
   }
   connective_lstm = LSTMBuilder(options.lstm_layers, options.token_dim,
@@ -571,6 +574,11 @@ vector<Parameters*> LSTMCausalityTagger::GetParameters() {
   if (options.parse_path_hidden_dim > 0) {
     params.push_back(p_parse_path_start);
     params.push_back(p_parsepath2S);
+    if (options.parse_path_arc_dim > 0) {
+      params.push_back(p_pp_bias);
+      params.push_back(p_parse2pp);
+      params.push_back(p_token2pp);
+    }
   }
   return params;
 }
@@ -637,13 +645,25 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   p_abias = model->add_parameters({action_size});
   p_s2a = model->add_parameters({action_size, options.state_dim});
 
-  // Parameters for guard/start items in empty lists
-  p_action_start = model->add_parameters({options.action_dim});
+  // Parse path parameters
   if (options.parse_path_hidden_dim > 0) {
-    p_parse_path_start = model->add_parameters({parser.options.rel_dim + 1});
+    const unsigned directed_rel_dim = parser.options.rel_dim + 1;
     p_parsepath2S = model->add_parameters(
         {options.state_dim, options.parse_path_hidden_dim});
+    if (options.parse_path_arc_dim > 0) {
+      p_pp_bias = model->add_parameters({options.parse_path_arc_dim});
+      p_parse2pp = model->add_parameters(
+          {options.parse_path_arc_dim, directed_rel_dim});
+      p_token2pp = model->add_parameters(
+          {options.parse_path_arc_dim, options.token_dim});
+      p_parse_path_start = model->add_parameters({options.parse_path_arc_dim});
+    } else {
+      p_parse_path_start = model->add_parameters({directed_rel_dim});
+    }
   }
+
+  // Parameters for guard/start items in empty lists
+  p_action_start = model->add_parameters({options.action_dim});
   p_L1_guard = model->add_parameters({options.token_dim});
   p_L2_guard = model->add_parameters({options.token_dim});
   p_L3_guard = model->add_parameters({options.token_dim});
@@ -709,6 +729,13 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     state->L4i.push_back(token_index);
     L4_lstm.add_input(token_repr);
     state->all_tokens[token_index] = token_repr;
+
+    // Parse paths may need their own set of subtree-less token embeddings.
+    if (options.subtrees && options.parse_path_arc_dim > 0) {
+      Expression token_repr_no_subtree = GetTokenEmbedding(
+          cg, token_index, word_id, pos_id, true);
+      state->all_subtreeless_tokens[token_index] = token_repr_no_subtree;
+    }
   }
 
   state->current_conn_token_i = state->L4i.back();
@@ -723,7 +750,8 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
 Expression LSTMCausalityTagger::GetTokenEmbedding(ComputationGraph* cg,
                                                   unsigned word_index,
                                                   unsigned word_id,
-                                                  unsigned pos_id) {
+                                                  unsigned pos_id,
+                                                  bool no_subtrees) {
   Expression word = lookup(*cg, p_w, word_id);
   unsigned pretrained_id =
       parser.pretrained.count(word_id) ? word_id : parser.GetVocab()->kUNK;
@@ -735,7 +763,7 @@ Expression LSTMCausalityTagger::GetTokenEmbedding(ComputationGraph* cg,
       GetParamExpr(p_w2t), word,
       GetParamExpr(p_p2t), pos,
       GetParamExpr(p_v2t), pretrained};
-  if (options.subtrees) {
+  if (options.subtrees && !no_subtrees) {
     Expression subtree_repr = nobackprop(
         parser_states.at(to_string(word_index)));
     args.push_back(GetParamExpr(p_subtree2t));
@@ -894,7 +922,16 @@ Expression LSTMCausalityTagger::GetParsePathEmbedding(
       Expression relation = const_lookup(*cg, parser.p_r, action_id);
       Expression is_back_edge = zeroes(*cg, {1}) + static_cast<cnn::real>(
           arc.reversed);
-      parse_path_lstm.add_input(concatenate({relation, is_back_edge}));
+      Expression directed_rel = concatenate({relation, is_back_edge});
+
+      if (options.parse_path_arc_dim > 0) {
+        Expression token_embedding = state->all_subtreeless_tokens.at(arc.end);
+        parse_path_lstm.add_input(RectifyWithDropout(affine_transform(
+            {GetParamExpr(p_pp_bias), GetParamExpr(p_parse2pp), directed_rel,
+             GetParamExpr(p_token2pp), token_embedding})));
+      } else {
+        parse_path_lstm.add_input(directed_rel);
+      }
     }
   }
 
