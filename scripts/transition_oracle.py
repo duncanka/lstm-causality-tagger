@@ -15,7 +15,7 @@ from causeway.because_data import CausalityStandoffReader, CausationInstance
 from nlpypline.data.io import DirectoryReader, InstancesDocumentWriter
 
 try:
-    DEFINE_bool('separate_new_conn', False,
+    DEFINE_bool('separate_new_conn', True,
                 'Whether a separate "NEW-CONN" transition should be generated'
                 ' at the start of each new relation')
     DEFINE_bool('separate_shift', False,
