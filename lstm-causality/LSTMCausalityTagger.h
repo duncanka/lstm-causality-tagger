@@ -52,6 +52,7 @@ public:
       ar & token_dim;
       ar & lambda_hidden_dim;
       ar & actions_hidden_dim;
+      ar & parse_path_arc_dim;
       ar & parse_path_hidden_dim;
       ar & span_hidden_dim;
       ar & action_dim;
