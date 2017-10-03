@@ -748,8 +748,8 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
     for (const CausalityRelation rel : oracle_rels) {
       const auto connective = rel.GetConnectiveIndices();
       assert(is_sorted(connective.begin(), connective.end()));
-      state->oracle_connectives[connective.at(0)] = vector<unsigned>(
-          connective.begin() + 1, connective.end());
+      state->oracle_connectives[connective.at(0)].push_back(vector<unsigned>(
+          connective.begin() + 1, connective.end()));
     }
 
     auto conn_frag_action_iter = find(vocab.action_names.begin(),
@@ -757,6 +757,10 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
                                       "CONN-FRAG-RIGHT");
     assert(conn_frag_action_iter != vocab.action_names.end());
     conn_frag_action = conn_frag_action_iter - vocab.action_names.begin();
+    auto split_action_iter = find(vocab.action_names.begin(),
+                                  vocab.action_names.end(), "SPLIT");
+    assert(split_action_iter != vocab.action_names.end());
+    split_action = split_action_iter - vocab.action_names.begin();
   }
 
   return state;
@@ -958,29 +962,52 @@ Expression LSTMCausalityTagger::GetParsePathEmbedding(
 }
 
 
-Expression LSTMCausalityTagger::GetActionProbabilities(TaggerState* state) {
-  CausalityTaggerState* real_state = static_cast<CausalityTaggerState*>(state);
+bool LSTMCausalityTagger::ShouldUseOracleTransition(CausalityTaggerState* state) {
   if (options.oracle_connectives) {
-    auto oracle_conn_iter = real_state->oracle_connectives.find(
-        real_state->current_conn_token_i);
-    if (oracle_conn_iter != real_state->oracle_connectives.end()) {
-      if (!real_state->currently_processing_rel) {
+    auto oracle_conn_iter = state->oracle_connectives.find(
+        state->current_conn_token_i);
+    if (oracle_conn_iter != state->oracle_connectives.end()) {
+      if (!state->currently_processing_rel) {
         // The oracle says we ought to start a new instance here, so follow it.
         // cerr << "Should use oracle action NEW-CONN" << endl;
-        return NeuralTransitionTagger::USE_ORACLE;
-      } else {  // We are in the middle of an instance. Check for CONN-FRAG.
-        if (real_state->current_arg_token_i != real_state->current_conn_token_i
-            // CONN-FRAG doesn't advance the argument token, so we have to make
-            // sure we forbid repeatedly trying to use the oracle transition.
-            && real_state->prev_action != conn_frag_action
-            && Contains(oracle_conn_iter->second,
-                        real_state->current_arg_token_i)) {
-          // cerr << "Should use oracle action CONN-FRAG" << endl;
-          return NeuralTransitionTagger::USE_ORACLE;
+        return true;
+      } else {  // we're in the middle of an instance; check for CONN-FRAG/SPLIT
+        if (state->current_arg_token_i != state->current_conn_token_i
+            // CONN-FRAG and SPLIT doesn't advance the argument token, so we
+            // have to make sure we don't repeatedly use the oracle transition.
+            && state->prev_action != conn_frag_action
+            && state->prev_action != split_action) {
+          unsigned next_split = state->splits_seen_for_conn + 1;
+          const auto co_starting_conns = oracle_conn_iter->second;
+
+          // Use splits_seen_for_conn to check which instance for this
+          // connective anchor we're in.
+          if (Contains(co_starting_conns.at(state->splits_seen_for_conn),
+                       state->current_arg_token_i)) {
+            // cerr << "Should use oracle action CONN-FRAG-RIGHT" << endl;
+            return true;
+          } else if (  // If there is a next split...
+              co_starting_conns.size() > next_split
+              // ...and its fragment list starts with our current arg token...
+              && co_starting_conns.at(next_split).at(0)
+                  == state->current_arg_token_i) {
+            // cerr << "Should use oracle action SPLIT" << endl;
+            return true;
+          }
         }
       }
     }
-  }  // If we get to here, we don't want to use the oracle transition.
+  }
+
+  return false;
+}
+
+
+Expression LSTMCausalityTagger::GetActionProbabilities(TaggerState* state) {
+  CausalityTaggerState* real_state = static_cast<CausalityTaggerState*>(state);
+  if (ShouldUseOracleTransition(real_state)) {
+    return NeuralTransitionTagger::USE_ORACLE;
+  }
 
   // sbias + actions2S * actions_lstm + (\sum_i rel_cmpt_i2S * rel_cmpt_i)
   //       + current2S * current_token + (\sum_i LToS_i * L_i)
@@ -1167,6 +1194,7 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
     cst->current_rel_cause_tokens.clear();
     cst->current_rel_effect_tokens.clear();
     cst->current_rel_means_tokens.clear();
+    cst->splits_seen_for_conn = 0;
     StartNewRelation();  // relation LSTMs should be empty until next relation
   };
 
@@ -1261,6 +1289,7 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
     // token; in theory, this could still be an argument word.
     connective_lstm.add_input(current_arg_token);
     cst->current_rel_conn_tokens.push_back(current_arg_token_i);
+    cst->splits_seen_for_conn++;
   } else if (action_name == "SHIFT") {
     assert(options.shift_action);
     assert(L4.size() == 1 && L1.size() == 1);  // processed all tokens?

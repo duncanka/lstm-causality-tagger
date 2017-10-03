@@ -121,8 +121,9 @@ protected:
     std::map<unsigned, Expression> all_subtreeless_tokens;
     // For checking oracle connectives when we're using them.
     // Each oracle connective is stored as its initial connective word mapped to
-    // a list of connective fragments.
-    std::map<unsigned, std::vector<unsigned>> oracle_connectives;
+    // a list of lists of connective fragments (one per connective).
+    std::map<unsigned, std::vector<std::vector<unsigned>>> oracle_connectives;
+    unsigned splits_seen_for_conn;
 
     std::vector<Expression> L1; // unprocessed tokens to the left
     std::vector<Expression> L2; // processed tokens to the left (reverse order)
@@ -146,9 +147,11 @@ protected:
 
     CausalityTaggerState(const lstm_parser::Sentence& raw_sent,
                          const lstm_parser::Sentence::SentenceMap& sent)
-    : TaggerState{raw_sent, sent}, currently_processing_rel(false),
-      prev_action(-1), current_conn_token_i(sentence.begin()->first),
-      current_arg_token_i(sentence.begin()->first) {}
+        : TaggerState {raw_sent, sent}, splits_seen_for_conn(0),
+          currently_processing_rel(false), prev_action(-1),
+          current_conn_token_i(sentence.begin()->first),
+          current_arg_token_i(sentence.begin()->first) {
+    }
   };
 
   virtual std::vector<cnn::Parameters*> GetParameters() override;
@@ -176,6 +179,7 @@ protected:
 
   virtual cnn::expr::Expression GetActionProbabilities(TaggerState* state)
       override;
+  bool ShouldUseOracleTransition(CausalityTaggerState* state);
 
   virtual void DoAction(
       unsigned action, TaggerState* state, cnn::ComputationGraph* cg,
@@ -351,6 +355,7 @@ private:
   std::unordered_map<const lstm_parser::Sentence*,
                      std::vector<CausalityRelation>> training_decoded_cache;
   unsigned conn_frag_action;  // Cached for GetActionProbabilities check
+  unsigned split_action;      // Cached for GetActionProbabilities check
 };
 
 #endif /* LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_ */

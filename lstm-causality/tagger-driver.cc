@@ -90,8 +90,8 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Whether to restrict the possible transitions at test time to allow only"
      " known connectives")
     ("oracle-conns,o", POBooleanFlag(false),
-     "Whether to use oracle NEW-CONN and CONN-FRAG transitions at test time."
-     " Valid only in conjunction with --new-conn-action.")
+     "Whether to use oracle NEW-CONN, CONN-FRAG, and SPLIT transitions at test"
+     " time. Valid only in conjunction with --new-conn-action.")
     ("log-diffs,L", POBooleanFlag(false),
      "Whether to log differences between correct and predicted")
     ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
