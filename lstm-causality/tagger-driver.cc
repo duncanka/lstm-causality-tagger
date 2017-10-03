@@ -89,6 +89,9 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("known-conns-only,K", POBooleanFlag(false),
      "Whether to restrict the possible transitions at test time to allow only"
      " known connectives")
+    ("oracle-conns,o", POBooleanFlag(false),
+     "Whether to use oracle NEW-CONN and CONN-FRAG transitions at test time."
+     " Valid only in conjunction with --new-conn-action.")
     ("log-diffs,L", POBooleanFlag(false),
      "Whether to log differences between correct and predicted")
     ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
@@ -296,7 +299,8 @@ int main(int argc, char** argv) {
           conf["shift-action"].as<bool>(),
           conf["known-conns-only"].as<bool>(),
           conf["train-pairwise"].as<bool>(),
-          conf["log-diffs"].as<bool>()});
+          conf["log-diffs"].as<bool>(),
+          conf["oracle-conns"].as<bool>()});
 
   if (conf.count("train")) {
     double dev_pct = conf["dev-pct"].as<double>();
@@ -313,6 +317,12 @@ int main(int argc, char** argv) {
       cerr << "Invalid dropout rate: " << tagger.options.dropout << endl;
       abort();
     }
+    if (tagger.options.oracle_connectives && !tagger.options.new_conn_action) {
+      cerr << "Oracle connectives are available only with NEW-CONN actions"
+           << endl;
+      abort();
+    }
+
     double epochs_cutoff = conf["epochs-cutoff"].as<double>();
     double recent_improvements_cutoff =
         conf["recent-improvements-cutoff"].as<double>();

@@ -42,8 +42,9 @@ public:
     bool shift_action;
     bool known_conns_only;
     bool train_pairwise;
-
+    // Non-serialized (runtime) options
     bool log_differences;
+    bool oracle_connectives;
 
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version) {
@@ -64,8 +65,6 @@ public:
       ar & shift_action;
       ar & known_conns_only;
       ar & train_pairwise;
-
-      // log_differences is a runtime option, not a model option.
     }
   };
 
@@ -120,6 +119,11 @@ protected:
   struct CausalityTaggerState : public TaggerState {
     std::map<unsigned, Expression> all_tokens;
     std::map<unsigned, Expression> all_subtreeless_tokens;
+    // For checking oracle connectives when we're using them.
+    // Each oracle connective is stored as its initial connective word mapped to
+    // a list of connective fragments.
+    std::map<unsigned, std::vector<unsigned>> oracle_connectives;
+
     std::vector<Expression> L1; // unprocessed tokens to the left
     std::vector<Expression> L2; // processed tokens to the left (reverse order)
     std::vector<Expression> L3; // unprocessed tokens to the right
@@ -346,6 +350,7 @@ private:
   std::vector<std::reference_wrapper<cnn::LSTMBuilder>> persistent_lstms;
   std::unordered_map<const lstm_parser::Sentence*,
                      std::vector<CausalityRelation>> training_decoded_cache;
+  unsigned conn_frag_action;  // Cached for GetActionProbabilities check
 };
 
 #endif /* LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_ */

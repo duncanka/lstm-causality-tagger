@@ -743,6 +743,22 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
   state->current_conn_token = state->all_tokens[state->current_conn_token_i];
   state->current_arg_token = state->all_tokens[state->current_arg_token_i];
 
+  if (options.oracle_connectives) {
+    const auto oracle_rels = GetDecodedGoldRelations(raw_sent, correct_actions);
+    for (const CausalityRelation rel : oracle_rels) {
+      const auto connective = rel.GetConnectiveIndices();
+      assert(is_sorted(connective.begin(), connective.end()));
+      state->oracle_connectives[connective.at(0)] = vector<unsigned>(
+          connective.begin() + 1, connective.end());
+    }
+
+    auto conn_frag_action_iter = find(vocab.action_names.begin(),
+                                      vocab.action_names.end(),
+                                      "CONN-FRAG-RIGHT");
+    assert(conn_frag_action_iter != vocab.action_names.end());
+    conn_frag_action = conn_frag_action_iter - vocab.action_names.begin();
+  }
+
   return state;
 }
 
@@ -944,6 +960,28 @@ Expression LSTMCausalityTagger::GetParsePathEmbedding(
 
 Expression LSTMCausalityTagger::GetActionProbabilities(TaggerState* state) {
   CausalityTaggerState* real_state = static_cast<CausalityTaggerState*>(state);
+  if (options.oracle_connectives) {
+    auto oracle_conn_iter = real_state->oracle_connectives.find(
+        real_state->current_conn_token_i);
+    if (oracle_conn_iter != real_state->oracle_connectives.end()) {
+      if (!real_state->currently_processing_rel) {
+        // The oracle says we ought to start a new instance here, so follow it.
+        // cerr << "Should use oracle action NEW-CONN" << endl;
+        return NeuralTransitionTagger::USE_ORACLE;
+      } else {  // We are in the middle of an instance. Check for CONN-FRAG.
+        if (real_state->current_arg_token_i != real_state->current_conn_token_i
+            // CONN-FRAG doesn't advance the argument token, so we have to make
+            // sure we forbid repeatedly trying to use the oracle transition.
+            && real_state->prev_action != conn_frag_action
+            && Contains(oracle_conn_iter->second,
+                        real_state->current_arg_token_i)) {
+          // cerr << "Should use oracle action CONN-FRAG" << endl;
+          return NeuralTransitionTagger::USE_ORACLE;
+        }
+      }
+    }
+  }  // If we get to here, we don't want to use the oracle transition.
+
   // sbias + actions2S * actions_lstm + (\sum_i rel_cmpt_i2S * rel_cmpt_i)
   //       + current2S * current_token + (\sum_i LToS_i * L_i)
   vector<Expression> state_args = {GetParamExpr(p_sbias),
