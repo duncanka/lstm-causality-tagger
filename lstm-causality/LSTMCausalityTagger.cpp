@@ -925,7 +925,10 @@ Expression LSTMCausalityTagger::GetParsePathEmbedding(
       Expression directed_rel = concatenate({relation, is_back_edge});
 
       if (options.parse_path_arc_dim > 0) {
-        Expression token_embedding = state->all_subtreeless_tokens.at(arc.end);
+        Expression token_embedding =
+            options.subtrees ?
+                state->all_subtreeless_tokens.at(arc.end) :
+                state->all_tokens.at(arc.end);
         parse_path_lstm.add_input(RectifyWithDropout(affine_transform(
             {GetParamExpr(p_pp_bias), GetParamExpr(p_parse2pp), directed_rel,
              GetParamExpr(p_token2pp), token_embedding})));
