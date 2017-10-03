@@ -145,9 +145,9 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
   unsigned num_sentences_train = num_sentences - num_sentences_dev;
 
   unsigned sentences_seen = 0;
-  double best_f1 = -numeric_limits<double>::infinity();
+  double best_dev_score = -numeric_limits<double>::infinity();
   double last_epoch_saved = nan("");
-  double last_f1 = best_f1;  // -inf
+  double last_dev_score = best_dev_score;  // -inf
   double evaluations_per_epoch = num_sentences_train / static_cast<double>(
       status_every_i_iterations * update_groups_between_evals);
   boost::circular_buffer<bool> recent_evals_improved(
@@ -200,6 +200,9 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
       llh += lp;
       ++sentence_i;
       actions_seen += correct_actions.size();
+      if (options.oracle_connectives) {
+        actions_seen -= oracle_actions_taken;
+      }
       sentences_seen += 1;
     }
 
@@ -213,32 +216,31 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
          << (actions_seen - correct) / actions_seen << endl;
 
     if (update_group_num % update_groups_between_evals == 0) {
-      double f1 = DoDevEvaluation(corpus, selections, compare_punct,
-                                  num_sentences_train, update_group_num,
-                                  sentences_seen);
-      // TODO: should we take into account action-level error, too?
-      if (f1 > best_f1) {
-        best_f1 = f1;
+      double dev_score = DoDevEvaluation(corpus, selections, compare_punct,
+                                         num_sentences_train, update_group_num,
+                                         sentences_seen);
+      if (dev_score > best_dev_score) {
+        best_dev_score = dev_score;
         SaveModel(model_fname, !isnan(last_epoch_saved));
         last_epoch_saved = epoch;
       }
 
-      recent_evals_improved.push_back(f1 > last_f1);
-      last_f1 = f1;
+      recent_evals_improved.push_back(dev_score > last_dev_score);
+      last_dev_score = dev_score;
 
-      if (epoch - last_epoch_saved > epochs_cutoff && best_f1 > 0) {
+      if (epoch - last_epoch_saved > epochs_cutoff && best_dev_score > 0) {
         unsigned num_recent_evals_improved = accumulate(
             recent_evals_improved.begin(), recent_evals_improved.end(), 0);
         double pct_recent_increases = num_recent_evals_improved
             / static_cast<double>(recent_evals_improved.size());
         if (pct_recent_increases < recent_improvements_cutoff) {
-          cerr << "Reached cutoff for epochs with no increase in max dev F1: "
+          cerr << "Reached cutoff for epochs with no increase in max dev score: "
                << epoch - last_epoch_saved << " > " << epochs_cutoff
                << "; terminating training" << endl;
           break;
         }
-      } else if (best_f1 >= 0.999) {
-        cerr << "Reached maximal F1; terminating training" << endl;
+      } else if (best_dev_score >= 0.999) {
+        cerr << "Reached maximal dev performance; terminating training" << endl;
         break;
       }
     }
@@ -291,6 +293,11 @@ double LSTMCausalityTagger::DoDevEvaluation(
         *sentence, gold_actions);
 
     num_actions += actions.size();
+    // With oracle connectives, all NEW-CONN, CONN-FRAG, and SPLIT actions are
+    // not actually being predicted. So subtract them from any error metrics.
+    if (options.oracle_connectives) {
+      num_actions -= oracle_actions_taken;
+    }
     const GraphEnhancedParseTree& parse =
         *corpus->sentence_parses[sentence_index];
     evaluation += CausalityMetrics(
@@ -300,15 +307,19 @@ double LSTMCausalityTagger::DoDevEvaluation(
 
   auto t_end = chrono::high_resolution_clock::now();
   double epoch = sentences_seen / static_cast<double>(num_sentences_train);
+  double error = (num_actions - correct_dev) / num_actions;
   cerr << "  **dev (iter=" << iteration << " epoch=" << epoch
        << ") llh=" << llh_dev << " ppl: " << exp(llh_dev / num_actions)
-       << "\terr: " << (num_actions - correct_dev) / num_actions
-       << " evaluation: \n" << evaluation
+       << "\terr: " << error << " evaluation: \n" << evaluation
        << "\n[" << num_sentences - num_sentences_train << " sentences in "
        << chrono::duration<double, milli>(t_end - t_start).count() << " ms]"
        << endl;
 
-  return evaluation.connective_metrics->GetF1();
+  // TODO: use action-level accuracy all the time?
+  if (options.oracle_connectives)
+    return 1 - error;  // Use action-level accuracy
+  else
+    return evaluation.connective_metrics->GetF1();
 }
 
 
@@ -761,6 +772,8 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
                                   vocab.action_names.end(), "SPLIT");
     assert(split_action_iter != vocab.action_names.end());
     split_action = split_action_iter - vocab.action_names.begin();
+
+    oracle_actions_taken = 0;
   }
 
   return state;

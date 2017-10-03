@@ -356,6 +356,7 @@ private:
                      std::vector<CausalityRelation>> training_decoded_cache;
   unsigned conn_frag_action;  // Cached for GetActionProbabilities check
   unsigned split_action;      // Cached for GetActionProbabilities check
+  unsigned oracle_actions_taken;
 };
 
 #endif /* LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_ */
