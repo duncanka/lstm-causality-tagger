@@ -200,6 +200,8 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
       llh += lp;
       ++sentence_i;
       actions_seen += correct_actions.size();
+      // With oracle connectives, all NEW-CONN, CONN-FRAG, and SPLIT actions are
+      // not actually being predicted. So subtract them from any error metrics.
       if (options.oracle_connectives) {
         actions_seen -= oracle_actions_taken;
       }
@@ -293,8 +295,6 @@ double LSTMCausalityTagger::DoDevEvaluation(
         *sentence, gold_actions);
 
     num_actions += actions.size();
-    // With oracle connectives, all NEW-CONN, CONN-FRAG, and SPLIT actions are
-    // not actually being predicted. So subtract them from any error metrics.
     if (options.oracle_connectives) {
       num_actions -= oracle_actions_taken;
     }
@@ -513,7 +513,8 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
 
 
 vector<CausalityRelation> LSTMCausalityTagger::Tag(
-    const Sentence& sentence, GraphEnhancedParseTree* parse) {
+    const Sentence& sentence, GraphEnhancedParseTree* parse,
+    const vector<unsigned>& gold_actions) {
   ComputationGraph cg;
   vector<unsigned> parse_actions = parser.LogProbTagger(
       &cg, sentence, true, GetCachedParserStates());
@@ -521,7 +522,8 @@ vector<CausalityRelation> LSTMCausalityTagger::Tag(
   auto tree = parser.RecoverParseTree(sentence, parse_actions, parser_lp,
                                       true);
   *parse = GraphEnhancedParseTree(move(tree));
-  vector<unsigned> actions = LogProbTagger(&cg, sentence, false);
+  vector<unsigned> actions = LogProbTagger(&cg, sentence, sentence.words, false,
+                                           gold_actions);
   return Decode(sentence, actions, options.new_conn_action,
                 options.shift_action);
 }
@@ -549,7 +551,8 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
     sentence->tree = parse_with_depths;
 
     // Actually tag and evaluate.
-    vector<CausalityRelation> predicted = Tag(*sentence, parse_with_depths);
+    vector<CausalityRelation> predicted = Tag(*sentence, parse_with_depths,
+                                              gold_actions);
     vector<CausalityRelation> gold = Decode(
         *sentence, gold_actions, options.new_conn_action, options.shift_action);
     if (pairwise) {

@@ -92,8 +92,10 @@ public:
              double epochs_cutoff = std::numeric_limits<double>::infinity(),
              const volatile sig_atomic_t* requested_stop = nullptr);
 
+  // gold_actions is used only if oracle connectives were requested.
   std::vector<CausalityRelation> Tag(const lstm_parser::Sentence& sentence,
-                                     GraphEnhancedParseTree* parse);
+                                     GraphEnhancedParseTree* parse,
+                                     const vector<unsigned>& gold_actions);
 
   CausalityMetrics Evaluate(BecauseOracleTransitionCorpus* corpus,
                             const std::vector<unsigned>& selections,
