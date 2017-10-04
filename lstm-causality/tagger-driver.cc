@@ -99,6 +99,9 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("recent-improvements-cutoff,I", po::value<double>()->default_value(0.85),
      "Don't stop training yet if this % of evaluations in last --epochs-cutoff"
      " epochs have been an increase from the immediately prior evaluation")
+    ("recent-improvements-epsilon,N", po::value<double>()->default_value(0.005),
+     "How much better a dev evaluation must be than the previous one to be"
+     " considered a score increase for cutoff purposes")
     ("cv-start-at", po::value<unsigned>()->default_value(1),
      "Cross-validation fold to start at (useful for debugging/parallelizing")
     ("cv-end-at", po::value<unsigned>()->default_value(-1),
@@ -161,7 +164,8 @@ void DoTrain(LSTMCausalityTagger* tagger,
              BecauseOracleTransitionCorpus* full_corpus, unsigned folds,
              double dev_pct, bool compare_punct, const string& model_fname,
              unsigned dev_eval_period, double epochs_cutoff,
-             double recent_improvements_cutoff, bool eval_pairwise,
+             double recent_improvements_cutoff,
+             double recent_improvements_epsilon, bool eval_pairwise,
              unsigned cv_start_at, unsigned cv_end_at,
              bool folds_for_comparison) {
   unsigned num_sentences = full_corpus->sentences.size();
@@ -171,7 +175,8 @@ void DoTrain(LSTMCausalityTagger* tagger,
   if (folds <= 1) {
     tagger->Train(full_corpus, all_sentence_indices, dev_pct, compare_punct,
                   model_fname, dev_eval_period, epochs_cutoff,
-                  recent_improvements_cutoff, &requested_stop);
+                  recent_improvements_cutoff, recent_improvements_epsilon,
+                  &requested_stop);
   } else {
     // For cutoffs, we use one *past* the index where the fold should stop.
     vector<unsigned> fold_cutoffs(folds);
@@ -220,7 +225,8 @@ void DoTrain(LSTMCausalityTagger* tagger,
 
       tagger->Train(full_corpus, fold_train_order, dev_pct, compare_punct,
                     model_fname, dev_eval_period, epochs_cutoff,
-                    recent_improvements_cutoff, &requested_stop);
+                    recent_improvements_cutoff, recent_improvements_epsilon,
+                    &requested_stop);
       cerr << "Evaluating..." << endl;
       if (folds_for_comparison) {
         cout << "Fold " << fold + 1 << " test sentences:" << endl;
@@ -326,6 +332,8 @@ int main(int argc, char** argv) {
     double epochs_cutoff = conf["epochs-cutoff"].as<double>();
     double recent_improvements_cutoff =
         conf["recent-improvements-cutoff"].as<double>();
+    double recent_improvements_epsilon =
+        conf["recent-improvements-epsilon"].as<double>();
     bool compare_punct = conf.count("compare-punct");
     bool eval_pairwise = conf.count("eval-pairwise");
     unsigned dev_eval_period = conf["dev-eval-period"].as<unsigned>();
@@ -345,7 +353,8 @@ int main(int argc, char** argv) {
     signal(SIGINT, signal_callback_handler);
     DoTrain(&tagger, &full_corpus, folds, dev_pct, compare_punct, model_fname,
             dev_eval_period, epochs_cutoff, recent_improvements_cutoff,
-            eval_pairwise, conf["cv-start-at"].as<unsigned>(),
+            recent_improvements_epsilon, eval_pairwise,
+            conf["cv-start-at"].as<unsigned>(),
             conf["cv-end-at"].as<unsigned>(), folds_for_comparison);
   }
 

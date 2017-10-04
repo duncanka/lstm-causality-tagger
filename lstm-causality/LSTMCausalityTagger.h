@@ -90,6 +90,7 @@ public:
              unsigned update_groups_between_evals = 25,
              double recent_improvements_cutoff = 0.85,
              double epochs_cutoff = std::numeric_limits<double>::infinity(),
+             double improvement_epsilon = 0.005,
              const volatile sig_atomic_t* requested_stop = nullptr);
 
   // gold_actions is used only if oracle connectives were requested.

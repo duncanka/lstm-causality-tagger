@@ -116,6 +116,7 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
                                 unsigned update_groups_between_evals,
                                 double epochs_cutoff,
                                 double recent_improvements_cutoff,
+                                double improvement_epsilon,
                                 const volatile sig_atomic_t* requested_stop) {
   const unsigned num_sentences = selections.size();
   // selections gives us the subcorpus to use for training at all. But we'll
@@ -227,7 +228,8 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
         last_epoch_saved = epoch;
       }
 
-      recent_evals_improved.push_back(dev_score > last_dev_score);
+      recent_evals_improved.push_back(
+          dev_score - last_dev_score > improvement_epsilon);
       last_dev_score = dev_score;
 
       if (epoch - last_epoch_saved > epochs_cutoff && best_dev_score > 0) {
