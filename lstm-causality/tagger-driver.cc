@@ -51,7 +51,7 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("state-dim,s", po::value<unsigned>()->default_value(72),
      "Dimension for overall tagger state")
     ("token-dim,i", po::value<unsigned>()->default_value(48),
-     "Dimension for representation of tokens as input to span or lambda LSTMs")
+     "Dimension for representation of tokens, e.g., as span/lambda LSTM inputs")
     ("lambda-hidden-dim,h", po::value<unsigned>()->default_value(48),
      "Dimension of the hidden state of each lambda LSTM")
     ("actions-hidden-dim,A", po::value<unsigned>()->default_value(32),
