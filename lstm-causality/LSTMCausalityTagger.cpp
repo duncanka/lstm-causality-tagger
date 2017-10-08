@@ -573,16 +573,20 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
 
 vector<Parameters*> LSTMCausalityTagger::GetParameters() {
   vector<Parameters*> params = {
-      p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_current2S, p_actions2S,
+      p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_curconn2S,
       p_s2a, p_abias,
       p_connective2S, p_cause2S, p_effect2S, p_means2S,
       p_w2t, p_p2t, p_v2t, p_tbias,
-      p_action_start, p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard,
+      p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard,
       p_connective_guard, p_cause_guard, p_effect_guard, p_means_guard};
   if (options.gated_parse) {
     auto to_add = {p_parse_sel_bias, p_state_to_parse_sel, p_parse2sel,
                    p_full_state_bias, p_parse2pstate, p_state2pstate};
     params.insert(params.end(), to_add.begin(), to_add.end());
+  }
+  if (options.action_dim > 0) {
+    params.push_back(p_actions2S);
+    params.push_back(p_action_start);
   }
   if (options.subtrees) {
     params.push_back(p_subtree2t);
@@ -612,7 +616,6 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
 
   // Parameters for token representation
   p_w = model->add_lookup_parameters(vocab_size, {options.word_dim});
-  p_a = model->add_lookup_parameters(action_size, {options.action_dim});
   p_tbias = model->add_parameters({options.token_dim});
   p_w2t = model->add_parameters({options.token_dim, options.word_dim});
   p_v2t = model->add_parameters({options.token_dim, pretrained_dim});
@@ -632,9 +635,12 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
       {options.state_dim, options.lambda_hidden_dim});
   p_L4toS = model->add_parameters(
       {options.state_dim, options.lambda_hidden_dim});
-  p_current2S = model->add_parameters({options.state_dim, options.token_dim});
-  p_actions2S = model->add_parameters(
-      {options.state_dim, options.actions_hidden_dim});
+  p_curconn2S = model->add_parameters({options.state_dim, options.token_dim});
+  if (options.action_dim > 0) {
+    p_actions2S = model->add_parameters(
+        {options.state_dim, options.actions_hidden_dim});
+    p_a = model->add_lookup_parameters(action_size, {options.action_dim});
+  }
   p_connective2S = model->add_parameters(
       {options.state_dim, options.span_hidden_dim});
   p_cause2S = model->add_parameters(
@@ -679,7 +685,8 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   }
 
   // Parameters for guard/start items in empty lists
-  p_action_start = model->add_parameters({options.action_dim});
+  if (options.action_dim > 0)
+    p_action_start = model->add_parameters({options.action_dim});
   p_L1_guard = model->add_parameters({options.token_dim});
   p_L2_guard = model->add_parameters({options.token_dim});
   p_L3_guard = model->add_parameters({options.token_dim});
@@ -714,7 +721,8 @@ LSTMCausalityTagger::TaggerState* LSTMCausalityTagger::InitializeParserState(
   StartNewRelation();
 
   // Initialize the sentence-level LSTMs. All but L4 should start out empty.
-  action_history_lstm.add_input(GetParamExpr(p_action_start));
+  if (options.action_dim > 0)
+    action_history_lstm.add_input(GetParamExpr(p_action_start));
 
   L1_lstm.add_input(GetParamExpr(p_L1_guard));
   state->L1.push_back(GetParamExpr(p_L1_guard));
@@ -1030,16 +1038,19 @@ Expression LSTMCausalityTagger::GetActionProbabilities(TaggerState* state) {
   // sbias + actions2S * actions_lstm + (\sum_i rel_cmpt_i2S * rel_cmpt_i)
   //       + current2S * current_token + (\sum_i LToS_i * L_i)
   vector<Expression> state_args = {GetParamExpr(p_sbias),
-      GetParamExpr(p_actions2S), action_history_lstm.back(),
       GetParamExpr(p_connective2S), connective_lstm.back(),
       GetParamExpr(p_cause2S), cause_lstm.back(),
       GetParamExpr(p_effect2S), effect_lstm.back(),
       GetParamExpr(p_means2S), means_lstm.back(),
-      GetParamExpr(p_current2S), real_state->current_conn_token,
+      GetParamExpr(p_curconn2S), real_state->current_conn_token,
       GetParamExpr(p_L1toS), L1_lstm.back(),
       GetParamExpr(p_L2toS), L2_lstm.back(),
       GetParamExpr(p_L3toS), L3_lstm.back(),
       GetParamExpr(p_L4toS), L4_lstm.back()};
+  if (options.action_dim > 0) {
+    state_args.push_back(GetParamExpr(p_actions2S));
+    state_args.push_back(action_history_lstm.back());
+  }
   if (options.parse_path_hidden_dim > 0) {
     state_args.push_back(GetParamExpr(p_parsepath2S));
     if (real_state->currently_processing_rel) {
@@ -1120,6 +1131,10 @@ void LSTMCausalityTagger::DoAction(unsigned action, TaggerState* state,
                                    map<string, Expression>* states_to_expose) {
   CausalityTaggerState* cst = static_cast<CausalityTaggerState*>(state);
   const string& action_name = vocab.action_names[action];
+  if (options.action_dim > 0) {
+    Expression action_e = lookup(*cg, p_a, action);
+    action_history_lstm.add_input(action_e);
+  }
 
   // Alias key state variables for ease of reference
   auto& L1 = cst->L1;

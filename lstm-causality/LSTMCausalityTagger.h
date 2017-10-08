@@ -239,7 +239,7 @@ protected:
   cnn::Parameters* p_L2toS;         // lambda 2 lstm to tagger state
   cnn::Parameters* p_L3toS;         // lambda 3 lstm to tagger state
   cnn::Parameters* p_L4toS;         // lambda 4 lstm to tagger state
-  cnn::Parameters* p_current2S;     // current token to tagger state
+  cnn::Parameters* p_curconn2S;     // current connective token to tagger state
   cnn::Parameters* p_actions2S;     // action history lstm to tagger state
   cnn::Parameters* p_s2a;           // parser state to action
   cnn::Parameters* p_abias;         // bias for final action output

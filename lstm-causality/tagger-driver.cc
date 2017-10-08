@@ -44,8 +44,9 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("dev-pct,d", po::value<double>()->default_value(0.2),
      "Percent of training data in each shuffle to use as dev (tuning)")
     ("train", "Whether to train the tagger")
-    ("action-dim,a", po::value<unsigned>()->default_value(8),
-     "Dimension for vector representation of actions")
+    ("action-dim,a", po::value<unsigned>()->default_value(0),
+     "Dimension for vector representation of actions. If 0, action history is"
+     " not used.")
     ("word-dim,w", po::value<unsigned>()->default_value(10),
      "Dimension for vector representation of words")
     ("state-dim,s", po::value<unsigned>()->default_value(72),
@@ -132,6 +133,7 @@ void signal_callback_handler(int /* signum */) {
 
 const string GetModelFileName(const LSTMCausalityTagger& tagger) {
   ostringstream os;
+  // TODO: update with latest options?
   os << "tagger_" << tagger.options.word_dim
      << '_' << tagger.options.lstm_layers
      << '_' << tagger.options.token_dim
