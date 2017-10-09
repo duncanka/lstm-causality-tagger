@@ -66,6 +66,9 @@ public:
     arguments[arg_num] = indices;
   }
 
+  void PrintTokens(std::ostream& os,
+                   const BecauseRelation::IndexList& indices) const;
+
 protected:
   friend std::ostream& operator<<(std::ostream& os, const BecauseRelation& rel);
 
