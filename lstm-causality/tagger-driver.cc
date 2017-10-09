@@ -102,15 +102,16 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      " epochs have been an increase from the immediately prior evaluation")
     ("recent-improvements-epsilon,N", po::value<double>()->default_value(0.005),
      "How much better a dev evaluation must be than the previous one to be"
-     " considered a score increase for cutoff purposes")
+     " considered a score increase for termination purposes")
     ("cv-start-at", po::value<unsigned>()->default_value(1),
      "Cross-validation fold to start at (useful for debugging/parallelizing")
     ("cv-end-at", po::value<unsigned>()->default_value(-1),
      "Cross-validation fold to end on (useful for debugging/parallelizing")
-    ("folds-for-comparison,C", POBooleanFlag(false),
+    ("for-comparison,C", POBooleanFlag(false),
      "Whether we'll be comparing outputs against a system with different"
-     " randomization (prints order of folds and test sentences, and forces the"
-     " corpus to sort its sentences alphabetically for easier comparison)");
+     " randomization (prints order of folds and test sentences, logs"
+     " differences as TSV format, and forces the corpus to sort its sentences"
+     " alphabetically for easier comparison)");
 
   po::options_description dcmdline_options;
   dcmdline_options.add(opts);
@@ -162,6 +163,72 @@ const string GetModelFileName(const LSTMCausalityTagger& tagger) {
   return os.str();
 }
 
+
+void OutputComparison(const CausalityMetrics& metrics) {
+  auto log_instances = [](
+      const std::vector<CausalityRelation>& gold_instances,
+      const std::vector<CausalityRelation>& predicted_instances,
+      const std::string& connective_status) {
+    if (gold_instances.size() != predicted_instances.size()
+        && !gold_instances.empty() && !predicted_instances.empty()) {
+      cerr << "Invalid comparison instances!" << endl;
+      abort();
+    }
+
+    // cout << "Sentence\tConnective\tGold cause\tGold effect\tGold means"
+    //      << "\tLSTM status\tLSTM cause\tLSTM effect\tLSTM means\n";
+    for (unsigned i = 0; i < max(gold_instances.size(),
+                                 predicted_instances.size()); ++i) {
+      if (!gold_instances.empty()) {
+        const CausalityRelation& gold_instance = gold_instances.at(i);
+        cout << gold_instance.GetSentence() << '\t';
+        gold_instance.PrintTokens(cout, gold_instance.GetConnectiveIndices());
+        cout << '\t';
+        gold_instance.PrintTokens(cout, gold_instance.GetCause());
+        cout << '\t';
+        gold_instance.PrintTokens(cout, gold_instance.GetEffect());
+        cout << '\t';
+        gold_instance.PrintTokens(cout, gold_instance.GetMeans());
+        cout << '\t';
+      } else {
+        const CausalityRelation& predicted_instance = predicted_instances.at(i);
+        cout << predicted_instance.GetSentence() << '\t';
+        predicted_instance.PrintTokens(cout, predicted_instance.GetConnectiveIndices());
+        cout << "\t\t\t\t";  // Finish connective; skip gold args
+      }
+
+      cout << connective_status << '\t';
+
+      if (!predicted_instances.empty()) {
+        const CausalityRelation& predicted_instance = predicted_instances.at(i);
+        predicted_instance.PrintTokens(cout, predicted_instance.GetCause());
+        cout << '\t';
+        predicted_instance.PrintTokens(cout, predicted_instance.GetEffect());
+        cout << '\t';
+        predicted_instance.PrintTokens(cout, predicted_instance.GetMeans());
+        cout << '\t';
+      } else {
+        cout << "\t\t\t";
+      }
+      cout << endl;
+    }
+  };
+
+  log_instances(metrics.GetArgumentMatches(), metrics.GetArgumentMatches(),
+                "TP");
+  log_instances(metrics.GetFNs(), {}, "FN");
+  log_instances({}, metrics.GetFPs(), "FP");
+
+  vector<CausalityRelation> arg_mismatch_gold;
+  vector<CausalityRelation> arg_mismatch_predicted;
+  for (const auto& match_tuple : metrics.GetArgumentMismatches()) {
+    arg_mismatch_gold.push_back(std::get<0>(match_tuple));
+    arg_mismatch_predicted.push_back(std::get<1>(match_tuple));
+  }
+  log_instances(arg_mismatch_gold, arg_mismatch_predicted, "TP");
+}
+
+
 void DoTrain(LSTMCausalityTagger* tagger,
              BecauseOracleTransitionCorpus* full_corpus, unsigned folds,
              double dev_pct, bool compare_punct, const string& model_fname,
@@ -169,7 +236,7 @@ void DoTrain(LSTMCausalityTagger* tagger,
              double recent_improvements_cutoff,
              double recent_improvements_epsilon, bool eval_pairwise,
              unsigned cv_start_at, unsigned cv_end_at,
-             bool folds_for_comparison) {
+             bool for_comparison) {
   unsigned num_sentences = full_corpus->sentences.size();
   vector<unsigned> all_sentence_indices(num_sentences);
   iota(all_sentence_indices.begin(), all_sentence_indices.end(), 0);
@@ -221,7 +288,7 @@ void DoTrain(LSTMCausalityTagger* tagger,
       vector<unsigned> fold_test_order(
           all_sentence_indices.begin() + previous_cutoff,
           all_sentence_indices.begin() + current_cutoff);
-      if (folds_for_comparison) {
+      if (for_comparison) {
         cerr << "Testing order: " << fold_test_order << endl;
       }
 
@@ -230,7 +297,7 @@ void DoTrain(LSTMCausalityTagger* tagger,
                     recent_improvements_cutoff, recent_improvements_epsilon,
                     &requested_stop);
       cerr << "Evaluating..." << endl;
-      if (folds_for_comparison) {
+      if (for_comparison) {
         cout << "Fold " << fold + 1 << " test sentences:" << endl;
         IndentingOStreambuf indent(cout);
         for (unsigned sentence_index : fold_test_order) {
@@ -243,6 +310,12 @@ void DoTrain(LSTMCausalityTagger* tagger,
            << fold_test_order.size() << " test sentences)" << endl;
       CausalityMetrics evaluation = tagger->Evaluate(
           full_corpus, fold_test_order, compare_punct);
+
+      if (for_comparison) {
+        OutputComparison(evaluation);
+        cout << "\n\n";
+      }
+
       IndentingOStreambuf indent(cout);
       cout << evaluation << '\n' << endl;
       evaluation_results.push_back(evaluation);
@@ -251,6 +324,12 @@ void DoTrain(LSTMCausalityTagger* tagger,
             full_corpus, fold_test_order, compare_punct, eval_pairwise);
         cout << "Pairwise evaluation:";
         IndentingOStreambuf indent(cout);
+        if (for_comparison) {
+          cout << '\n';
+          OutputComparison(pairwise_evaluation);
+          cout << '\n';
+        }
+
         cout << '\n' << pairwise_evaluation << '\n' << endl;
         pairwise_eval_results.push_back(pairwise_evaluation);
       }
@@ -286,6 +365,8 @@ int main(int argc, char** argv) {
 
   po::variables_map conf;
   InitCommandLine(argc, argv, &conf);
+
+  bool for_comparison = conf["for-comparison"].as<bool>();
 
   LSTMCausalityTagger tagger(
       conf["parser-model"].as<string>(),
@@ -342,9 +423,8 @@ int main(int argc, char** argv) {
     unsigned folds = conf["folds"].as<unsigned>();
 
     const string& training_path = conf["training-data"].as<string>();
-    bool folds_for_comparison = conf["folds-for-comparison"].as<bool>();
     BecauseOracleTransitionCorpus full_corpus(
-        tagger.GetVocab(), training_path, true, folds_for_comparison);
+        tagger.GetVocab(), training_path, true, for_comparison);
     tagger.FinalizeVocab();
     cerr << "Corpus size: " << full_corpus.sentences.size() << " sentences"
          << endl;
@@ -357,7 +437,7 @@ int main(int argc, char** argv) {
             dev_eval_period, epochs_cutoff, recent_improvements_cutoff,
             recent_improvements_epsilon, eval_pairwise,
             conf["cv-start-at"].as<unsigned>(),
-            conf["cv-end-at"].as<unsigned>(), folds_for_comparison);
+            conf["cv-end-at"].as<unsigned>(), for_comparison);
   }
 
 
