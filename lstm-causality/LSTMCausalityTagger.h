@@ -257,7 +257,7 @@ protected:
   cnn::Parameters* p_state2pstate;
 
   // Parameters for LSTM input for stacks containing tokens
-  cnn::Parameters* p_w2t;           // word to token representation
+  cnn::Parameters* p_w2t;           // word vector to token representation
   cnn::Parameters* p_p2t;           // POS to token representation
   cnn::Parameters* p_v2t;           // pretrained word embeddings to token repr
   cnn::Parameters* p_tbias;         // LSTM input bias

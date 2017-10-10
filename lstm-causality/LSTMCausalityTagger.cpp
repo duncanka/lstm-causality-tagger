@@ -576,9 +576,12 @@ vector<Parameters*> LSTMCausalityTagger::GetParameters() {
       p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_curconn2S,
       p_s2a, p_abias,
       p_connective2S, p_cause2S, p_effect2S, p_means2S,
-      p_w2t, p_p2t, p_v2t, p_tbias,
+      p_p2t, p_v2t, p_tbias,
       p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard,
       p_connective_guard, p_cause_guard, p_effect_guard, p_means_guard};
+  if (options.word_dim > 0) {
+    params.push_back(p_w2t);
+  }
   if (options.gated_parse) {
     auto to_add = {p_parse_sel_bias, p_state_to_parse_sel, p_parse2sel,
                    p_full_state_bias, p_parse2pstate, p_state2pstate};
@@ -615,9 +618,11 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
   assert(parser.options.use_pos);
 
   // Parameters for token representation
-  p_w = model->add_lookup_parameters(vocab_size, {options.word_dim});
+  if (options.word_dim > 0) {
+    p_w = model->add_lookup_parameters(vocab_size, {options.word_dim});
+    p_w2t = model->add_parameters({options.token_dim, options.word_dim});
+  }
   p_tbias = model->add_parameters({options.token_dim});
-  p_w2t = model->add_parameters({options.token_dim, options.word_dim});
   p_v2t = model->add_parameters({options.token_dim, pretrained_dim});
   p_p2t = model->add_parameters({options.token_dim, pos_dim});
   if (options.subtrees) {
@@ -798,7 +803,6 @@ Expression LSTMCausalityTagger::GetTokenEmbedding(ComputationGraph* cg,
                                                   unsigned word_id,
                                                   unsigned pos_id,
                                                   bool no_subtrees) {
-  Expression word = lookup(*cg, p_w, word_id);
   unsigned pretrained_id =
       parser.pretrained.count(word_id) ? word_id : parser.GetVocab()->kUNK;
   Expression pretrained = const_lookup(*cg, parser.p_t, pretrained_id);
@@ -806,9 +810,13 @@ Expression LSTMCausalityTagger::GetTokenEmbedding(ComputationGraph* cg,
   // TODO: add in the token index directly as an input?
   vector<Expression> args = {
       GetParamExpr(p_tbias),
-      GetParamExpr(p_w2t), word,
       GetParamExpr(p_p2t), pos,
       GetParamExpr(p_v2t), pretrained};
+  if (options.word_dim > 0) {
+    Expression word = lookup(*cg, p_w, word_id);
+    args.push_back(GetParamExpr(p_w2t));
+    args.push_back(word);
+  }
   if (options.subtrees && !no_subtrees) {
     Expression subtree_repr = nobackprop(
         parser_states.at(to_string(word_index)));

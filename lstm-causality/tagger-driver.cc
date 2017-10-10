@@ -98,7 +98,8 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Dimension for vector representation of actions. If 0, action history is"
      " not used.")
     ("word-dim,w", po::value<unsigned>()->default_value(10),
-     "Dimension for task-specific vector representation of words")
+     "Dimension for task-specific vector representation of words. If 0, no"
+     " task-specific word vectors are created.")
     ("state-dim,s", po::value<unsigned>()->default_value(72),
      "Dimension for overall tagger state")
     ("token-dim,i", po::value<unsigned>()->default_value(48),
