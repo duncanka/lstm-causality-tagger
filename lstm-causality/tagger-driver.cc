@@ -32,23 +32,73 @@ po::typed_value<bool>* POBooleanFlag(bool default_val) {
 void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
   po::options_description opts("Configuration options");
   opts.add_options()
+    // Basic operation options
     ("help", "Print these usage instructions and exit")
     ("parser-model,M",
       po::value<string>()->default_value(
           "lstm-parser/english_pos_2_32_100_20_100_12_20.params"),
      "File from which to load saved syntactic parser model")
+
+    // Data options
     ("training-data,t", po::value<string>(),
      "Directory containing training data")
+    ("new-conn-action,n", POBooleanFlag(true),
+     "Whether starting a relation is a separate action (must match data)")
+    ("shift-action,H", POBooleanFlag(false),
+     "Whether completing a relation is a separate action (must match data)")
+
+    // Testing/evaluation options
     ("folds,f", po::value<unsigned>()->default_value(20),
      "How many folds to split the data into for cross-validation")
+    ("eval-pairwise,P", POBooleanFlag(true),
+     "Whether to also evaluate on just instances with both cause and effect")
+    ("compare-punct,c", POBooleanFlag(false),
+     "Whether to count punctuation when comparing argument spans")
+    ("log-diffs,L", POBooleanFlag(false),
+     "Whether to log differences between correct and predicted")
+    ("for-comparison,C", POBooleanFlag(false),
+     "Whether we'll be comparing outputs against a system with different"
+     " randomization (prints order of folds and test sentences, logs"
+     " differences as TSV format, and forces the corpus to sort its sentences"
+     " alphabetically for easier sentence index comparison)")
+    ("known-conns-only,K", POBooleanFlag(false),
+     "Whether to restrict the possible transitions at test time to allow only"
+     " known connectives")
+    ("oracle-conns,o", POBooleanFlag(false),
+     "Whether to use oracle NEW-CONN, CONN-FRAG, and SPLIT transitions at test"
+     " time. Valid only in conjunction with --new-conn-action.")
+    ("cv-start-at", po::value<unsigned>()->default_value(1),
+     "Cross-validation fold to start at (useful for debugging/parallelizing")
+    ("cv-end-at", po::value<unsigned>()->default_value(-1),
+     "Cross-validation fold to end on (useful for debugging/parallelizing")
+
+    // Training options
+    ("train", "Whether to train the tagger")
     ("dev-pct,d", po::value<double>()->default_value(0.2),
      "Percent of training data in each shuffle to use as dev (tuning)")
-    ("train", "Whether to train the tagger")
-    ("action-dim,a", po::value<unsigned>()->default_value(0),
+    ("train-pairwise,r", POBooleanFlag(false),
+     "Whether to train on just instances with both cause and effect")
+    ("dropout,D", po::value<float>()->default_value(0.0),
+     "Dropout rate (no dropout is performed for a value of 0)")
+    ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
+     "How many training iterations to go between dev evaluations")
+    ("epochs-cutoff,e", po::value<double>()->default_value(5),
+     "Number of training epochs without an improvement in the best F1 to allow"
+     " before stopping training (SIGINT always works to stop; see also"
+     " --recent-improvements-cutoff)")
+    ("recent-improvements-cutoff,I", po::value<double>()->default_value(0.85),
+     "Don't stop training yet if this % of evaluations in last --epochs-cutoff"
+     " epochs have been an increase from the immediately prior evaluation")
+    ("recent-improvements-epsilon,N", po::value<double>()->default_value(0.005),
+     "How much better a dev evaluation must be than the previous one to be"
+     " considered a score increase for termination purposes")
+
+    // Network dimensionality/structure options
+    ("action-dim,a", po::value<unsigned>()->default_value(8),
      "Dimension for vector representation of actions. If 0, action history is"
      " not used.")
     ("word-dim,w", po::value<unsigned>()->default_value(10),
-     "Dimension for vector representation of words")
+     "Dimension for task-specific vector representation of words")
     ("state-dim,s", po::value<unsigned>()->default_value(72),
      "Dimension for overall tagger state")
     ("token-dim,i", po::value<unsigned>()->default_value(48),
@@ -60,58 +110,17 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("parse-path-arc-dim,R", po::value<unsigned>()->default_value(0),
      "Dimension for embedding parse relation + POS + word vector for input to"
      " parse path. If 0, the raw parse relation embedding is used.")
-    ("parse-path-hidden-dim,p", po::value<unsigned>()->default_value(12),
+    ("parse-path-hidden-dim,p", po::value<unsigned>()->default_value(20),
      "Dimension of the hidden state of the parse path embedding LSTM. If 0,"
      " parse paths are not used.")
     ("span-hidden-dim,S", po::value<unsigned>()->default_value(32),
      "Dimension of each connective/argument span LSTM's hidden state")
     ("lstm-layers,l", po::value<unsigned>()->default_value(2),
      "Number of layers for each stack LSTM")
-    ("epochs-cutoff,e", po::value<double>()->default_value(5),
-     "Number of training epochs without an improvement in the best F1 to allow"
-     " before stopping training on that fold (SIGINT always works to stop; see"
-     " also --recent-improvements-cutoff)")
-    ("compare-punct,c",
-     "Whether to count punctuation when comparing argument spans")
-    ("eval-pairwise,P", POBooleanFlag(true),
-     "Whether to also evaluate on just instances with both cause and effect")
-    ("train-pairwise,r", POBooleanFlag(false),
-     "Whether to train on just instances with both cause and effect")
-    ("subtrees,u", POBooleanFlag(true),
+    ("subtrees,u", POBooleanFlag(false),
      "Whether to include embeddings of parse subtrees in token representations")
-    ("gated-parse,g", POBooleanFlag(true),
-     "Whether to include gated parse tree embedding in the overall state")
-    ("dropout,D", po::value<float>()->default_value(0.0),
-     "Dropout rate (no dropout is performed for a value of 0)")
-    ("new-conn-action,n", POBooleanFlag(true),
-     "Whether starting a relation is a separate action (must match data)")
-    ("shift-action,H", POBooleanFlag(false),
-     "Whether completing a relation is a separate action (must match data)")
-    ("known-conns-only,K", POBooleanFlag(false),
-     "Whether to restrict the possible transitions at test time to allow only"
-     " known connectives")
-    ("oracle-conns,o", POBooleanFlag(false),
-     "Whether to use oracle NEW-CONN, CONN-FRAG, and SPLIT transitions at test"
-     " time. Valid only in conjunction with --new-conn-action.")
-    ("log-diffs,L", POBooleanFlag(false),
-     "Whether to log differences between correct and predicted")
-    ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
-     "How many training iterations to go between dev evaluations")
-    ("recent-improvements-cutoff,I", po::value<double>()->default_value(0.85),
-     "Don't stop training yet if this % of evaluations in last --epochs-cutoff"
-     " epochs have been an increase from the immediately prior evaluation")
-    ("recent-improvements-epsilon,N", po::value<double>()->default_value(0.005),
-     "How much better a dev evaluation must be than the previous one to be"
-     " considered a score increase for termination purposes")
-    ("cv-start-at", po::value<unsigned>()->default_value(1),
-     "Cross-validation fold to start at (useful for debugging/parallelizing")
-    ("cv-end-at", po::value<unsigned>()->default_value(-1),
-     "Cross-validation fold to end on (useful for debugging/parallelizing")
-    ("for-comparison,C", POBooleanFlag(false),
-     "Whether we'll be comparing outputs against a system with different"
-     " randomization (prints order of folds and test sentences, logs"
-     " differences as TSV format, and forces the corpus to sort its sentences"
-     " alphabetically for easier comparison)");
+    ("gated-parse,g", POBooleanFlag(false),
+     "Whether to include gated parse tree embedding in the overall state");
 
   po::options_description dcmdline_options;
   dcmdline_options.add(opts);
