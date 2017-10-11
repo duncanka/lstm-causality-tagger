@@ -174,8 +174,9 @@ const string GetModelFileName(const LSTMCausalityTagger& tagger) {
 }
 
 
-void OutputComparison(const CausalityMetrics& metrics) {
-  auto log_instances = [](
+void OutputComparison(const CausalityMetrics& metrics,
+                      const std::vector<bool>& pos_is_punct) {
+  auto log_instances = [&](
       const std::vector<CausalityRelation>& gold_instances,
       const std::vector<CausalityRelation>& predicted_instances,
       const std::string& connective_status) {
@@ -185,40 +186,59 @@ void OutputComparison(const CausalityMetrics& metrics) {
       abort();
     }
 
-    // cout << "Sentence\tConnective\tGold cause\tGold effect\tGold means"
-    //      << "\tLSTM status\tLSTM cause\tLSTM effect\tLSTM means\n";
+    // cout << "Sentence\tConnective\tGold cause\tGold effect\tGold means\t"
+    //      << "LSTM status\tLSTM cause\tLSTM effect\tLSTM means\t"
+    //      << "LSTM cause matches\tLSTM effect matches\tLSTM means matches\n";
     for (unsigned i = 0; i < max(gold_instances.size(),
                                  predicted_instances.size()); ++i) {
+      // Always print sentence and connective.
+      const CausalityRelation& non_null_instance =
+          (gold_instances.empty() ? predicted_instances : gold_instances).at(i);
+      cout << non_null_instance.GetSentence() << '\t';
+      non_null_instance.PrintTokens(cout, non_null_instance.GetConnectiveIndices());
+      cout << '\t';
+
+      // Print gold arguments, if available.
       if (!gold_instances.empty()) {
         const CausalityRelation& gold_instance = gold_instances.at(i);
-        cout << gold_instance.GetSentence() << '\t';
-        gold_instance.PrintTokens(cout, gold_instance.GetConnectiveIndices());
-        cout << '\t';
-        gold_instance.PrintTokens(cout, gold_instance.GetCause());
-        cout << '\t';
-        gold_instance.PrintTokens(cout, gold_instance.GetEffect());
-        cout << '\t';
-        gold_instance.PrintTokens(cout, gold_instance.GetMeans());
-        cout << '\t';
+        for (unsigned j = 0; j < CausalityMetrics::NumArgs(); ++j) {
+          gold_instance.PrintTokens(cout, gold_instance.GetArgument(j));
+          cout << '\t';
+        }
       } else {
-        const CausalityRelation& predicted_instance = predicted_instances.at(i);
-        cout << predicted_instance.GetSentence() << '\t';
-        predicted_instance.PrintTokens(cout, predicted_instance.GetConnectiveIndices());
-        cout << "\t\t\t\t";  // Finish connective; skip gold args
+        cout << "\t\t\t";
       }
 
       cout << connective_status << '\t';
 
+      // Print predicted arguments, if available.
       if (!predicted_instances.empty()) {
         const CausalityRelation& predicted_instance = predicted_instances.at(i);
-        predicted_instance.PrintTokens(cout, predicted_instance.GetCause());
-        cout << '\t';
-        predicted_instance.PrintTokens(cout, predicted_instance.GetEffect());
-        cout << '\t';
-        predicted_instance.PrintTokens(cout, predicted_instance.GetMeans());
-        cout << '\t';
+        for (unsigned j = 0; j < CausalityMetrics::NumArgs(); ++j) {
+          predicted_instance.PrintTokens(cout, predicted_instance.GetArgument(j));
+          cout << '\t';
+        }
       } else {
         cout << "\t\t\t";
+      }
+
+      if (!gold_instances.empty() && !predicted_instances.empty()) {
+        const CausalityRelation& gold_instance = gold_instances.at(i);
+        const CausalityRelation& predicted_instance = predicted_instances.at(i);
+        SpanTokenFilter filter{pos_is_punct.empty(),
+                               gold_instance.GetSentence(), pos_is_punct};
+        for (unsigned j = 0; j < CausalityMetrics::NumArgs(); ++j) {
+          BecauseRelation::IndexList filtered_gold(
+              gold_instance.GetArgument(j));
+          ReallyDeleteIf(&filtered_gold, filter);
+          BecauseRelation::IndexList filtered_pred(
+              predicted_instance.GetArgument(j));
+          ReallyDeleteIf(&filtered_pred, filter);
+          cout << static_cast<unsigned>(filtered_gold == filtered_pred);
+          if (j + 1 < CausalityMetrics::NumArgs()) {
+            cout << '\t';
+          }
+        }
       }
       cout << endl;
     }
@@ -322,7 +342,9 @@ void DoTrain(LSTMCausalityTagger* tagger,
           full_corpus, fold_test_order, compare_punct);
 
       if (for_comparison) {
-        OutputComparison(evaluation);
+        OutputComparison(
+            evaluation,
+            compare_punct ? vector<bool>() : full_corpus->pos_is_punct);
         cout << "\n\n";
       }
 
@@ -336,7 +358,9 @@ void DoTrain(LSTMCausalityTagger* tagger,
         IndentingOStreambuf indent(cout);
         if (for_comparison) {
           cout << '\n';
-          OutputComparison(pairwise_evaluation);
+          OutputComparison(
+              pairwise_evaluation,
+              compare_punct ? vector<bool>() : full_corpus->pos_is_punct);
           cout << '\n';
         }
 
