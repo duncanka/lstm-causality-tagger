@@ -36,6 +36,7 @@ public:
     unsigned action_dim;
     unsigned state_dim;  // dimension for the concatenated tagger state
     double dropout;
+    bool conn_in_state;
     bool subtrees;
     bool gated_parse;
     bool new_conn_action;
@@ -59,6 +60,7 @@ public:
       ar & action_dim;
       ar & state_dim;
       ar & dropout;
+      ar & conn_in_state;
       ar & subtrees;
       ar & gated_parse;
       ar & new_conn_action;

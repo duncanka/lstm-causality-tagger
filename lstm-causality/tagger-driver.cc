@@ -102,6 +102,8 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      " task-specific word vectors are created.")
     ("state-dim,s", po::value<unsigned>()->default_value(72),
      "Dimension for overall tagger state")
+    ("conn-in-state,G", POBooleanFlag(false),
+     "Whether to include the current connective token as its own state input")
     ("token-dim,i", po::value<unsigned>()->default_value(48),
      "Dimension for representation of tokens, e.g., as span/lambda LSTM inputs")
     ("lambda-hidden-dim,h", po::value<unsigned>()->default_value(48),
@@ -416,6 +418,7 @@ int main(int argc, char** argv) {
           conf["action-dim"].as<unsigned>(),
           conf["state-dim"].as<unsigned>(),
           conf["dropout"].as<float>(),
+          conf["conn-in-state"].as<bool>(),
           conf["subtrees"].as<bool>(),
           conf["gated-parse"].as<bool>(),
           conf["new-conn-action"].as<bool>(),

@@ -584,15 +584,16 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
 
 vector<Parameters*> LSTMCausalityTagger::GetParameters() {
   vector<Parameters*> params = {
-      p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS, p_curconn2S,
+      p_sbias, p_L1toS, p_L2toS, p_L3toS, p_L4toS,
       p_s2a, p_abias,
       p_connective2S, p_cause2S, p_effect2S, p_means2S,
       p_p2t, p_v2t, p_tbias,
       p_L1_guard, p_L2_guard, p_L3_guard, p_L4_guard,
       p_connective_guard, p_cause_guard, p_effect_guard, p_means_guard};
-  if (options.word_dim > 0) {
+  if (options.conn_in_state)
+    params.push_back(p_curconn2S);
+  if (options.word_dim > 0)
     params.push_back(p_w2t);
-  }
   if (options.gated_parse) {
     auto to_add = {p_parse_sel_bias, p_state_to_parse_sel, p_parse2sel,
                    p_full_state_bias, p_parse2pstate, p_state2pstate};
@@ -602,9 +603,8 @@ vector<Parameters*> LSTMCausalityTagger::GetParameters() {
     params.push_back(p_actions2S);
     params.push_back(p_action_start);
   }
-  if (options.subtrees) {
+  if (options.subtrees)
     params.push_back(p_subtree2t);
-  }
   if (options.parse_path_hidden_dim > 0) {
     params.push_back(p_parse_path_start);
     params.push_back(p_parsepath2S);
@@ -651,7 +651,8 @@ void LSTMCausalityTagger::InitializeNetworkParameters() {
       {options.state_dim, options.lambda_hidden_dim});
   p_L4toS = model->add_parameters(
       {options.state_dim, options.lambda_hidden_dim});
-  p_curconn2S = model->add_parameters({options.state_dim, options.token_dim});
+  if (options.conn_in_state)
+    p_curconn2S = model->add_parameters({options.state_dim, options.token_dim});
   if (options.action_dim > 0) {
     p_actions2S = model->add_parameters(
         {options.state_dim, options.actions_hidden_dim});
@@ -1054,18 +1055,22 @@ Expression LSTMCausalityTagger::GetActionProbabilities(TaggerState* state) {
     return NeuralTransitionTagger::USE_ORACLE;
   }
 
-  // sbias + actions2S * actions_lstm + (\sum_i rel_cmpt_i2S * rel_cmpt_i)
-  //       + current2S * current_token + (\sum_i LToS_i * L_i)
+  // sbias + ?(actions2S * actions_lstm) + (\sum_i rel_cmpt_i2S * rel_cmpt_i)
+  //       + ?(current2S * current_token) + (\sum_i LToS_i * L_i)
+  //       + ?(pp2S * parse_path)
   vector<Expression> state_args = {GetParamExpr(p_sbias),
       GetParamExpr(p_connective2S), connective_lstm.back(),
       GetParamExpr(p_cause2S), cause_lstm.back(),
       GetParamExpr(p_effect2S), effect_lstm.back(),
       GetParamExpr(p_means2S), means_lstm.back(),
-      GetParamExpr(p_curconn2S), real_state->current_conn_token,
       GetParamExpr(p_L1toS), L1_lstm.back(),
       GetParamExpr(p_L2toS), L2_lstm.back(),
       GetParamExpr(p_L3toS), L3_lstm.back(),
       GetParamExpr(p_L4toS), L4_lstm.back()};
+  if (options.conn_in_state) {
+    state_args.push_back(GetParamExpr(p_curconn2S));
+    state_args.push_back(real_state->current_conn_token);
+  }
   if (options.action_dim > 0) {
     state_args.push_back(GetParamExpr(p_actions2S));
     state_args.push_back(action_history_lstm.back());
