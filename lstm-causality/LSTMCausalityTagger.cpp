@@ -385,6 +385,16 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
     }
   };
 
+  auto FixArgsOrder = [&]() {
+    // Transitions can scramble argument order. Make sure tokens are ordered by
+    // their appearance in the sentence.
+    for (unsigned arg_num = 0; arg_num < CausalityRelation::ARG_NAMES.size();
+         ++arg_num) {
+      CausalityRelation::IndexList* arg = current_rel->GetArgument(arg_num);
+      sort(arg->begin(), arg->end());
+    }
+  };
+
   for (auto iter = actions.begin(), actions_end = actions.end();
        iter != actions_end; ++iter) {
     auto CompleteRelation = [&]() {  // defined here to capture iterators
@@ -411,13 +421,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
         assert(iter + 1 == actions_end);
       }
 
-      // Transitions can scramble argument order; make sure order is fixed.
-      for (unsigned arg_num = 0; arg_num < CausalityRelation::ARG_NAMES.size();
-           ++arg_num) {
-        CausalityRelation::IndexList* arg = current_rel->GetArgument(arg_num);
-        sort(arg->begin(), arg->end());
-      }
-
+      FixArgsOrder();
       current_rel = nullptr;
     };
 
@@ -466,38 +470,45 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       AdvanceArgTokenLeft();
     } else if (action_name == "SPLIT") {
       assert(current_rel && current_rel->GetConnectiveIndices()->size() > 1);
+      FixArgsOrder();  // Fix order before cloning the causal language instance
       // Make a copy of the current relation.
       relations.push_back(*current_rel);
       current_rel = &relations.back();
       // Find the last connective word that shares the same lemma, if possible.
+      // (SPLITs only happen with function words, so using surface forms
+      // instead of lemmas is OK. Which is good, b/c we don't have any lemmas.)
       // Default is cut off after initial connective word.
-      unsigned connective_repeated_token_index = 1;
+      unsigned connective_repeated_token_index_index = 1;
       IndexList* connective_indices = current_rel->GetConnectiveIndices();
+      // (Don't bother checking 1; that's our default.)
       for (size_t i = connective_indices->size() - 1; i > 1; --i) {
         if (sentence.words.at((*connective_indices)[i])
             == sentence.words.at(current_arg_token)) {
-          connective_repeated_token_index = i;
+          connective_repeated_token_index_index = i;
           break;
         }
       }
+      unsigned connective_repeated_token_index =
+          (*connective_indices)[connective_repeated_token_index_index];
       /*
       cerr << "Splitting " << *current_rel << " at "
-           << vocab.int_to_words[sentence.words.at(
-               connective_repeated_token_index)] << endl;
+           << sentence.vocab->int_to_words[sentence.words.at(
+               connective_repeated_token_index)]
+           << " (" << connective_repeated_token_index << ')' << endl;
       //*/
 
       // Now replace that index and everything after it with the new token.
       ThresholdedCmp<greater_equal<unsigned>> gte_repeated_index(
-          (*connective_indices)[connective_repeated_token_index]);
+          connective_repeated_token_index);
       ReallyDeleteIf(connective_indices, gte_repeated_index);
       connective_indices->push_back(current_arg_token);
       // Delete all arg words that came after the previous last connective word.
-      // TODO: make this more efficient?
       for (unsigned arg_num = 0; arg_num < current_rel->ARG_NAMES.size();
           ++arg_num) {
         IndexList* arg_indices = current_rel->GetArgument(arg_num);
         ReallyDeleteIf(arg_indices, gte_repeated_index);
       }
+      // cerr << "Post-split instance: " << *current_rel << endl;
       // Don't advance the arg token.
     } else if (action_name == "SHIFT") {
       assert(shift_is_action);

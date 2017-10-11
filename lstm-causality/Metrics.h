@@ -452,8 +452,8 @@ public:
     unsigned num_matching_connectives = matching_gold.size();
     connective_metrics.reset(new ClassificationMetrics(tp, fp, fn));
 
-    vector<bool> gold_args_match_if_tp(  // Entries for non-TP will all be true.
-        sentence_gold.size(), true);
+    // Entries for non-TP will all be true.
+    std::vector<bool> gold_args_match_if_tp(sentence_gold.size(), true);
     for (unsigned arg_num : boost::irange(0u, NumArgs())) {
       unsigned spans_correct = 0;
       unsigned heads_correct = 0;
