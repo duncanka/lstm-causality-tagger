@@ -494,7 +494,7 @@ public:
       const std::vector<
           BecauseOracleTransitionCorpus::ExtrasententialArgCounts>&
           missing_args = {},
-      bool log_differences = false) : argument_metrics(NumArgs()) {
+      bool save_differences = false) : argument_metrics(NumArgs()) {
     ConnectiveDiff diff(sentence_gold, sentence_predicted);
     unsigned tp = diff.LCS().size();
     unsigned fp = sentence_predicted.size() - tp;
@@ -556,7 +556,7 @@ public:
                     << sentence_gold[gold_index] << std::endl;
           args_match = false;
         }
-        if (log_differences && !args_match) {
+        if (save_differences && !args_match) {
           argument_mismatches.push_back(
               std::make_tuple(gold_instance, pred_instance, arg_num));
         }
@@ -573,7 +573,7 @@ public:
       argument_metrics[arg_num].reset(current_arg_metrics);
     }
 
-    if (log_differences) {
+    if (save_differences) {
       RecordInstanceDifferences(diff, sentence_gold, sentence_predicted);
       for (const unsigned gold_index : matching_gold) {
         if (gold_args_match_if_tp[gold_index]) {

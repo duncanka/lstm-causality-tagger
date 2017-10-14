@@ -428,7 +428,7 @@ int main(int argc, char** argv) {
           conf["shift-action"].as<bool>(),
           conf["known-conns-only"].as<bool>(),
           conf["train-pairwise"].as<bool>(),
-          conf["log-diffs"].as<bool>(),
+          conf["log-diffs"].as<bool>() || for_comparison,
           conf["oracle-conns"].as<bool>()});
 
   if (conf.count("train")) {

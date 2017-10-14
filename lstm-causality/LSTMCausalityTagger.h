@@ -44,7 +44,7 @@ public:
     bool known_conns_only;
     bool train_pairwise;
     // Non-serialized (runtime) options
-    bool log_differences;
+    bool save_differences;
     bool oracle_connectives;
 
     template<class Archive>
