@@ -5,6 +5,7 @@
 #include <cassert>
 #include <csignal>
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <numeric>
@@ -279,6 +280,8 @@ void DoTrain(LSTMCausalityTagger* tagger,
                   recent_improvements_cutoff, recent_improvements_epsilon,
                   &requested_stop);
   } else {
+    cout << setprecision(4);
+
     // For cutoffs, we use one *past* the index where the fold should stop.
     vector<unsigned> fold_cutoffs(folds);
     unsigned uneven_sentences_to_distribute = num_sentences % folds;

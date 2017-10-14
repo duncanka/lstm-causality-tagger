@@ -1,6 +1,9 @@
 #ifndef LSTM_CAUSALITY_METRICS_H_
 #define LSTM_CAUSALITY_METRICS_H_
 
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics/stats.hpp>
+#include <boost/accumulators/statistics/variance.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/equal.hpp>
 #include <boost/algorithm/cxx11/any_of.hpp>
@@ -26,6 +29,18 @@
 
 
 constexpr unsigned UNSIGNED_NEG_1 = static_cast<unsigned>(-1);
+
+
+template <class RangeType>
+std::pair<double, double> GetMeanAndStdDev(const RangeType& range) {
+  using namespace boost::accumulators;
+  accumulator_set<double, stats<tag::lazy_variance>> acc_variance;
+  for (const auto &elt : range) {
+    acc_variance(elt);
+  }
+  return {mean(acc_variance), std::sqrt(variance(acc_variance))};
+}
+
 
 class ClassificationMetrics {
 public:
@@ -100,6 +115,17 @@ public:
   unsigned fp;
   unsigned fn;
   unsigned tn;
+
+  virtual void Print(std::ostream& s) const {
+#ifdef METRICS_PRINT_RAW_COUNTS
+    s << "TP: " << tp << "\nFP:" << fp
+    << "\nFN:" << fn << "\nTN: " << tn << "\n";
+#endif
+    s << "Accuracy: " << GetAccuracy()
+        << "\nPrecision: " << GetPrecision()
+        << "\nRecall: " << GetRecall()
+        << "\nF1: " << GetF1();
+  }
 };
 
 class AveragedClassificationMetrics : public ClassificationMetrics {
@@ -120,17 +146,15 @@ public:
     if (tn != UNSIGNED_NEG_1)
       tn = std::round(tn / count);
 
-    // Finally, compute averaged derived metrics.
-    for (const ClassificationMetrics& metrics : all_metrics) {
-      avg_f1 += metrics.GetF1();
-      avg_recall += metrics.GetRecall();
-      avg_precision += metrics.GetPrecision();
-      avg_accuracy += metrics.GetAccuracy();
-    }
-    avg_f1 /= count;
-    avg_recall /= count;
-    avg_precision /= count;
-    avg_accuracy /= count;
+    // Compute averages and derived metrics.
+    std::tie(avg_f1, f1_stddev) = GetMeanAndStdDev(
+        BOOST_TRANSFORMED_RANGE(all_metrics, m, m.GetF1()));
+    std::tie(avg_recall, recall_stddev) = GetMeanAndStdDev(
+        BOOST_TRANSFORMED_RANGE(all_metrics, m, m.GetRecall()));
+    std::tie(avg_precision, precision_stddev) = GetMeanAndStdDev(
+        BOOST_TRANSFORMED_RANGE(all_metrics, m, m.GetPrecision()));
+    std::tie(avg_accuracy, accuracy_stddev) = GetMeanAndStdDev(
+        BOOST_TRANSFORMED_RANGE(all_metrics, m, m.GetAccuracy()));
   }
 
   virtual double GetAccuracy() const { return avg_accuracy; }
@@ -138,23 +162,32 @@ public:
   virtual double GetRecall() const { return avg_recall; }
   virtual double GetF1() const { return avg_f1; }
 
+  virtual void Print(std::ostream& s) const {
+#ifdef METRICS_PRINT_RAW_COUNTS
+    s << "TP: " << tp << "\nFP:" << fp
+    << "\nFN:" << fn << "\nTN: " << tn << "\n";
+#endif
+    s << "Accuracy: " << GetAccuracy() << "±" << accuracy_stddev
+        << "\nPrecision: " << GetPrecision() << "±" << precision_stddev
+        << "\nRecall: " << GetRecall() << "±" << recall_stddev
+        << "\nF1: " << GetF1() << "±" << f1_stddev;
+  }
+
 protected:
   double avg_f1;
   double avg_recall;
   double avg_precision;
   double avg_accuracy;
+
+  double f1_stddev;
+  double recall_stddev;
+  double precision_stddev;
+  double accuracy_stddev;
 };
 
 inline std::ostream& operator<<(std::ostream& s,
                          const ClassificationMetrics& metrics) {
-#ifdef METRICS_PRINT_RAW_COUNTS
-  s << "TP: " << metrics.tp << "\nFP:" << metrics.fp
-    << "\nFN:" << metrics.fn << "\nTN: " << metrics.tn << "\n";
-#endif
-  s << "Accuracy: " << metrics.GetAccuracy()
-    << "\nPrecision: " << metrics.GetPrecision()
-    << "\nRecall: " << metrics.GetRecall()
-    << "\nF1: " << metrics.GetF1();
+  metrics.Print(s);
   return s;
 }
 
@@ -189,6 +222,13 @@ public:
   double correct;
   double incorrect;
 
+  virtual void Print(std::ostream& s) const {
+#ifdef METRICS_PRINT_RAW_COUNTS
+    s << "Correct: " << correct << "\nIncorrect: " << incorrect << "\n";
+#endif
+    s << "Accuracy: " << GetAccuracy();
+  }
+
 private:
   AccuracyMetrics(double correct, double incorrect) :
       correct(correct), incorrect(incorrect) {}
@@ -206,27 +246,27 @@ public:
     double count = all_metrics.size();
     correct = correct / count;
     incorrect = incorrect / count;
-    for (const AccuracyMetrics& metrics : all_metrics) {
-      avg_accuracy += metrics.GetAccuracy();
-    }
-    avg_accuracy /= count;
+    std::tie(avg_accuracy, accuracy_stddev) = GetMeanAndStdDev(
+        BOOST_TRANSFORMED_RANGE(all_metrics, m, m.GetAccuracy()));
   }
 
   virtual double GetAccuracy() const {
     return avg_accuracy;
   }
 
-protected:
+  virtual void Print(std::ostream& s) const {
+    AccuracyMetrics::Print(s);
+    // Last thing printed is accuracy, so modify it with stddev.
+    s << "±" << accuracy_stddev;
+  }
+
   double avg_accuracy;
+  double accuracy_stddev;
 };
 
 inline std::ostream& operator<<(std::ostream& s,
                                 const AccuracyMetrics& metrics) {
-#ifdef METRICS_PRINT_RAW_COUNTS
-  s << "Correct: " << metrics.correct << "\nIncorrect: " << metrics.incorrect
-    << "\n";
-#endif
-  s << "Accuracy: " << metrics.GetAccuracy();
+  metrics.Print(s);
   return s;
 }
 
@@ -238,6 +278,8 @@ struct ArgumentMetrics {
       : spans(new AccuracyMetrics(correct_spans, incorrect_spans)),
         heads(new AccuracyMetrics(heads_correct, heads_incorrect)),
         jaccard_index(jaccard_index), instance_count(instance_count) {}
+
+  virtual ~ArgumentMetrics() {}
 
   ArgumentMetrics(const ArgumentMetrics& other)
       : spans(new AccuracyMetrics(*other.spans)),
@@ -276,11 +318,26 @@ struct ArgumentMetrics {
         && FloatsAlmostSame(jaccard_index, other.jaccard_index);
   }
 
+  virtual void Print(std::ostream& s) const {
+    s << "Spans:";
+    {
+      IndentingOStreambuf indent(s);
+      s << '\n' << *spans;
+    }
+    s << "\nHeads:";
+    {
+      IndentingOStreambuf indent(s);
+      s << '\n' << *heads;
+    }
+    s << "\nJaccard index: " << jaccard_index;
+  }
+
   std::unique_ptr<AccuracyMetrics> spans;
   std::unique_ptr<AccuracyMetrics> heads;
   double jaccard_index;
   unsigned instance_count;
 };
+
 
 class AveragedArgumentMetrics : public ArgumentMetrics {
   FRIEND_TEST(DataMetricsTest, AveragingMetricsWorks);
@@ -299,23 +356,22 @@ public:
     // what happens to the instance counts. Those only matter for adding.
     instance_count = std::round(boost::accumulate(all_instance_counts, 0) /
                                 static_cast<double>(all_metrics.size()));
-    jaccard_index = boost::accumulate(all_jaccards, 0.0) / all_metrics.size();
+    std::tie(jaccard_index, jaccard_stddev) = GetMeanAndStdDev(all_jaccards);
   }
+
+  virtual void Print(std::ostream& s) const {
+    ArgumentMetrics::Print(s);
+    // Last thing output is Jaccard index, which won't have stddev attached yet.
+    s << "±" << jaccard_stddev;
+  }
+
+protected:
+  double jaccard_stddev;
 };
 
 inline std::ostream& operator<<(std::ostream& s,
                                 const ArgumentMetrics& metrics) {
-  s << "Spans:";
-  {
-    IndentingOStreambuf indent(s);
-    s << '\n' << *metrics.spans;
-  }
-  s << "\nHeads:";
-  {
-    IndentingOStreambuf indent(s);
-    s << '\n' << *metrics.heads;
-  }
-  s << "\nJaccard index: " << metrics.jaccard_index;
+  metrics.Print(s);
   return s;
 }
 
