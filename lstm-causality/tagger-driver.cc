@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <string>
 #include <sstream>
@@ -21,8 +22,8 @@
 #include "Metrics.h"
 
 using namespace lstm_parser;
-namespace po = boost::program_options;
 namespace ad = boost::adaptors;
+namespace po = boost::program_options;
 using namespace std;
 
 volatile sig_atomic_t requested_stop = false;
@@ -40,6 +41,8 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
       po::value<string>()->default_value(
           "lstm-parser/english_pos_2_32_100_20_100_12_20.params"),
      "File from which to load saved syntactic parser model")
+    ("model-dir", po::value<string>()->default_value("models"),
+     "Directory in which to store saved model")
 
     // Data options
     ("training-data,t", po::value<string>(),
@@ -146,8 +149,13 @@ void signal_callback_handler(int /* signum */) {
   requested_stop = true;
 }
 
-const string GetModelFileName(const LSTMCausalityTagger& tagger) {
+const string GetModelFileName(const LSTMCausalityTagger& tagger,
+                              const string& model_dir) {
   ostringstream os;
+  if (!model_dir.empty()) {
+    os << model_dir;
+    os << '/';
+  }
   // TODO: update with latest options?
   os << "tagger_" << tagger.options.word_dim
      << '_' << tagger.options.lstm_layers
@@ -414,11 +422,36 @@ void DoTrain(LSTMCausalityTagger* tagger,
   }
 }
 
+
+void RunCommandToStream(const char* cmd, ostream& s) {
+  array<char, 128> buffer;
+  unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+  if (!pipe)
+    throw runtime_error("popen() failed!");
+  while (!feof(pipe.get())) {
+    if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
+      s << buffer.data();
+  }
+}
+
+
 int main(int argc, char** argv) {
   cerr << "COMMAND:";
   for (unsigned i = 0; i < static_cast<unsigned>(argc); ++i)
     cerr << ' ' << argv[i];
   cerr << endl;
+
+  // Print Git status.
+  {
+    cerr << "Git status:";
+    IndentingOStreambuf indent(cerr);
+    cerr << '\n';
+    RunCommandToStream("git rev-parse HEAD", cerr);
+    cerr << "Modified:";
+    IndentingOStreambuf indent2(cerr);
+    cerr << '\n';
+    RunCommandToStream("git ls-files -m", cerr);
+  }
 
   unsigned random_seed = cnn::Initialize(argc, argv);
   srand(random_seed + 1);
@@ -492,7 +525,8 @@ int main(int argc, char** argv) {
     cerr << "Corpus size: " << full_corpus.sentences.size() << " sentences"
          << endl;
 
-    const string model_fname = GetModelFileName(tagger);
+    const string& model_dir = conf["model-dir"].as<string>();
+    const string model_fname = GetModelFileName(tagger, model_dir);
     cerr << "Writing parameters to file: " << model_fname << endl;
 
     signal(SIGINT, signal_callback_handler);
