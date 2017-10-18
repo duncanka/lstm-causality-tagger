@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/join.hpp>
 #include <boost/program_options.hpp>
@@ -180,12 +181,19 @@ const string GetModelFileName(const LSTMCausalityTagger& tagger) {
 void OutputComparison(const CausalityMetrics& metrics,
                       const std::vector<bool>& pos_is_punct) {
   auto log_instances = [&](
-      const std::vector<CausalityRelation>& gold_instances,
-      const std::vector<CausalityRelation>& predicted_instances,
-      const std::string& connective_status) {
+      const vector<CausalityRelation>& gold_instances,
+      const vector<CausalityRelation>& predicted_instances,
+      const string& connective_status,
+      const vector<array<bool, 3>>& argument_matches = {}) {
     if (gold_instances.size() != predicted_instances.size()
         && !gold_instances.empty() && !predicted_instances.empty()) {
       cerr << "Invalid comparison instances!" << endl;
+      abort();
+    }
+    if (!argument_matches.empty() &&
+        (argument_matches.size() != predicted_instances.size()
+            || gold_instances.empty() || predicted_instances.empty())) {
+      cerr << "Invalid argument matches!" << endl;
       abort();
     }
 
@@ -225,19 +233,12 @@ void OutputComparison(const CausalityMetrics& metrics,
         cout << "\t\t\t";
       }
 
+      // If we're comparing TPs, print argument match statuses.
       if (!gold_instances.empty() && !predicted_instances.empty()) {
-        const CausalityRelation& gold_instance = gold_instances.at(i);
-        const CausalityRelation& predicted_instance = predicted_instances.at(i);
-        SpanTokenFilter filter{pos_is_punct.empty(),
-                               gold_instance.GetSentence(), pos_is_punct};
         for (unsigned j = 0; j < CausalityMetrics::NumArgs(); ++j) {
-          BecauseRelation::IndexList filtered_gold(
-              gold_instance.GetArgument(j));
-          ReallyDeleteIf(&filtered_gold, filter);
-          BecauseRelation::IndexList filtered_pred(
-              predicted_instance.GetArgument(j));
-          ReallyDeleteIf(&filtered_pred, filter);
-          cout << static_cast<unsigned>(filtered_gold == filtered_pred);
+          unsigned args_match = // assume a match unless we have detailed info
+              argument_matches.empty() ? 1 : argument_matches.at(i).at(j);
+          cout << args_match;
           if (j + 1 < CausalityMetrics::NumArgs()) {
             cout << '\t';
           }
@@ -254,11 +255,31 @@ void OutputComparison(const CausalityMetrics& metrics,
 
   vector<CausalityRelation> arg_mismatch_gold;
   vector<CausalityRelation> arg_mismatch_predicted;
+  vector<array<bool, 3>> arg_matches;
+  const lstm_parser::Sentence* previous_sentence = nullptr;
+  const BecauseRelation::IndexList* previous_connective_indices = nullptr;
+
   for (const auto& match_tuple : metrics.GetArgumentMismatches()) {
-    arg_mismatch_gold.push_back(std::get<0>(match_tuple));
-    arg_mismatch_predicted.push_back(std::get<1>(match_tuple));
+    const CausalityRelation& gold_instance = std::get<0>(match_tuple);
+    const CausalityRelation& predicted_instance = std::get<1>(match_tuple);
+    unsigned mismatched_arg = std::get<2>(match_tuple);
+
+    // Add a new entry to output if we've moved on to a different instance.
+    // (Argument mismatches for the same instance will be adjacent in the list.)
+    if (&gold_instance.GetSentence() != previous_sentence
+        || gold_instance.GetConnectiveIndices()
+            != *previous_connective_indices) {
+      arg_mismatch_gold.push_back(gold_instance);
+      arg_mismatch_predicted.push_back(predicted_instance);
+      arg_matches.push_back({1, 1, 1});  // If we find no mismatch, it's a match
+    }
+    // The reason we're here is that evaluation found a mismatch.
+    arg_matches.back().at(mismatched_arg) = 0;
+
+    previous_sentence = &gold_instance.GetSentence();
+    previous_connective_indices = &gold_instance.GetConnectiveIndices();
   }
-  log_instances(arg_mismatch_gold, arg_mismatch_predicted, "TP");
+  log_instances(arg_mismatch_gold, arg_mismatch_predicted, "TP", arg_matches);
 }
 
 
