@@ -415,33 +415,35 @@ inline std::ostream& operator<<(
     }
   }
 
-  auto log_instances = [&s](
-      const std::vector<CausalityRelation>& instances,
-      const std::string& label) {
-    if (!instances.empty()) {
-      s << label << ":\n";
-      IndentingOStreambuf indent(s);
-      for (const CausalityRelation& instance : instances) {
-        s << instance << std::endl;
+  if (metrics.log_differences) {
+    auto log_instances = [&s](
+        const std::vector<CausalityRelation>& instances,
+        const std::string& label) {
+      if (!instances.empty()) {
+        s << label << ":\n";
+        IndentingOStreambuf indent(s);
+        for (const CausalityRelation& instance : instances) {
+          s << instance << std::endl;
+        }
       }
-    }
-  };
+    };
 
-  s << "\n\n";
-  log_instances(metrics.argument_matches, "Correct instances");
-  s << '\n';
-  log_instances(metrics.fps, "False positives");
-  s << '\n';
-  log_instances(metrics.fns, "False negatives");
+    s << "\n\n";
+    log_instances(metrics.argument_matches, "Correct instances");
+    s << '\n';
+    log_instances(metrics.fps, "False positives");
+    s << '\n';
+    log_instances(metrics.fns, "False negatives");
 
-  if (!metrics.argument_mismatches.empty()) {
-    s << "\nArgument mismatches:\n";
-    IndentingOStreambuf indent(s);
-    for (const auto& instance_tuple : metrics.argument_mismatches) {
-      const unsigned arg_type = std::get<2>(instance_tuple);
-      s << RelationType::ARG_NAMES[arg_type] << " mismatch:\n"
-        << "  " << std::get<0>(instance_tuple)
-        << "\n  vs.\n  " << std::get<1>(instance_tuple) << std::endl;
+    if (!metrics.argument_mismatches.empty()) {
+      s << "\nArgument mismatches:\n";
+      IndentingOStreambuf indent(s);
+      for (const auto& instance_tuple : metrics.argument_mismatches) {
+        const unsigned arg_type = std::get<2>(instance_tuple);
+        s << RelationType::ARG_NAMES[arg_type] << " mismatch:\n"
+          << "  " << std::get<0>(instance_tuple)
+          << "\n  vs.\n  " << std::get<1>(instance_tuple) << std::endl;
+      }
     }
   }
 
@@ -469,7 +471,8 @@ public:
   // type.
   BecauseRelationMetrics()
       : connective_metrics(new ClassificationMetrics),
-        argument_metrics(RelationType::ARG_NAMES.size()) {
+        argument_metrics(RelationType::ARG_NAMES.size()),
+        log_differences(false) {
     for (unsigned i = 0; i < argument_metrics.size(); ++i) {
       argument_metrics[i].reset(new ArgumentMetrics);
     }
@@ -478,7 +481,8 @@ public:
   BecauseRelationMetrics(const BecauseRelationMetrics& other)
       : connective_metrics(
           new ClassificationMetrics(*other.connective_metrics)),
-          argument_metrics(other.argument_metrics.size()) {
+        argument_metrics(other.argument_metrics.size()),
+        log_differences(other.log_differences)  {
     for (unsigned i = 0; i < argument_metrics.size(); ++i) {
       argument_metrics[i].reset(
           new ArgumentMetrics(*other.argument_metrics[i]));
@@ -494,7 +498,9 @@ public:
       const std::vector<
           BecauseOracleTransitionCorpus::ExtrasententialArgCounts>&
           missing_args = {},
-      bool save_differences = false) : argument_metrics(NumArgs()) {
+      bool save_differences = false,
+      bool log_differences = false)
+        : argument_metrics(NumArgs()), log_differences(log_differences) {
     ConnectiveDiff diff(sentence_gold, sentence_predicted);
     unsigned tp = diff.LCS().size();
     unsigned fp = sentence_predicted.size() - tp;
@@ -760,6 +766,7 @@ protected:
       argument_mismatches;
   std::vector<CausalityRelation> fps;
   std::vector<CausalityRelation> fns;
+  bool log_differences;
 };
 
 template <class RelationType>

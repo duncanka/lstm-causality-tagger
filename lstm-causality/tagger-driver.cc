@@ -427,6 +427,7 @@ int main(int argc, char** argv) {
   InitCommandLine(argc, argv, &conf);
 
   bool for_comparison = conf["for-comparison"].as<bool>();
+  bool log_diffs = conf["log-diffs"].as<bool>();
 
   LSTMCausalityTagger tagger(
       conf["parser-model"].as<string>(),
@@ -449,7 +450,8 @@ int main(int argc, char** argv) {
           conf["shift-action"].as<bool>(),
           conf["known-conns-only"].as<bool>(),
           conf["train-pairwise"].as<bool>(),
-          conf["log-diffs"].as<bool>() || for_comparison,
+          log_diffs || for_comparison,
+          log_diffs,
           conf["oracle-conns"].as<bool>()});
 
   if (conf.count("train")) {
