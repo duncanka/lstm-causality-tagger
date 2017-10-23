@@ -205,8 +205,8 @@ void OutputComparison(const CausalityMetrics& metrics,
       abort();
     }
 
-    // cout << "Sentence\tConnective\tGold cause\tGold effect\tGold means\t"
-    //      << "LSTM status\tLSTM cause\tLSTM effect\tLSTM means\t"
+    // cout << "Sentence\tConnective\tConnective indices\tGold cause\tGold effect\t"
+    //      << "Gold means\tLSTM status\tLSTM cause\tLSTM effect\tLSTM means\t"
     //      << "LSTM cause matches\tLSTM effect matches\tLSTM means matches\n";
     for (unsigned i = 0; i < max(gold_instances.size(),
                                  predicted_instances.size()); ++i) {
@@ -216,6 +216,7 @@ void OutputComparison(const CausalityMetrics& metrics,
       cout << non_null_instance.GetSentence() << '\t';
       non_null_instance.PrintTokens(cout, non_null_instance.GetConnectiveIndices());
       cout << '\t';
+      cout << non_null_instance.GetConnectiveIndices() << '\t';
 
       // Print gold arguments, if available.
       if (!gold_instances.empty()) {
