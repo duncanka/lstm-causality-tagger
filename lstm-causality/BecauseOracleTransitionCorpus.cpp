@@ -1,3 +1,4 @@
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
@@ -200,7 +201,12 @@ BecauseOracleTransitionCorpus::BecauseOracleTransitionCorpus(
         }
         os << vocab->int_to_words.at(word) << ' ';
       }
-      sentence_texts.push_back(os.str());
+      // Normalize quotes
+      string sentence_text = boost::replace_all_copy(os.str(), "''", "\"");
+      boost::replace_all(sentence_text, "``", "\"");
+      // TODO: deal with fractions and ellipses, which could also affect sort
+      // order but don't in practice?
+      sentence_texts.push_back(sentence_text);
     }
     // Now get the sort order of those strings and apply it to the sentences.
     vector<size_t> sort_order = SortIndices(sentence_texts);
