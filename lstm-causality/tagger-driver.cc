@@ -186,8 +186,7 @@ const string GetModelFileName(const LSTMCausalityTagger& tagger,
 }
 
 
-void OutputComparison(const CausalityMetrics& metrics,
-                      const std::vector<bool>& pos_is_punct) {
+void OutputComparison(const CausalityMetrics& metrics, unsigned fold_number) {
   auto log_instances = [&](
       const vector<CausalityRelation>& gold_instances,
       const vector<CausalityRelation>& predicted_instances,
@@ -207,7 +206,7 @@ void OutputComparison(const CausalityMetrics& metrics,
 
     // cout << "Sentence\tConnective\tConnective indices\tGold cause\tGold effect\t"
     //      << "Gold means\tLSTM status\tLSTM cause\tLSTM effect\tLSTM means\t"
-    //      << "LSTM cause matches\tLSTM effect matches\tLSTM means matches\n";
+    //      << "LSTM cause matches\tLSTM effect matches\tLSTM means matches\tFold\n";
     for (unsigned i = 0; i < max(gold_instances.size(),
                                  predicted_instances.size()); ++i) {
       // Always print sentence and connective.
@@ -252,8 +251,12 @@ void OutputComparison(const CausalityMetrics& metrics,
             cout << '\t';
           }
         }
+      } else {
+        cout << "\t\t\t";
       }
-      cout << endl;
+
+      // Print fold number.
+      cout << fold_number + 1 << endl;
     }
   };
 
@@ -377,9 +380,7 @@ void DoTrain(LSTMCausalityTagger* tagger,
           full_corpus, fold_test_order, compare_punct);
 
       if (for_comparison) {
-        OutputComparison(
-            evaluation,
-            compare_punct ? vector<bool>() : full_corpus->pos_is_punct);
+        OutputComparison(evaluation, fold);
         cout << "\n\n";
       }
 
@@ -393,9 +394,7 @@ void DoTrain(LSTMCausalityTagger* tagger,
         IndentingOStreambuf indent(cout);
         if (for_comparison) {
           cout << '\n';
-          OutputComparison(
-              pairwise_evaluation,
-              compare_punct ? vector<bool>() : full_corpus->pos_is_punct);
+          OutputComparison(pairwise_evaluation, fold);
           cout << '\n';
         }
 
