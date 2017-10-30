@@ -246,10 +246,7 @@ void OutputComparison(const CausalityMetrics& metrics, unsigned fold_number) {
         for (unsigned j = 0; j < CausalityMetrics::NumArgs(); ++j) {
           unsigned args_match = // assume a match unless we have detailed info
               argument_matches.empty() ? 1 : argument_matches.at(i).at(j);
-          cout << args_match;
-          if (j + 1 < CausalityMetrics::NumArgs()) {
-            cout << '\t';
-          }
+          cout << args_match << '\t';
         }
       } else {
         cout << "\t\t\t";
