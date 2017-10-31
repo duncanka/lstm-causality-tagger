@@ -88,8 +88,8 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("dev-eval-period,E", po::value<unsigned>()->default_value(25),
      "How many training iterations to go between dev evaluations")
     ("epochs-cutoff,e", po::value<double>()->default_value(5),
-     "Number of training epochs without an improvement in the best F1 to allow"
-     " before stopping training (SIGINT always works to stop; see also"
+     "Number of training epochs without an improvement in the best dev score to"
+     " allow before stopping training (SIGINT always works to stop; see also"
      " --recent-improvements-cutoff)")
     ("recent-improvements-cutoff,I", po::value<double>()->default_value(0.85),
      "Don't stop training yet if this % of evaluations in last --epochs-cutoff"
@@ -362,14 +362,6 @@ void DoTrain(LSTMCausalityTagger* tagger,
                     recent_improvements_cutoff, recent_improvements_epsilon,
                     &requested_stop);
       cerr << "Evaluating..." << endl;
-      if (for_comparison) {
-        cout << "Fold " << fold + 1 << " test sentences:" << endl;
-        IndentingOStreambuf indent(cout);
-        for (unsigned sentence_index : fold_test_order) {
-          cout << full_corpus->sentences[sentence_index] << '\n';
-        }
-        cout << endl;
-      }
       tagger->LoadModel(model_fname);  // Reset to last saved state
       cout << "Evaluation for fold " << fold + 1 << " ("
            << fold_test_order.size() << " test sentences)" << endl;
