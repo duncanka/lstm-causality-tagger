@@ -440,10 +440,11 @@ inline std::ostream& operator<<(
       s << "\nArgument mismatches:\n";
       IndentingOStreambuf indent(s);
       for (const auto& instance_tuple : metrics.argument_mismatches) {
-        const unsigned arg_type = std::get<2>(instance_tuple);
-        s << RelationType::ARG_NAMES[arg_type] << " mismatch:\n"
-          << "  " << std::get<0>(instance_tuple)
-          << "\n  vs.\n  " << std::get<1>(instance_tuple) << std::endl;
+        const unsigned arg_type = std::get<0>(instance_tuple);
+        s << RelationType::ARG_NAMES[arg_type] << " mismatch (J="
+          << std::get<3>(instance_tuple) << "):\n"
+          << "  " << std::get<1>(instance_tuple)
+          << "\n  vs.\n  " << std::get<2>(instance_tuple) << std::endl;
       }
     }
   }
@@ -563,12 +564,14 @@ public:
                     << sentence_gold[gold_index] << std::endl;
           args_match = false;
         }
+
+        double jaccard = CalculateJaccard(filtered_gold, filtered_pred,
+                                          gold_arg_missing_tokens);
+        jaccard_sum += jaccard;
         if (save_differences && !args_match) {
           argument_mismatches.push_back(
-              std::make_tuple(gold_instance, pred_instance, arg_num));
+              std::make_tuple(arg_num, gold_instance, pred_instance, jaccard));
         }
-        jaccard_sum += CalculateJaccard(filtered_gold, filtered_pred,
-                                        gold_arg_missing_tokens);
         gold_args_match_if_tp[gold_index] =
             gold_args_match_if_tp[gold_index] && args_match;
       }
@@ -763,8 +766,8 @@ protected:
   }
 
   std::vector<CausalityRelation> argument_matches;
-  std::vector<std::tuple<CausalityRelation, CausalityRelation, unsigned>>
-      argument_mismatches;
+  std::vector<std::tuple<unsigned, CausalityRelation, CausalityRelation,
+              double>> argument_mismatches;
   std::vector<CausalityRelation> fps;
   std::vector<CausalityRelation> fns;
   bool log_differences;

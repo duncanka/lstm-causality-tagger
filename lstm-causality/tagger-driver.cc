@@ -191,14 +191,14 @@ void OutputComparison(const CausalityMetrics& metrics, unsigned fold_number) {
       const vector<CausalityRelation>& gold_instances,
       const vector<CausalityRelation>& predicted_instances,
       const string& connective_status,
-      const vector<array<bool, 3>>& argument_matches = {}) {
+      const vector<array<double, 3>>& arg_jaccards = {}) {
     if (gold_instances.size() != predicted_instances.size()
         && !gold_instances.empty() && !predicted_instances.empty()) {
       cerr << "Invalid comparison instances!" << endl;
       abort();
     }
-    if (!argument_matches.empty() &&
-        (argument_matches.size() != predicted_instances.size()
+    if (!arg_jaccards.empty() &&
+        (arg_jaccards.size() != predicted_instances.size()
             || gold_instances.empty() || predicted_instances.empty())) {
       cerr << "Invalid argument matches!" << endl;
       abort();
@@ -206,7 +206,8 @@ void OutputComparison(const CausalityMetrics& metrics, unsigned fold_number) {
 
     // cout << "Sentence\tConnective\tConnective indices\tGold cause\tGold effect\t"
     //      << "Gold means\tLSTM status\tLSTM cause\tLSTM effect\tLSTM means\t"
-    //      << "LSTM cause matches\tLSTM effect matches\tLSTM means matches\tFold\n";
+    //      << "LSTM cause matches\tLSTM effect matches\tLSTM means matches\t"
+    //      << "LSTM cause Jaccard\tLSTM effect Jaccard\tLSTM means Jaccard\tFold\n";
     for (unsigned i = 0; i < max(gold_instances.size(),
                                  predicted_instances.size()); ++i) {
       // Always print sentence and connective.
@@ -241,15 +242,21 @@ void OutputComparison(const CausalityMetrics& metrics, unsigned fold_number) {
         cout << "\t\t\t";
       }
 
-      // If we're comparing TPs, print argument match statuses.
+      // If we're comparing TPs, print argument match statuses and Jaccard indices.
       if (!gold_instances.empty() && !predicted_instances.empty()) {
-        for (unsigned j = 0; j < CausalityMetrics::NumArgs(); ++j) {
-          unsigned args_match = // assume a match unless we have detailed info
-              argument_matches.empty() ? 1 : argument_matches.at(i).at(j);
-          cout << args_match << '\t';
+        for (unsigned argj = 0; argj < CausalityMetrics::NumArgs(); ++argj) {
+          double arg_jaccard = // assume a match unless we have detailed info
+              arg_jaccards.empty() ? 1 : arg_jaccards.at(i).at(argj);
+          cout << (arg_jaccard == 1.0) << '\t';
+        }
+
+        for (unsigned argj = 0; argj < CausalityMetrics::NumArgs(); ++argj) {
+          double arg_jaccard = // assume a match unless we have detailed info
+              arg_jaccards.empty() ? 1 : arg_jaccards.at(i).at(argj);
+          cout << arg_jaccard << '\t';
         }
       } else {
-        cout << "\t\t\t";
+        cout << "\t\t\t\t\t\t";
       }
 
       // Print fold number.
@@ -264,14 +271,15 @@ void OutputComparison(const CausalityMetrics& metrics, unsigned fold_number) {
 
   vector<CausalityRelation> arg_mismatch_gold;
   vector<CausalityRelation> arg_mismatch_predicted;
-  vector<array<bool, 3>> arg_matches;
+  vector<array<double, 3>> arg_jaccards;
   const lstm_parser::Sentence* previous_sentence = nullptr;
   const BecauseRelation::IndexList* previous_connective_indices = nullptr;
 
   for (const auto& match_tuple : metrics.GetArgumentMismatches()) {
-    const CausalityRelation& gold_instance = std::get<0>(match_tuple);
-    const CausalityRelation& predicted_instance = std::get<1>(match_tuple);
-    unsigned mismatched_arg = std::get<2>(match_tuple);
+    unsigned mismatched_arg = std::get<0>(match_tuple);
+    const CausalityRelation& gold_instance = std::get<1>(match_tuple);
+    const CausalityRelation& predicted_instance = std::get<2>(match_tuple);
+    double jaccard = std::get<3>(match_tuple);
 
     // Add a new entry to output if we've moved on to a different instance.
     // (Argument mismatches for the same instance will be adjacent in the list.)
@@ -280,15 +288,15 @@ void OutputComparison(const CausalityMetrics& metrics, unsigned fold_number) {
             != *previous_connective_indices) {
       arg_mismatch_gold.push_back(gold_instance);
       arg_mismatch_predicted.push_back(predicted_instance);
-      arg_matches.push_back({1, 1, 1});  // If we find no mismatch, it's a match
+      arg_jaccards.push_back({1, 1, 1});  // Initially assume perfect matches
     }
     // The reason we're here is that evaluation found a mismatch.
-    arg_matches.back().at(mismatched_arg) = 0;
+    arg_jaccards.back().at(mismatched_arg) = jaccard;
 
     previous_sentence = &gold_instance.GetSentence();
     previous_connective_indices = &gold_instance.GetConnectiveIndices();
   }
-  log_instances(arg_mismatch_gold, arg_mismatch_predicted, "TP", arg_matches);
+  log_instances(arg_mismatch_gold, arg_mismatch_predicted, "TP", arg_jaccards);
 }
 
 
