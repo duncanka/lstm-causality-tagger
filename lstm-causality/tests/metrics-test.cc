@@ -124,7 +124,7 @@ TEST_F(DataMetricsTest, SameAnnotationGetsPerfectScores) {
       original_relations);
 
   ClassificationMetrics correct_connective_metrics(7, 0, 0);
-  ArgumentMetrics correct_arg_metrics(7, 0, 7, 0, 1, 7);
+  ArgumentMetrics correct_arg_metrics(7, 0, 0, 0, 1, 7);
   ASSERT_EQ(correct_connective_metrics, correct_connective_metrics);
   ASSERT_EQ(correct_arg_metrics, correct_arg_metrics);
   TEST_METRICS(self_metrics, correct_connective_metrics, correct_arg_metrics,
@@ -135,8 +135,8 @@ TEST_F(DataMetricsTest, SameAnnotationGetsPerfectScores) {
 TEST_F(DataMetricsTest, ModifiedAnnotationsGivesLessPerfectScores) {
   CausalityMetrics compared_metrics = CompareOriginalAndModified();
   ClassificationMetrics correct_connective_metrics(5, 2, 2);
-  ArgumentMetrics correct_cause_metrics(3, 2, 3, 2, 0.6);
-  ArgumentMetrics correct_effect_metrics(4, 1, 5, 0, 33/35.);
+  ArgumentMetrics correct_cause_metrics(3, 2, 2, 2, 0.6);
+  ArgumentMetrics correct_effect_metrics(4, 1, 2, 2, 33/35.);
   TEST_METRICS(compared_metrics, correct_connective_metrics,
                correct_cause_metrics, correct_effect_metrics);
 }
@@ -150,8 +150,8 @@ TEST_F(DataMetricsTest, AddingMetricsWorks) {
   CausalityMetrics summed_metrics = compared_metrics + tweaked_metrics;
 
   ClassificationMetrics correct_connective_metrics(10, 4, 4);
-  ArgumentMetrics correct_cause_metrics(6, 4, 6, 4, 0.45);
-  ArgumentMetrics correct_effect_metrics(8, 2, 10, 0, 34/35.);
+  ArgumentMetrics correct_cause_metrics(6, 4, 4, 4, 0.45);
+  ArgumentMetrics correct_effect_metrics(8, 2, 4, 4, 34/35.);
   TEST_METRICS(summed_metrics, correct_connective_metrics,
                correct_cause_metrics, correct_effect_metrics);
 }
@@ -191,30 +191,32 @@ TEST_F(DataMetricsTest, AveragingMetricsWorks) {
   AveragedArgumentMetrics* correct_cause_metrics =
       static_cast<AveragedArgumentMetrics*>(
           correct_metrics.argument_metrics[CAUSE_INDEX].get());
-  tie(correct_cause_metrics->spans->correct,
-      correct_cause_metrics->spans->incorrect,
-      static_cast<AveragedAccuracyMetrics*>(
-          correct_cause_metrics->spans.get())->avg_accuracy,
-      correct_cause_metrics->heads->correct,
-      correct_cause_metrics->heads->incorrect,
-      static_cast<AveragedAccuracyMetrics*>(
-          correct_cause_metrics->heads.get())->avg_accuracy,
+  AveragedClassificationMetrics *cause_spans =
+      static_cast<AveragedClassificationMetrics *>(
+          correct_cause_metrics->spans.get());
+  tie(cause_spans->tp, cause_spans->fp, cause_spans->fn,
       correct_cause_metrics->jaccard_index) =
-          make_tuple(5, 1, 0.8, 5, 1, 0.8, (1 + 0.6) / 2);
+          make_tuple(5, 2, 2, (1 + 0.6) / 2);
+  tie(cause_spans->avg_precision, cause_spans->avg_recall, cause_spans->avg_f1)
+      = make_tuple(cause_spans->ClassificationMetrics::GetPrecision(),
+                   cause_spans->ClassificationMetrics::GetRecall(),
+                   cause_spans->ClassificationMetrics::GetF1());
 
+  // TODO: fix me
   AveragedArgumentMetrics* correct_effect_metrics =
       static_cast<AveragedArgumentMetrics*>(
           correct_metrics.argument_metrics[EFFECT_INDEX].get());
-  tie(correct_effect_metrics->spans->correct,
-      correct_effect_metrics->spans->incorrect,
-      static_cast<AveragedAccuracyMetrics*>(
-          correct_effect_metrics->spans.get())->avg_accuracy,
-      correct_effect_metrics->heads->correct,
-      correct_effect_metrics->heads->incorrect,
-      static_cast<AveragedAccuracyMetrics*>(
-          correct_effect_metrics->heads.get())->avg_accuracy,
+  AveragedClassificationMetrics *effect_spans =
+      static_cast<AveragedClassificationMetrics *>(
+          correct_effect_metrics->spans.get());
+  tie(effect_spans->tp, effect_spans->fp, effect_spans->fn,
       correct_effect_metrics->jaccard_index) =
-          make_tuple(5.5, 0.5, 0.9, 6, 0, 1, 34 / 35.);
+          make_tuple(5.5, 1.5, 1.5, 34 / 35.);
+  tie(effect_spans->avg_precision, effect_spans->avg_recall,
+      effect_spans->avg_f1) = make_tuple(
+      effect_spans->ClassificationMetrics::GetPrecision(),
+      effect_spans->ClassificationMetrics::GetRecall(),
+      effect_spans->ClassificationMetrics::GetF1());
 
   TEST_METRICS(averaged_metrics, *correct_conn_metrics,
                *correct_cause_metrics, *correct_effect_metrics);

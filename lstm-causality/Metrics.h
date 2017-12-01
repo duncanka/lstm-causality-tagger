@@ -79,7 +79,8 @@ public:
   virtual double GetPrecision() const { return CalculatePrecision(tp, fp); }
   virtual double GetRecall() const { return CalculateRecall(tp, fn); }
   virtual double GetF1() const {
-    return CalculateF1(GetPrecision(), GetRecall());
+    return CalculateF1(ClassificationMetrics::GetPrecision(),
+                       ClassificationMetrics::GetRecall());
   }
 
   virtual ~ClassificationMetrics() {}
@@ -111,10 +112,11 @@ public:
     return (2 * precision * recall) / (precision + recall);
   }
 
-  unsigned tp;
-  unsigned fp;
-  unsigned fn;
-  unsigned tn;
+  // Store as doubles to allow averaging.
+  double tp;
+  double fp;
+  double fn;
+  double tn;
 
   virtual void Print(std::ostream& s) const {
 #ifdef METRICS_PRINT_RAW_COUNTS
@@ -139,12 +141,11 @@ public:
           boost::accumulate(all_metrics, ClassificationMetrics())),
         avg_f1(0), avg_recall(0), avg_precision(0), avg_accuracy(0) {
     // Now divide to turn those into averages.
-    double count = static_cast<double>(all_metrics.size());
-    tp = std::round(tp / count);
-    fp = std::round(fp / count);
-    fn = std::round(fn / count);
+    tp = tp / all_metrics.size();
+    fp = fp / all_metrics.size();
+    fn = fn / all_metrics.size();
     if (tn != UNSIGNED_NEG_1)
-      tn = std::round(tn / count);
+      tn = tn / all_metrics.size();
 
     // Compute averages and derived metrics.
     std::tie(avg_f1, f1_stddev) = GetMeanAndStdDev(
@@ -191,105 +192,29 @@ inline std::ostream& operator<<(std::ostream& s,
   return s;
 }
 
-class AccuracyMetrics {
-public:
-  AccuracyMetrics(unsigned correct, unsigned incorrect) :
-      correct(correct), incorrect(incorrect) {}
-
-  virtual ~AccuracyMetrics() {}
-
-  virtual double GetAccuracy() const {
-    return correct / (correct + incorrect);
-  }
-
-  bool operator==(const AccuracyMetrics& other) const {
-    return FloatsAlmostSame(correct, other.correct)
-        && FloatsAlmostSame(incorrect, other.incorrect)
-        && FloatsAlmostSame(GetAccuracy(), other.GetAccuracy());
-  }
-
-  void operator+=(const AccuracyMetrics& other) {
-    correct += other.correct;
-    incorrect += other.incorrect;
-  }
-
-  AccuracyMetrics operator+(const AccuracyMetrics& other) const {
-    return AccuracyMetrics(correct + other.correct,
-                           incorrect + other.incorrect);
-  }
-
-  // Store as floats to make averages work
-  double correct;
-  double incorrect;
-
-  virtual void Print(std::ostream& s) const {
-#ifdef METRICS_PRINT_RAW_COUNTS
-    s << "Correct: " << correct << "\nIncorrect: " << incorrect << "\n";
-#endif
-    s << "Accuracy: " << GetAccuracy();
-  }
-
-private:
-  AccuracyMetrics(double correct, double incorrect) :
-      correct(correct), incorrect(incorrect) {}
-};
-
-class AveragedAccuracyMetrics : public AccuracyMetrics {
-  FRIEND_TEST(DataMetricsTest, AveragingMetricsWorks);
-public:
-  template <class Iterator>
-  AveragedAccuracyMetrics(
-      boost::iterator_range<Iterator> all_metrics)
-      : AccuracyMetrics(boost::accumulate(all_metrics,
-                                          AccuracyMetrics(0u, 0u))),
-        avg_accuracy(0) {
-    double count = all_metrics.size();
-    correct = correct / count;
-    incorrect = incorrect / count;
-    std::tie(avg_accuracy, accuracy_stddev) = GetMeanAndStdDev(
-        BOOST_TRANSFORMED_RANGE(all_metrics, m, m.GetAccuracy()));
-  }
-
-  virtual double GetAccuracy() const {
-    return avg_accuracy;
-  }
-
-  virtual void Print(std::ostream& s) const {
-    AccuracyMetrics::Print(s);
-    // Last thing printed is accuracy, so modify it with stddev.
-    s << "±" << accuracy_stddev;
-  }
-
-  double avg_accuracy;
-  double accuracy_stddev;
-};
-
-inline std::ostream& operator<<(std::ostream& s,
-                                const AccuracyMetrics& metrics) {
-  metrics.Print(s);
-  return s;
-}
-
 
 struct ArgumentMetrics {
-  ArgumentMetrics(unsigned correct_spans = 0, unsigned incorrect_spans = 0,
-                  unsigned heads_correct = 0, unsigned heads_incorrect = 0,
-                  double jaccard_index = 0, unsigned instance_count = 0)
-      : spans(new AccuracyMetrics(correct_spans, incorrect_spans)),
-        heads(new AccuracyMetrics(heads_correct, heads_incorrect)),
+  ArgumentMetrics()
+      : spans(new ClassificationMetrics(0, 0, 0)), jaccard_index(0),
+        instance_count(0) {}
+
+  ArgumentMetrics(unsigned tp_correct_spans, unsigned tp_incorrect_spans,
+                  unsigned fps, unsigned fns, double jaccard_index,
+                  unsigned instance_count = 0)
+      : spans(
+          new ClassificationMetrics(tp_correct_spans, fps + tp_incorrect_spans,
+                                    fns + tp_incorrect_spans)),
         jaccard_index(jaccard_index), instance_count(instance_count) {}
 
   virtual ~ArgumentMetrics() {}
 
   ArgumentMetrics(const ArgumentMetrics& other)
-      : spans(new AccuracyMetrics(*other.spans)),
-        heads(new AccuracyMetrics(*other.heads)),
+      : spans(new ClassificationMetrics(*other.spans)),
         jaccard_index(other.jaccard_index),
         instance_count(other.instance_count) {}
 
   void operator+=(const ArgumentMetrics& other) {
     *spans += *other.spans;
-    *heads += *other.heads;
     // Jaccard indices were already probably averages. So we have to preserve
     // the weighting for the new average.
     // If either Jaccard index is nan, ignore it and use the other one (and its
@@ -315,7 +240,7 @@ struct ArgumentMetrics {
   bool operator==(const ArgumentMetrics& other) const {
     // instance_count is irrelevant; we only care about it for tracking future
     // changes.
-    return *spans == *other.spans && *heads == *other.heads
+    return *spans == *other.spans
         && FloatsAlmostSame(jaccard_index, other.jaccard_index);
   }
 
@@ -325,16 +250,10 @@ struct ArgumentMetrics {
       IndentingOStreambuf indent(s);
       s << '\n' << *spans;
     }
-    s << "\nHeads:";
-    {
-      IndentingOStreambuf indent(s);
-      s << '\n' << *heads;
-    }
-    s << "\nJaccard index: " << jaccard_index;
+    s << "\nJaccard index (conditional): " << jaccard_index;
   }
 
-  std::unique_ptr<AccuracyMetrics> spans;
-  std::unique_ptr<AccuracyMetrics> heads;
+  std::unique_ptr<ClassificationMetrics> spans;
   double jaccard_index;
   unsigned instance_count;
 };
@@ -346,13 +265,11 @@ public:
   template <class IteratorType>
   AveragedArgumentMetrics(boost::iterator_range<IteratorType> all_metrics) {
     auto all_spans = BOOST_TRANSFORMED_RANGE(all_metrics, m, *m.spans);
-    auto all_heads = BOOST_TRANSFORMED_RANGE(all_metrics, m, *m.heads);
     auto all_jaccards = BOOST_TRANSFORMED_RANGE(all_metrics, m,
                                                 m.jaccard_index);
     auto all_instance_counts = BOOST_TRANSFORMED_RANGE(all_metrics, m,
                                                        m.instance_count);
-    spans.reset(new AveragedAccuracyMetrics(all_spans));
-    heads.reset(new AveragedAccuracyMetrics(all_heads));
+    spans.reset(new AveragedClassificationMetrics(all_spans));
     // We're assuming an unweighted average here, so don't worry too much about
     // what happens to the instance counts. Those only matter for adding.
     instance_count = std::round(boost::accumulate(all_instance_counts, 0) /
@@ -520,7 +437,6 @@ public:
     std::vector<bool> gold_args_match_if_tp(sentence_gold.size(), true);
     for (unsigned arg_num : boost::irange(0u, NumArgs())) {
       unsigned spans_correct = 0;
-      unsigned heads_correct = 0;
       unsigned gold_index;
       unsigned pred_index;
       double jaccard_sum = 0.0;
@@ -541,21 +457,14 @@ public:
 
         unsigned gold_arg_missing_tokens =
             missing_args.empty() ? 0 : missing_args[gold_index][arg_num];
-        // If we have any missing tokens for the argument, assume we got the
-        // head and span wrong. (We definitely got the span wrong, and it's not
-        // even clear what it'd mean to get the head right.)
+        // If we have any missing tokens for the argument, we definitely got the
+        // span wrong.
         bool args_match = true;
         if (gold_arg_missing_tokens == 0) {
           if (boost::equal(filtered_gold, filtered_pred)) {
             ++spans_correct;
           } else {
             args_match = false;
-          }
-
-          if ((filtered_gold.empty() && filtered_pred.empty())
-              || GetHead(gold_span, parse, source_corpus)
-                 == GetHead(pred_span, parse, source_corpus)) {
-            ++heads_correct;
           }
         } else {  // We're missing some argument tokens (cross-sentence span)
           std::cerr << "WARNING: assuming full mismatch for argument "
@@ -577,8 +486,7 @@ public:
       }
 
       auto current_arg_metrics = new ArgumentMetrics(
-          spans_correct, num_matching_connectives - spans_correct,
-          heads_correct, num_matching_connectives - heads_correct,
+          spans_correct, num_matching_connectives - spans_correct, fp, fn,
           jaccard_sum / num_matching_connectives, num_matching_connectives);
       argument_metrics[arg_num].reset(current_arg_metrics);
     }
