@@ -32,6 +32,18 @@ TEST(MetricsTest, F1Works) {
   EXPECT_DOUBLE_EQ(0.880597014925373, f1);
 }
 
+TEST(MetricsTest, F1WorksInMetricsClasses) {
+  unsigned tp = 1770;
+  unsigned fp = 150;
+  unsigned fn = 330;
+
+  ArgumentMetrics am(tp, fp, fn, 0, tp + fp + fn);
+  EXPECT_DOUBLE_EQ(0.880597014925373, am.spans->GetF1());
+
+  ClassificationMetrics cm(tp, fp, fn);
+  EXPECT_DOUBLE_EQ(0.880597014925373, cm.GetF1());
+}
+
 
 struct DataMetricsTest: public ::testing::Test {
 protected:
@@ -200,10 +212,11 @@ TEST_F(DataMetricsTest, AveragingMetricsWorks) {
   tie(cause_spans->tp, cause_spans->fp, cause_spans->fn,
       correct_cause_metrics->jaccard_index) =
           make_tuple(5, 1.5, 2, (1 + 0.6) / 2);
+  precision = 0.75;
+  recall = (3/7. + 1) / 2;
+  f1 = (1 + ClassificationMetrics::CalculateF1(0.5, 3/7.)) / 2;
   tie(cause_spans->avg_precision, cause_spans->avg_recall, cause_spans->avg_f1)
-      = make_tuple(cause_spans->ClassificationMetrics::GetPrecision(),
-                   cause_spans->ClassificationMetrics::GetRecall(),
-                   cause_spans->ClassificationMetrics::GetF1());
+      = make_tuple(precision, recall, f1);
 
   AveragedArgumentMetrics* correct_effect_metrics =
       static_cast<AveragedArgumentMetrics*>(
@@ -214,11 +227,9 @@ TEST_F(DataMetricsTest, AveragingMetricsWorks) {
   tie(effect_spans->tp, effect_spans->fp, effect_spans->fn,
       correct_effect_metrics->jaccard_index) =
           make_tuple(5.5, 1.5, 1.5, 34 / 35.);
+  double p_r_f1 = (4/7. + 1) / 2;
   tie(effect_spans->avg_precision, effect_spans->avg_recall,
-      effect_spans->avg_f1) = make_tuple(
-      effect_spans->ClassificationMetrics::GetPrecision(),
-      effect_spans->ClassificationMetrics::GetRecall(),
-      effect_spans->ClassificationMetrics::GetF1());
+      effect_spans->avg_f1) = make_tuple(p_r_f1, p_r_f1, p_r_f1);
 
   TEST_METRICS(averaged_metrics, *correct_conn_metrics,
                *correct_cause_metrics, *correct_effect_metrics);
