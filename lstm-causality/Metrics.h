@@ -198,12 +198,9 @@ struct ArgumentMetrics {
       : spans(new ClassificationMetrics(0, 0, 0)), jaccard_index(0),
         instance_count(0) {}
 
-  ArgumentMetrics(unsigned tp_correct_spans, unsigned tp_incorrect_spans,
-                  unsigned fps, unsigned fns, double jaccard_index,
-                  unsigned instance_count = 0)
-      : spans(
-          new ClassificationMetrics(tp_correct_spans, fps + tp_incorrect_spans,
-                                    fns + tp_incorrect_spans)),
+  ArgumentMetrics(unsigned tps, unsigned fps, unsigned fns,
+                  double jaccard_index, unsigned instance_count = 0)
+      : spans(new ClassificationMetrics(tps, fps, fns)),
         jaccard_index(jaccard_index), instance_count(instance_count) {}
 
   virtual ~ArgumentMetrics() {}
@@ -291,6 +288,12 @@ inline std::ostream& operator<<(std::ostream& s,
                                 const ArgumentMetrics& metrics) {
   metrics.Print(s);
   return s;
+}
+
+// Specialization so GTest can find it.
+inline std::ostream& operator<<(std::ostream& s,
+                                const AveragedArgumentMetrics& metrics) {
+  return operator<<(s, static_cast<const ArgumentMetrics&>(metrics));
 }
 
 
@@ -422,8 +425,8 @@ public:
         : argument_metrics(NumArgs()), log_differences(log_differences) {
     ConnectiveDiff diff(sentence_gold, sentence_predicted);
     unsigned tp = diff.LCS().size();
-    unsigned fp = sentence_predicted.size() - tp;
-    unsigned fn = sentence_gold.size() - tp + missing_instances;
+    unsigned connective_fps = sentence_predicted.size() - tp;
+    unsigned connective_fns = sentence_gold.size() - tp + missing_instances;
 
     const typename ConnectiveDiff::IndexList matching_gold =
         diff.OrigLCSIndices();
@@ -431,12 +434,15 @@ public:
         diff.NewLCSIndices();
     assert(matching_pred.size() == matching_gold.size());
     unsigned num_matching_connectives = matching_gold.size();
-    connective_metrics.reset(new ClassificationMetrics(tp, fp, fn));
+    connective_metrics.reset(
+        new ClassificationMetrics(tp, connective_fps, connective_fns));
 
     // Entries for non-TP will all be true.
     std::vector<bool> gold_args_match_if_tp(sentence_gold.size(), true);
     for (unsigned arg_num : boost::irange(0u, NumArgs())) {
       unsigned spans_correct = 0;
+      unsigned span_fps = 0;
+      unsigned span_fns = 0;
       unsigned gold_index;
       unsigned pred_index;
       double jaccard_sum = 0.0;
@@ -465,13 +471,22 @@ public:
             ++spans_correct;
           } else {
             args_match = false;
+            if (filtered_gold.empty()) {
+              ++span_fps;
+            } else if (filtered_pred.empty()) {
+              ++span_fns;
+            } // else it's a mismatch
           }
         } else {  // We're missing some argument tokens (cross-sentence span)
-          std::cerr << "WARNING: assuming full mismatch for argument "
-                    << RelationType::ARG_NAMES[arg_num]
-                    << " of instance with missing argument tokens: "
-                    << sentence_gold[gold_index] << std::endl;
           args_match = false;
+          if (filtered_pred.empty()) {
+            ++span_fns;
+          } else {
+            std::cerr << "WARNING: assuming mismatch for argument "
+                      << RelationType::ARG_NAMES[arg_num]
+                      << " of instance with missing argument tokens: "
+                      << sentence_gold[gold_index] << std::endl;
+          }
         }
 
         double jaccard = CalculateJaccard(filtered_gold, filtered_pred,
@@ -485,8 +500,11 @@ public:
             gold_args_match_if_tp[gold_index] && args_match;
       }
 
+      unsigned mismatches =
+          num_matching_connectives - spans_correct - span_fps - span_fns;
       auto current_arg_metrics = new ArgumentMetrics(
-          spans_correct, num_matching_connectives - spans_correct, fp, fn,
+          spans_correct, connective_fps + span_fps + mismatches,
+          connective_fns + span_fns + mismatches,
           jaccard_sum / num_matching_connectives, num_matching_connectives);
       argument_metrics[arg_num].reset(current_arg_metrics);
     }
