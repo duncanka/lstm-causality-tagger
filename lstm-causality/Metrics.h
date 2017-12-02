@@ -440,9 +440,10 @@ public:
     // Entries for non-TP will all be true.
     std::vector<bool> gold_args_match_if_tp(sentence_gold.size(), true);
     for (unsigned arg_num : boost::irange(0u, NumArgs())) {
-      unsigned spans_correct = 0;
+      unsigned span_tps = 0;
       unsigned span_fps = 0;
       unsigned span_fns = 0;
+      unsigned span_mismatches = 0;
       unsigned gold_index;
       unsigned pred_index;
       double jaccard_sum = 0.0;
@@ -468,14 +469,17 @@ public:
         bool args_match = true;
         if (gold_arg_missing_tokens == 0) {
           if (boost::equal(filtered_gold, filtered_pred)) {
-            ++spans_correct;
+            if (!filtered_gold.empty())
+              ++span_tps;
           } else {
             args_match = false;
             if (filtered_gold.empty()) {
               ++span_fps;
             } else if (filtered_pred.empty()) {
               ++span_fns;
-            } // else it's a mismatch
+            } else {
+              ++span_mismatches;
+            }
           }
         } else {  // We're missing some argument tokens (cross-sentence span)
           args_match = false;
@@ -500,11 +504,9 @@ public:
             gold_args_match_if_tp[gold_index] && args_match;
       }
 
-      unsigned mismatches =
-          num_matching_connectives - spans_correct - span_fps - span_fns;
       auto current_arg_metrics = new ArgumentMetrics(
-          spans_correct, connective_fps + span_fps + mismatches,
-          connective_fns + span_fns + mismatches,
+          span_tps, connective_fps + span_fps + span_mismatches,
+          connective_fns + span_fns + span_mismatches,
           jaccard_sum / num_matching_connectives, num_matching_connectives);
       argument_metrics[arg_num].reset(current_arg_metrics);
     }
