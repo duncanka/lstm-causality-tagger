@@ -137,11 +137,12 @@ TEST_F(DataMetricsTest, SameAnnotationGetsPerfectScores) {
       original_relations);
 
   ClassificationMetrics correct_connective_metrics(7, 0, 0);
-  ArgumentMetrics correct_arg_metrics(7, 0, 0, 1, 7);
+  ArgumentMetrics correct_cause_metrics(6, 0, 0, 1, 7);
+  ArgumentMetrics correct_effect_metrics(7, 0, 0, 1, 7);
   ASSERT_EQ(correct_connective_metrics, correct_connective_metrics);
-  ASSERT_EQ(correct_arg_metrics, correct_arg_metrics);
-  TEST_METRICS(self_metrics, correct_connective_metrics, correct_arg_metrics,
-               correct_arg_metrics);
+  ASSERT_EQ(correct_cause_metrics, correct_cause_metrics);
+  TEST_METRICS(self_metrics, correct_connective_metrics, correct_cause_metrics,
+               correct_effect_metrics);
 }
 
 
@@ -150,7 +151,7 @@ TEST_F(DataMetricsTest, ModifiedAnnotationsGivesLessPerfectScores) {
   ClassificationMetrics correct_connective_metrics(5, 2, 2);
   // One cause changed -> arg FP+FN; one cause deleted -> arg FN. Plus the 2 FPs
   // and FNs from connectives.
-  ArgumentMetrics correct_cause_metrics(3, 3, 4, 0.6);
+  ArgumentMetrics correct_cause_metrics(2, 3, 4, 0.6);
   ArgumentMetrics correct_effect_metrics(4, 3, 3, 33/35.);
   TEST_METRICS(compared_metrics, correct_connective_metrics,
                correct_cause_metrics, correct_effect_metrics);
@@ -165,7 +166,7 @@ TEST_F(DataMetricsTest, AddingMetricsWorks) {
   CausalityMetrics summed_metrics = compared_metrics + tweaked_metrics;
 
   ClassificationMetrics correct_connective_metrics(10, 4, 4);
-  ArgumentMetrics correct_cause_metrics(6, 6, 8, 0.45);
+  ArgumentMetrics correct_cause_metrics(4, 6, 8, 0.45);
   ArgumentMetrics correct_effect_metrics(8, 6, 6, 34/35.);  // 34 = mean(33, 35)
   TEST_METRICS(summed_metrics, correct_connective_metrics,
                correct_cause_metrics, correct_effect_metrics);
@@ -211,10 +212,10 @@ TEST_F(DataMetricsTest, AveragingMetricsWorks) {
           correct_cause_metrics->spans.get());
   tie(cause_spans->tp, cause_spans->fp, cause_spans->fn,
       correct_cause_metrics->jaccard_index) =
-          make_tuple(5, 1.5, 2, (1 + 0.6) / 2);
-  precision = 0.75;
-  recall = (3/7. + 1) / 2;
-  f1 = (1 + ClassificationMetrics::CalculateF1(0.5, 3/7.)) / 2;
+          make_tuple(4, 1.5, 2, (1 + 0.6) / 2);
+  precision = (1 + 2/5.) / 2;
+  recall = (1 + 2/6.) / 2;
+  f1 = (1 + ClassificationMetrics::CalculateF1(2/5., 2/6.)) / 2;
   tie(cause_spans->avg_precision, cause_spans->avg_recall, cause_spans->avg_f1)
       = make_tuple(precision, recall, f1);
 
