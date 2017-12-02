@@ -39,7 +39,7 @@ protected:
                           unique_ptr<BecauseOracleTransitionCorpus>* corpus,
                           vector<vector<CausalityRelation>>* relations) {
     corpus->reset(
-        new BecauseOracleTransitionCorpus(&vocab, data_path, true, false));
+        new BecauseOracleTransitionCorpus(vocab.get(), data_path, true, false));
     for (unsigned i = 0; i < (*corpus)->sentences.size(); ++i) {
       const lstm_parser::Sentence& sentence = (*corpus)->sentences[i];
       const vector<unsigned>& actions = (*corpus)->correct_act_sent[i];
@@ -84,6 +84,7 @@ protected:
   }
 
   static void SetUpTestCase() {
+    vocab.reset(new lstm_parser::CorpusVocabulary);
     SetUpCorpus("lstm-causality/tests/data/original", &original_corpus,
                 &original_relations);
     SetUpCorpus("lstm-causality/tests/data/modified", &modified_corpus,
@@ -94,14 +95,14 @@ protected:
     original_corpus.release();
   }
 
-  static lstm_parser::CorpusVocabulary vocab;
+  static unique_ptr<lstm_parser::CorpusVocabulary> vocab;
   static unique_ptr<BecauseOracleTransitionCorpus> original_corpus;
   static vector<vector<CausalityRelation>> original_relations;
   static unique_ptr<BecauseOracleTransitionCorpus> modified_corpus;
   static vector<vector<CausalityRelation>> modified_relations;
 };
 
-lstm_parser::CorpusVocabulary DataMetricsTest::vocab;
+unique_ptr<lstm_parser::CorpusVocabulary> DataMetricsTest::vocab;
 unique_ptr<BecauseOracleTransitionCorpus> DataMetricsTest::original_corpus;
 vector<vector<CausalityRelation>> DataMetricsTest::original_relations;
 unique_ptr<BecauseOracleTransitionCorpus> DataMetricsTest::modified_corpus;
