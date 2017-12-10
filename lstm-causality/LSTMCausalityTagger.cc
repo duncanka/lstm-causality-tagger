@@ -545,7 +545,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Tag(
 CausalityMetrics LSTMCausalityTagger::Evaluate(
     BecauseOracleTransitionCorpus* corpus,
     const vector<unsigned>& sentence_selections, bool compare_punct,
-    bool pairwise) {
+    bool pairwise, double overlap_threshold) {
   CausalityMetrics evaluation;
 
   for (unsigned sentence_index : sentence_selections) {
@@ -576,7 +576,7 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
         gold, predicted, *corpus, *parse_with_depths,
         SpanTokenFilter {compare_punct, *sentence, corpus->pos_is_punct},
         missing_instances, missing_args, options.save_differences,
-        options.log_differences);
+        options.log_differences, overlap_threshold);
   }
 
   return evaluation;

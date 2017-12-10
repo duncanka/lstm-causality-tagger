@@ -420,8 +420,8 @@ public:
       const std::vector<
           BecauseOracleTransitionCorpus::ExtrasententialArgCounts>&
           missing_args = {},
-      bool save_differences = false,
-      bool log_differences = false)
+      bool save_differences = false, bool log_differences = false,
+      double overlap_threshold = 1.0)
         : argument_metrics(NumArgs()), log_differences(log_differences) {
     ConnectiveDiff diff(sentence_gold, sentence_predicted);
     unsigned tp = diff.LCS().size();

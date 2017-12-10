@@ -76,6 +76,9 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Cross-validation fold to start at (useful for debugging/parallelizing")
     ("cv-end-at", po::value<unsigned>()->default_value(-1),
      "Cross-validation fold to end on (useful for debugging/parallelizing")
+    ("eval-partial-threshold", po::value<float>()->default_value(0.5),
+     "The minimum overlap to count as a partial match. If 1.0, no partial"
+     " matching evaluation is performed.")
 
     // Training options
     ("train", "Whether to train the tagger")
@@ -306,8 +309,8 @@ void DoTrain(LSTMCausalityTagger* tagger,
              unsigned dev_eval_period, double epochs_cutoff,
              double recent_improvements_cutoff,
              double recent_improvements_epsilon, bool eval_pairwise,
-             unsigned cv_start_at, unsigned cv_end_at,
-             bool for_comparison) {
+             double eval_partial_threshold, unsigned cv_start_at,
+             unsigned cv_end_at, bool for_comparison) {
   unsigned num_sentences = full_corpus->sentences.size();
   vector<unsigned> all_sentence_indices(num_sentences);
   iota(all_sentence_indices.begin(), all_sentence_indices.end(), 0);
@@ -373,48 +376,66 @@ void DoTrain(LSTMCausalityTagger* tagger,
       tagger->LoadModel(model_fname);  // Reset to last saved state
       cout << "Evaluation for fold " << fold + 1 << " ("
            << fold_test_order.size() << " test sentences)" << endl;
-      CausalityMetrics evaluation = tagger->Evaluate(
-          full_corpus, fold_test_order, compare_punct);
 
-      if (for_comparison) {
-        OutputComparison(evaluation, fold);
-        cout << "\n\n";
-      }
+      vector<double> eval_overlap_thresholds({1.0, eval_partial_threshold});
+      if (eval_partial_threshold >= 1.0)
+        eval_overlap_thresholds.resize(1);
 
-      IndentingOStreambuf indent(cout);
-      cout << evaluation << '\n' << endl;
-      evaluation_results.push_back(evaluation);
-      if (eval_pairwise) {
-        CausalityMetrics pairwise_evaluation = tagger->Evaluate(
-            full_corpus, fold_test_order, compare_punct, eval_pairwise);
-        cout << "Pairwise evaluation:";
-        IndentingOStreambuf indent(cout);
-        if (for_comparison) {
-          cout << '\n';
-          OutputComparison(pairwise_evaluation, fold);
-          cout << '\n';
+      for (double overlap_threshold : eval_overlap_thresholds) {
+        unique_ptr<IndentingOStreambuf> partial_indent;
+        if (eval_overlap_thresholds.size() > 1) {
+          cout << (overlap_threshold == 1.0 ? "Not allowing" : "Allowing")
+               << " partial matches:" << endl;
+          partial_indent.reset(new IndentingOStreambuf(cout));
         }
 
-        cout << '\n' << pairwise_evaluation << '\n' << endl;
-        pairwise_eval_results.push_back(pairwise_evaluation);
+        CausalityMetrics evaluation = tagger->Evaluate(full_corpus,
+                                                       fold_test_order,
+                                                       compare_punct, false,
+                                                       overlap_threshold);
+
+        if (for_comparison) {
+          OutputComparison(evaluation, fold);
+          cout << "\n\n";
+        }
+
+        IndentingOStreambuf indent(cout);
+        cout << evaluation << '\n' << endl;
+        evaluation_results.push_back(evaluation);
+        if (eval_pairwise) {
+          CausalityMetrics pairwise_evaluation = tagger->Evaluate(
+              full_corpus, fold_test_order, compare_punct, true,
+              overlap_threshold);
+          cout << "Pairwise evaluation:";
+          IndentingOStreambuf indent(cout);
+          if (for_comparison) {
+            cout << '\n';
+            OutputComparison(pairwise_evaluation, fold);
+            cout << '\n';
+          }
+
+          cout << '\n' << pairwise_evaluation << '\n' << endl;
+          pairwise_eval_results.push_back(pairwise_evaluation);
+        }
+
+        requested_stop = false;
+        previous_cutoff = current_cutoff;
+        tagger->Reset();  // Reset for next fold
+
+
+        {
+          cout << "Average evaluation:\n";
+          IndentingOStreambuf indent(cout);
+          auto evals_range = boost::make_iterator_range(evaluation_results);
+          cout << AveragedCausalityMetrics(evals_range) << endl;
+        }
+        if (eval_pairwise) {
+          cout << "Average pairwise evaluation:" << '\n';
+          IndentingOStreambuf indent(cout);
+          auto evals_range = boost::make_iterator_range(pairwise_eval_results);
+          cout << AveragedCausalityMetrics(evals_range) << endl;
+        }
       }
-
-      requested_stop = false;
-      previous_cutoff = current_cutoff;
-      tagger->Reset();  // Reset for next fold
-    }
-
-    {
-      cout << "Average evaluation:\n";
-      IndentingOStreambuf indent(cout);
-      auto evals_range = boost::make_iterator_range(evaluation_results);
-      cout << AveragedCausalityMetrics(evals_range) << endl;
-    }
-    if (eval_pairwise) {
-      cout << "Average pairwise evaluation:" << '\n';
-      IndentingOStreambuf indent(cout);
-      auto evals_range = boost::make_iterator_range(pairwise_eval_results);
-      cout << AveragedCausalityMetrics(evals_range) << endl;
     }
   }
 }
@@ -512,6 +533,7 @@ int main(int argc, char** argv) {
         conf["recent-improvements-epsilon"].as<double>();
     bool compare_punct = conf.count("compare-punct");
     bool eval_pairwise = conf.count("eval-pairwise");
+    bool eval_partial_threshold = conf["eval-partial-threshold"].as<double>();
     unsigned dev_eval_period = conf["dev-eval-period"].as<unsigned>();
     unsigned folds = conf["folds"].as<unsigned>();
 
@@ -529,7 +551,7 @@ int main(int argc, char** argv) {
     signal(SIGINT, signal_callback_handler);
     DoTrain(&tagger, &full_corpus, folds, dev_pct, compare_punct, model_fname,
             dev_eval_period, epochs_cutoff, recent_improvements_cutoff,
-            recent_improvements_epsilon, eval_pairwise,
+            recent_improvements_epsilon, eval_pairwise, eval_partial_threshold,
             conf["cv-start-at"].as<unsigned>(),
             conf["cv-end-at"].as<unsigned>(), for_comparison);
   }
