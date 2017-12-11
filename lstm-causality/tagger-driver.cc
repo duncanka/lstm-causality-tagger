@@ -76,7 +76,7 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Cross-validation fold to start at (useful for debugging/parallelizing")
     ("cv-end-at", po::value<unsigned>()->default_value(-1),
      "Cross-validation fold to end on (useful for debugging/parallelizing")
-    ("eval-partial-threshold", po::value<float>()->default_value(0.5),
+    ("eval-partial-threshold", po::value<double>()->default_value(0.5),
      "The minimum overlap to count as a partial match. If 1.0, no partial"
      " matching evaluation is performed.")
 
@@ -533,7 +533,7 @@ int main(int argc, char** argv) {
         conf["recent-improvements-epsilon"].as<double>();
     bool compare_punct = conf.count("compare-punct");
     bool eval_pairwise = conf.count("eval-pairwise");
-    bool eval_partial_threshold = conf["eval-partial-threshold"].as<double>();
+    double eval_partial_threshold = conf["eval-partial-threshold"].as<double>();
     unsigned dev_eval_period = conf["dev-eval-period"].as<unsigned>();
     unsigned folds = conf["folds"].as<unsigned>();
 

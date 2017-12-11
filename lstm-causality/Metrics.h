@@ -11,6 +11,7 @@
 #include <boost/range/irange.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/range/numeric.hpp>
+#include <boost/range/algorithm/set_algorithm.hpp>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -373,17 +374,49 @@ inline std::ostream& operator<<(
 }
 
 
-// TODO: add partial matching?
 template <class RelationType>
 class BecauseRelationMetrics {
 public:
-  struct ConnectivesEqual {
-    bool operator()(const RelationType& i1, const RelationType& i2) {
-      return i1.GetConnectiveIndices() == i2.GetConnectiveIndices();
+  // Comparison machinery that allows partial overlap.
+  template <class IndexContainer>
+  struct SortedSpansMatch {
+    SortedSpansMatch(double ovl_threshold) : ovl_threshold(ovl_threshold) {}
+
+    bool operator()(const IndexContainer& i1, const IndexContainer& i2) const {
+      if (ovl_threshold >= 1.0) {
+        return boost::equal(i1, i2);
+      } else {
+        if (i1.empty() && i2.empty()) {
+          return true;
+        }
+
+        // assert(std::is_sorted(begin(i1), end(i1))
+        //       && std::is_sorted(begin(i2), end(i2)));
+        Counter intersection_counter;
+        boost::set_intersection(i1, i2,
+                                std::back_inserter(intersection_counter));
+        double longer_length = static_cast<double>(
+            i2.size() > i1.size() ? i2.size() : i1.size());
+        return intersection_counter.count / longer_length >= ovl_threshold;
+      }
     }
+
+    double ovl_threshold;
   };
+
+  struct ConnectivesMatch {
+    ConnectivesMatch(double ovl_threshold) : ovl_threshold(ovl_threshold) {}
+
+    bool operator()(const RelationType& i1, const RelationType& i2) const {
+      return SortedSpansMatch<typename RelationType::IndexList>(ovl_threshold)(
+          i1.GetConnectiveIndices(), i2.GetConnectiveIndices());
+    }
+
+    double ovl_threshold;
+  };
+
   typedef Diff<RandomAccessSequence<
-      typename std::vector<RelationType>::const_iterator>, ConnectivesEqual>
+      typename std::vector<RelationType>::const_iterator>, ConnectivesMatch>
       ConnectiveDiff;
   typedef Diff<RandomAccessSequence<
       typename BecauseRelation::IndexList::const_iterator>> IndexDiff;
@@ -404,7 +437,7 @@ public:
       : connective_metrics(
           new ClassificationMetrics(*other.connective_metrics)),
         argument_metrics(other.argument_metrics.size()),
-        log_differences(other.log_differences)  {
+        log_differences(other.log_differences) {
     for (unsigned i = 0; i < argument_metrics.size(); ++i) {
       argument_metrics[i].reset(
           new ArgumentMetrics(*other.argument_metrics[i]));
@@ -423,7 +456,8 @@ public:
       bool save_differences = false, bool log_differences = false,
       double overlap_threshold = 1.0)
         : argument_metrics(NumArgs()), log_differences(log_differences) {
-    ConnectiveDiff diff(sentence_gold, sentence_predicted);
+    ConnectiveDiff diff(sentence_gold, sentence_predicted,
+                        ConnectivesMatch(overlap_threshold));
     unsigned tp = diff.LCS().size();
     unsigned connective_fps = sentence_predicted.size() - tp;
     unsigned connective_fns = sentence_gold.size() - tp + missing_instances;
@@ -468,7 +502,8 @@ public:
         // span wrong.
         bool args_match = true;
         if (gold_arg_missing_tokens == 0) {
-          if (boost::equal(filtered_gold, filtered_pred)) {
+          SortedSpansMatch<decltype(filtered_gold)> arg_cmp(overlap_threshold);
+          if (arg_cmp(filtered_gold, filtered_pred)) {
             if (!filtered_gold.empty())
               ++span_tps;
           } else {

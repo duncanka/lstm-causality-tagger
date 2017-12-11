@@ -141,4 +141,13 @@ std::ostream& operator<<(std::ostream& os, const Container& c) {
   return os;
 }
 
+
+// From https://stackoverflow.com/a/32640456
+struct Counter
+{
+  struct value_type { template<typename T> value_type(const T&) {} };
+  void push_back(const value_type&) { ++count; }
+  size_t count = 0;
+};
+
 #endif /* LSTM_CAUSALITY_UTILITIES_H_ */

@@ -71,7 +71,7 @@ protected:
       const BecauseOracleTransitionCorpus& corpus2,
       const vector<vector<CausalityRelation>>& rels1,
       const vector<vector<CausalityRelation>>& rels2,
-      bool record_differences = false) {
+      bool record_differences = false, double match_threshold = 1.0) {
     CausalityMetrics total_metrics;
 
     for (unsigned i = 0; i < corpus1.sentences.size(); ++i) {
@@ -83,16 +83,19 @@ protected:
       GraphEnhancedParseTree pseudo_parse(sentence);
       CausalityMetrics sentence_metrics(original_rels, modified_rels, corpus1,
                                         pseudo_parse, filter, 0, {},
-                                        record_differences);
+                                        record_differences, false,
+                                        match_threshold);
       total_metrics += sentence_metrics;
     }
 
     return total_metrics;
   }
 
-  inline CausalityMetrics CompareOriginalAndModified() {
+  inline CausalityMetrics CompareOriginalAndModified(
+      bool record_differences = false, double match_threshold = 1.0) {
     return CompareCorpora(*original_corpus, *modified_corpus,
-                          original_relations, modified_relations);
+                          original_relations, modified_relations,
+                          record_differences, match_threshold);
   }
 
   static void SetUpTestCase() {
@@ -137,7 +140,7 @@ TEST_F(DataMetricsTest, SameAnnotationGetsPerfectScores) {
       original_relations);
 
   ClassificationMetrics correct_connective_metrics(7, 0, 0);
-  ArgumentMetrics correct_cause_metrics(6, 0, 0, 1, 7);
+  ArgumentMetrics correct_cause_metrics(6, 0, 0, 1, 7);  // 1 causeless instance
   ArgumentMetrics correct_effect_metrics(7, 0, 0, 1, 7);
   ASSERT_EQ(correct_connective_metrics, correct_connective_metrics);
   ASSERT_EQ(correct_cause_metrics, correct_cause_metrics);
@@ -151,8 +154,20 @@ TEST_F(DataMetricsTest, ModifiedAnnotationsGivesLessPerfectScores) {
   ClassificationMetrics correct_connective_metrics(5, 2, 2);
   // One cause changed -> arg FP+FN; one cause deleted -> arg FN. Plus the 2 FPs
   // and FNs from connectives.
-  ArgumentMetrics correct_cause_metrics(2, 3, 4, 0.6);
+  ArgumentMetrics correct_cause_metrics(2, 3, 4, (1 + 1 + 0 + 0 + 1) / 5.);
   ArgumentMetrics correct_effect_metrics(4, 3, 3, 33/35.);
+  TEST_METRICS(compared_metrics, correct_connective_metrics,
+               correct_cause_metrics, correct_effect_metrics);
+}
+
+
+TEST_F(DataMetricsTest, ModifiedAnnotationsPartialGivesBetterScores) {
+  CausalityMetrics compared_metrics = CompareOriginalAndModified(false, 0.5);
+  ClassificationMetrics correct_connective_metrics(6, 1, 1);
+  // One cause changed -> arg FP+FN; one cause deleted -> arg FN. Plus the 1 FP
+  // and FN from connectives.
+  ArgumentMetrics correct_cause_metrics(3, 2, 3, (1 + 1 + 1 + 0 + 0 + 1) / 6.);
+  ArgumentMetrics correct_effect_metrics(6, 1, 1, (5/7. + 5)/6);
   TEST_METRICS(compared_metrics, correct_connective_metrics,
                correct_cause_metrics, correct_effect_metrics);
 }
