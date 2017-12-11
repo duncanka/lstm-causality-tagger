@@ -322,6 +322,7 @@ void DoTrain(LSTMCausalityTagger* tagger,
                   &requested_stop);
   } else {
     cout << setprecision(4);
+    bool partial_eval = eval_partial_threshold < 1.0;
 
     // For cutoffs, we use one *past* the index where the fold should stop.
     vector<unsigned> fold_cutoffs(folds);
@@ -337,12 +338,25 @@ void DoTrain(LSTMCausalityTagger* tagger,
     }
     assert(fold_cutoffs.back() == all_sentence_indices.size());
     unsigned previous_cutoff = 0;
-    vector<CausalityMetrics> evaluation_results;
-    vector<CausalityMetrics> pairwise_eval_results;
-    evaluation_results.reserve(folds);
-    if (eval_pairwise) {
-      pairwise_eval_results.reserve(folds);
+
+    // First index is pairwise-ness; second is partial-ness.
+    map<pair<bool, bool>, vector<CausalityMetrics>> evaluation_results;
+    vector<pair<bool, bool>> eval_configs = {{false, false}};
+    if (partial_eval) {
+      eval_configs.push_back({false, true});
+      if (eval_pairwise)
+        eval_configs.push_back({true, true});
     }
+    if (eval_pairwise) {
+      eval_configs.push_back({true, false});
+    }
+    for (const auto& config : eval_configs) {
+      evaluation_results[config].reserve(folds);  // Create/alloc results vector
+    }
+
+    vector<double> eval_overlap_thresholds({1.0, eval_partial_threshold});
+    if (!partial_eval)
+      eval_overlap_thresholds.resize(1);
 
     // Folds are 1-indexed, so subtract 1 from CL params to get indices.
     unsigned last_fold = cv_end_at;
@@ -377,9 +391,6 @@ void DoTrain(LSTMCausalityTagger* tagger,
       cout << "Evaluation for fold " << fold + 1 << " ("
            << fold_test_order.size() << " test sentences)" << endl;
 
-      vector<double> eval_overlap_thresholds({1.0, eval_partial_threshold});
-      if (eval_partial_threshold >= 1.0)
-        eval_overlap_thresholds.resize(1);
 
       for (double overlap_threshold : eval_overlap_thresholds) {
         unique_ptr<IndentingOStreambuf> partial_indent;
@@ -401,7 +412,8 @@ void DoTrain(LSTMCausalityTagger* tagger,
 
         IndentingOStreambuf indent(cout);
         cout << evaluation << '\n' << endl;
-        evaluation_results.push_back(evaluation);
+        bool is_partial = overlap_threshold < 1.0;
+        evaluation_results[{false, is_partial}].push_back(evaluation);
         if (eval_pairwise) {
           CausalityMetrics pairwise_evaluation = tagger->Evaluate(
               full_corpus, fold_test_order, compare_punct, true,
@@ -415,27 +427,22 @@ void DoTrain(LSTMCausalityTagger* tagger,
           }
 
           cout << '\n' << pairwise_evaluation << '\n' << endl;
-          pairwise_eval_results.push_back(pairwise_evaluation);
-        }
-
-        requested_stop = false;
-        previous_cutoff = current_cutoff;
-        tagger->Reset();  // Reset for next fold
-
-
-        {
-          cout << "Average evaluation:\n";
-          IndentingOStreambuf indent(cout);
-          auto evals_range = boost::make_iterator_range(evaluation_results);
-          cout << AveragedCausalityMetrics(evals_range) << endl;
-        }
-        if (eval_pairwise) {
-          cout << "Average pairwise evaluation:" << '\n';
-          IndentingOStreambuf indent(cout);
-          auto evals_range = boost::make_iterator_range(pairwise_eval_results);
-          cout << AveragedCausalityMetrics(evals_range) << endl;
+          evaluation_results[{true, is_partial}].push_back(evaluation);
         }
       }
+
+      requested_stop = false;
+      previous_cutoff = current_cutoff;
+      tagger->Reset();  // Reset for next fold
+    }
+
+    for (const auto eval_mapping : evaluation_results) {
+      cout << "\nAverage evaluation ("
+           << (eval_mapping.first.first ? "" : "not") << "pairwise; "
+           << (eval_mapping.first.second ? "" : "no") << "partial matching):\n";
+      IndentingOStreambuf indent(cout);
+      auto evals_range = boost::make_iterator_range(eval_mapping.second);
+      cout << AveragedCausalityMetrics(evals_range) << endl;
     }
   }
 }
