@@ -393,9 +393,11 @@ void DoTrain(LSTMCausalityTagger* tagger,
 
 
       for (double overlap_threshold : eval_overlap_thresholds) {
+        bool is_partial = overlap_threshold < 1.0;
+
         unique_ptr<IndentingOStreambuf> partial_indent;
         if (eval_overlap_thresholds.size() > 1) {
-          cout << (overlap_threshold == 1.0 ? "Not allowing" : "Allowing")
+          cout << (is_partial ? "Allowing" : "Not allowing")
                << " partial matches:" << endl;
           partial_indent.reset(new IndentingOStreambuf(cout));
         }
@@ -412,7 +414,6 @@ void DoTrain(LSTMCausalityTagger* tagger,
 
         IndentingOStreambuf indent(cout);
         cout << evaluation << '\n' << endl;
-        bool is_partial = overlap_threshold < 1.0;
         evaluation_results[{false, is_partial}].push_back(evaluation);
         if (eval_pairwise) {
           CausalityMetrics pairwise_evaluation = tagger->Evaluate(
@@ -427,7 +428,7 @@ void DoTrain(LSTMCausalityTagger* tagger,
           }
 
           cout << '\n' << pairwise_evaluation << '\n' << endl;
-          evaluation_results[{true, is_partial}].push_back(evaluation);
+          evaluation_results[{true, is_partial}].push_back(pairwise_evaluation);
         }
       }
 
