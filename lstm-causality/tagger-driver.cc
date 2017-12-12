@@ -438,8 +438,8 @@ void DoTrain(LSTMCausalityTagger* tagger,
 
     for (const auto eval_mapping : evaluation_results) {
       cout << "\nAverage evaluation ("
-           << (eval_mapping.first.first ? "" : "not") << "pairwise; "
-           << (eval_mapping.first.second ? "" : "no") << "partial matching):\n";
+           << (eval_mapping.first.first ? "" : "not ") << "pairwise; "
+           << (eval_mapping.first.second ? "" : "no ") << "partial matching):\n";
       IndentingOStreambuf indent(cout);
       auto evals_range = boost::make_iterator_range(eval_mapping.second);
       cout << AveragedCausalityMetrics(evals_range) << endl;
