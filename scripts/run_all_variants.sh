@@ -14,9 +14,9 @@ tsp -S 4
 # Run_type data_dir extra_flags
 read -r -d '' PER_RUN_VARS << EOF
 vanilla         $DATA_ROOT_DIR
-no-new-vectors  $DATA_ROOT_DIR     -w 0
-no-parse-paths  $DATA_ROOT_DIR     -p 0
-no-action-hist  $DATA_ROOT_DIR     -a 0
+no-new-vectors  $DATA_ROOT_DIR     --word-dim=0
+no-parse-paths  $DATA_ROOT_DIR     --parse-path-hidden-dim=0
+no-action-hist  $DATA_ROOT_DIR     --action-dim=0
 known-conns     $DATA_ROOT_DIR     -K
 oracle-conns    $DATA_ROOT_DIR     -o
 EOF
@@ -27,6 +27,7 @@ run_pipeline() {
 	FLAGS=$3
     echo "Run type:" $NAME
     tsp -n -L "lstm-$NAME" bash -c "$BASE_CMD -t $DATA_DIR $FLAGS > '$OUT_DIR/$NAME.out' 2> '$LOG_DIR/$NAME.log'"
+    sleep 15s
 }
 
 mkdir -p $OUT_DIR
