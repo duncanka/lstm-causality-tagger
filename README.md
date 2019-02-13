@@ -1,5 +1,5 @@
-# lstm-causality-tagger
-Transition-based shallow semantic parser for causal relations, with state embeddings computed by LSTM RNNs. Based on the [LSTM syntactic parser](https://github.com/clab/lstm-parser/tree/easy-to-use).
+# DeepCx
+Transition-based shallow semantic parser for causal relations, with state embeddings computed by LSTM RNNs. Based on the [LSTM syntactic parser](https://github.com/clab/lstm-parser/tree/easy-to-use). This system was documented in a [2018 EMNLP paper](http://aclweb.org/anthology/D18-1196).
 
 #### Required software
 
@@ -8,6 +8,7 @@ Transition-based shallow semantic parser for causal relations, with state embedd
  * [Eigen](http://eigen.tuxfamily.org) (newer versions strongly recommended)
  * [CMake](http://www.cmake.org/)
  * [gcc](https://gcc.gnu.org/gcc-5/) (only tested with gcc version 5.3.0, may be incompatible with earlier versions)
+ * [Googletest](https://github.com/google/googletest) library, if you're going to compile in debug mode (which is necessary for unit tests)
 
 #### Build instructions
 

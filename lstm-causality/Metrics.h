@@ -15,7 +15,9 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
-#include <gtest/gtest_prod.h>
+#ifndef NDEBUG // In debug mode, include FRIEND_TEST code.
+  #include <gtest/gtest_prod.h>
+#endif
 #include <iostream>
 #include <memory>
 #include <tuple>
@@ -132,7 +134,9 @@ public:
 };
 
 class AveragedClassificationMetrics : public ClassificationMetrics {
+#ifndef NDEBUG
   FRIEND_TEST(DataMetricsTest, AveragingMetricsWorks);
+#endif
 public:
   template <class IteratorType>
   AveragedClassificationMetrics(
@@ -258,7 +262,9 @@ struct ArgumentMetrics {
 
 
 class AveragedArgumentMetrics : public ArgumentMetrics {
+#ifndef NDEBUG
   FRIEND_TEST(DataMetricsTest, AveragingMetricsWorks);
+#endif
 public:
   template <class IteratorType>
   AveragedArgumentMetrics(boost::iterator_range<IteratorType> all_metrics) {
@@ -739,7 +745,9 @@ protected:
 template <class RelationType>
 class AveragedBecauseRelationMetrics
     : public BecauseRelationMetrics<RelationType> {
+#ifndef NDEBUG
   FRIEND_TEST(DataMetricsTest, AveragingMetricsWorks);
+#endif
 public:
   template <class IteratorType>
   AveragedBecauseRelationMetrics(
