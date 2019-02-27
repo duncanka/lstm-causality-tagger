@@ -45,8 +45,10 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Directory in which to store saved model")
 
     // Data options
-    ("training-data,t", po::value<string>(),
+    ("training-data,r", po::value<string>(),
      "Directory containing training data")
+    ("test-data,t", po::value<string>(),
+     "Directory containing test/evaluation data")
     ("new-conn-action,n", POBooleanFlag(true),
      "Whether starting a relation is a separate action (must match data)")
     ("shift-action,H", POBooleanFlag(false),
@@ -84,7 +86,7 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("train", "Whether to train the tagger")
     ("dev-pct,d", po::value<double>()->default_value(0.2),
      "Percent of training data in each shuffle to use as dev (tuning)")
-    ("train-pairwise,r", POBooleanFlag(false),
+    ("train-pairwise,2", POBooleanFlag(false),
      "Whether to train on just instances with both cause and effect")
     ("dropout,D", po::value<float>()->default_value(0.0),
      "Dropout rate (no dropout is performed for a value of 0)")
@@ -487,8 +489,28 @@ int main(int argc, char** argv) {
 
   bool for_comparison = conf["for-comparison"].as<bool>();
   bool log_diffs = conf["log-diffs"].as<bool>();
+  // bool model_specified = !conf["model"].defaulted();
+  string model_fname = conf["model"].as<string>();
+  bool train = conf.count("train");
+  bool evaluate = conf.count("evaluate");
+  bool test = conf.count("test");
 
-  LSTMCausalityTagger tagger(
+  // Shared by train/evaluate
+  unique_ptr<LSTMCausalityTagger> tagger;
+
+  if (train) {
+    double dev_pct = conf["dev-pct"].as<double>();
+    if (dev_pct < 0.0 || dev_pct > 1.0) {
+      cerr << "Invalid dev percentage: " << dev_pct << endl;
+      abort();
+    }
+    if (!conf.count("training-data")) {
+      cerr << "Can't train without training corpus!"
+              " Please provide --training-data." << endl;
+      abort();
+    }
+
+  tagger.reset(new LSTMCausalityTagger(
       conf["parser-model"].as<string>(),
       LSTMCausalityTagger::TaggerOptions{
           conf["word-dim"].as<unsigned>(),
@@ -511,24 +533,13 @@ int main(int argc, char** argv) {
           conf["train-pairwise"].as<bool>(),
           log_diffs || for_comparison,
           log_diffs,
-          conf["oracle-conns"].as<bool>()});
+          conf["oracle-conns"].as<bool>()}));
 
-  if (conf.count("train")) {
-    double dev_pct = conf["dev-pct"].as<double>();
-    if (dev_pct < 0.0 || dev_pct > 1.0) {
-      cerr << "Invalid dev percentage: " << dev_pct << endl;
+    if (tagger->options.dropout >= 1.0) {
+      cerr << "Invalid dropout rate: " << tagger->options.dropout << endl;
       abort();
     }
-    if (!conf.count("training-data")) {
-      cerr << "Can't train without training corpus!"
-              " Please provide --training-data." << endl;
-      abort();
-    }
-    if (tagger.options.dropout >= 1.0) {
-      cerr << "Invalid dropout rate: " << tagger.options.dropout << endl;
-      abort();
-    }
-    if (tagger.options.oracle_connectives && !tagger.options.new_conn_action) {
+    if (tagger->options.oracle_connectives && !tagger->options.new_conn_action) {
       cerr << "Oracle connectives are available only with NEW-CONN actions"
            << endl;
       abort();
@@ -547,23 +558,70 @@ int main(int argc, char** argv) {
 
     const string& training_path = conf["training-data"].as<string>();
     BecauseOracleTransitionCorpus full_corpus(
-        tagger.GetVocab(), training_path, true, for_comparison);
-    tagger.FinalizeVocab();
+        tagger->GetVocab(), training_path, true, for_comparison);
+    tagger->FinalizeVocab();
     cerr << "Corpus size: " << full_corpus.sentences.size() << " sentences"
          << endl;
 
     const string& model_dir = conf["model-dir"].as<string>();
-    const string model_fname = GetModelFileName(tagger, model_dir);
+    model_fname = GetModelFileName(*tagger, model_dir);
     cerr << "Writing parameters to file: " << model_fname << endl;
 
     signal(SIGINT, signal_callback_handler);
-    DoTrain(&tagger, &full_corpus, folds, dev_pct, compare_punct, model_fname,
-            dev_eval_period, epochs_cutoff, recent_improvements_cutoff,
-            recent_improvements_epsilon, eval_pairwise, eval_partial_threshold,
+    DoTrain(tagger.get(), &full_corpus, folds, dev_pct, compare_punct,
+            model_fname, dev_eval_period, epochs_cutoff,
+            recent_improvements_cutoff, recent_improvements_epsilon,
+            eval_pairwise, eval_partial_threshold,
             conf["cv-start-at"].as<unsigned>(),
             conf["cv-end-at"].as<unsigned>(), for_comparison);
   }
 
+  // Eval on dev data if we're not running a separate test.
+  if (evaluate && !test) {
+    if (!conf.count("test-data")) {
+      cerr << "Evaluation requested, but test data was not specified!" << endl;
+      abort();
+    }
+
+    tagger.reset(new LSTMCausalityTagger(conf["parser-model"].as<string>(),
+                                         model_fname));
+    tagger->FinalizeVocab();
+
+    const string& test_path = conf["test-data"].as<string>();
+    cerr << "Evaluating model " << model_fname << " on " << test_path << endl;
+    BecauseOracleTransitionCorpus test_corpus(tagger->GetVocab(), test_path,
+                                              false, false);
+    CausalityMetrics eval = tagger->Evaluate(&test_corpus);
+    {
+      cout << "Evaluation results:" << endl;
+      IndentingOStreambuf indent(cout);
+      cout << eval << endl;
+    }
+  }
+
+  else if (test) {
+    if (!conf.count("test-data")) {
+      cerr << "Test requested, but test data was not specified!" << endl;
+      abort();
+    }
+
+    tagger.reset(new LSTMCausalityTagger(conf["parser-model"].as<string>(),
+                                         model_fname));
+    tagger->FinalizeVocab();
+
+    const string& test_path = conf["test-data"].as<string>();
+    cerr << "Testing model " << model_fname << " on "
+         << test_path << endl;
+    BecauseOracleTransitionCorpus test_corpus(tagger->GetVocab(), test_path, false,
+                                        false);
+    CausalityMetrics eval = tagger->Test(&test_corpus, evaluate);
+    if (evaluate) {
+      cout.flush(); cerr.flush();  // Sync
+      cout << "Evaluation results:" << endl;
+      IndentingOStreambuf indent(cout);
+      cout << eval << endl;
+    }
+  }
 
   return 0;
 }

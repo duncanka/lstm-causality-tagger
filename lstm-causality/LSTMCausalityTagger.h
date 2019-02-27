@@ -101,10 +101,22 @@ public:
                                      GraphEnhancedParseTree* parse,
                                      const vector<unsigned>& gold_actions);
 
-  CausalityMetrics Evaluate(BecauseOracleTransitionCorpus* corpus,
-                            const std::vector<unsigned>& selections,
-                            bool compare_punct = false, bool pairwise = false,
-                            double overlap_threshold = 1.0);
+  CausalityMetrics Evaluate(
+      BecauseOracleTransitionCorpus* corpus,
+      const std::vector<unsigned>& selections = ALL_INDICES,
+      bool compare_punct = false, bool pairwise = false,
+      double overlap_threshold = 1.0) {
+    return DoTest(corpus, true, false, selections, compare_punct, pairwise,
+                  overlap_threshold);
+  }
+
+  CausalityMetrics Test(BecauseOracleTransitionCorpus* corpus,
+                             bool evaluate, bool compare_punct = false,
+                             bool pairwise = false,
+                             double overlap_threshold = 1.0) {
+    return DoTest(corpus, evaluate, true, ALL_INDICES, compare_punct, pairwise,
+                  overlap_threshold);
+  }
 
   static std::vector<CausalityRelation> Decode(
       const lstm_parser::Sentence& sentence,
@@ -200,6 +212,12 @@ protected:
                          const std::vector<unsigned>& selections,
                          bool compare_punct, unsigned num_sentences_train,
                          unsigned iteration, unsigned sentences_seen);
+
+  CausalityMetrics DoTest(BecauseOracleTransitionCorpus* corpus,
+                               bool evaluate, bool output_results,
+                               const std::vector<unsigned>& selections,
+                               bool compare_punct, bool pairwise,
+                               double overlap_threshold);
 
   void CacheParse(lstm_parser::Sentence* sentence,
                   BecauseOracleTransitionCorpus* corpus,
@@ -364,6 +382,7 @@ private:
   unsigned conn_frag_action;  // Cached for GetActionProbabilities check
   unsigned split_action;      // Cached for GetActionProbabilities check
   unsigned oracle_actions_taken;
+  static const std::vector<unsigned> ALL_INDICES;
 };
 
 #endif /* LSTM_CAUSALITY_LSTMCAUSALITYTAGGER_H_ */

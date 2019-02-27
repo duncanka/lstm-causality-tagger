@@ -38,6 +38,9 @@ typedef BecauseRelation::IndexList IndexList;
 #include <cassert>
 
 
+const std::vector<unsigned> LSTMCausalityTagger::ALL_INDICES(0);
+
+
 LSTMCausalityTagger::LSTMCausalityTagger(const string& parser_model_path,
                                          const TaggerOptions& options)
     : options(options), parser(parser_model_path),
@@ -542,13 +545,21 @@ vector<CausalityRelation> LSTMCausalityTagger::Tag(
 }
 
 
-CausalityMetrics LSTMCausalityTagger::Evaluate(
-    BecauseOracleTransitionCorpus* corpus,
+CausalityMetrics LSTMCausalityTagger::DoTest(
+    BecauseOracleTransitionCorpus* corpus, bool evaluate, bool write_results,
     const vector<unsigned>& sentence_selections, bool compare_punct,
     bool pairwise, double overlap_threshold) {
   CausalityMetrics evaluation;
 
-  for (unsigned sentence_index : sentence_selections) {
+  const vector<unsigned>* real_sentence_selections = &sentence_selections;
+  vector<unsigned> all_sentence_indices(0);
+  if (&sentence_selections == &ALL_INDICES) {
+    all_sentence_indices.resize(corpus->sentences.size());
+    iota(all_sentence_indices.begin(), all_sentence_indices.end(), 0);
+    real_sentence_selections = &all_sentence_indices;
+  }
+
+  for (unsigned sentence_index : *real_sentence_selections) {
     // Grab selected sentence and associated metadata from corpus.
     Sentence* sentence = &corpus->sentences[sentence_index];
     const vector<unsigned>& gold_actions =
@@ -566,17 +577,22 @@ CausalityMetrics LSTMCausalityTagger::Evaluate(
     // Actually tag and evaluate.
     vector<CausalityRelation> predicted = Tag(*sentence, parse_with_depths,
                                               gold_actions);
-    vector<CausalityRelation> gold = Decode(
-        *sentence, gold_actions, options.new_conn_action, options.shift_action);
     if (pairwise) {
       FilterToPairwise(&predicted);
-      FilterToPairwise(&gold);
     }
-    evaluation += CausalityMetrics(
-        gold, predicted, *corpus, *parse_with_depths,
-        SpanTokenFilter {compare_punct, *sentence, corpus->pos_is_punct},
-        missing_instances, missing_args, options.save_differences,
-        options.log_differences, overlap_threshold);
+
+    if (evaluate) {
+      vector<CausalityRelation> gold = Decode(
+          *sentence, gold_actions, options.new_conn_action, options.shift_action);
+      if (pairwise) {
+        FilterToPairwise(&gold);
+      }
+      evaluation += CausalityMetrics(
+          gold, predicted, *corpus, *parse_with_depths,
+          SpanTokenFilter {compare_punct, *sentence, corpus->pos_is_punct},
+          missing_instances, missing_args, options.save_differences,
+          options.log_differences, overlap_threshold);
+    }
   }
 
   return evaluation;

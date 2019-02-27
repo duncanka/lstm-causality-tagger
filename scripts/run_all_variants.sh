@@ -26,7 +26,7 @@ run_pipeline() {
 	DATA_DIR=$2
 	FLAGS=$3
     echo "Run type:" $NAME
-    tsp -n -L "lstm-$NAME" bash -c "$BASE_CMD -t $DATA_DIR $FLAGS > '$OUT_DIR/$NAME.out' 2> '$LOG_DIR/$NAME.log'"
+    tsp -n -L "lstm-$NAME" bash -c "$BASE_CMD -r $DATA_DIR $FLAGS > '$OUT_DIR/$NAME.out' 2> '$LOG_DIR/$NAME.log'"
     sleep 15s
 }
 
