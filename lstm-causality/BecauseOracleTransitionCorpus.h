@@ -101,6 +101,15 @@ protected:
   PredecessorMatrix path_predecessors;
 };
 
+
+struct BecauseSentenceMetadata
+    : public lstm_parser::Sentence::SentenceMetadata {
+  BecauseSentenceMetadata(const std::string& ann_file_path)
+      : ann_file_path(ann_file_path) {}
+  const std::string& ann_file_path;
+};
+
+
 class BecauseOracleTransitionCorpus: public lstm_parser::TrainingCorpus {
 public:
   friend class LSTMCausalityTagger;

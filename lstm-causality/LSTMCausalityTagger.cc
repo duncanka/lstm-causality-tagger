@@ -17,6 +17,8 @@
 #include <limits>
 #include <numeric>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -559,6 +561,13 @@ CausalityMetrics LSTMCausalityTagger::DoTest(
     real_sentence_selections = &all_sentence_indices;
   }
 
+  const string* last_filename = nullptr;
+  ofstream ann_out_file;
+  unsigned evt_id = 1000;  // BRAT IDs in the 1000s should be safe
+  unsigned span_id = 1000;
+  // unsigned attr_id = 1000;
+  unordered_map<IndexList, string, boost::hash<IndexList>> current_doc_span_ids(10);
+
   for (unsigned sentence_index : *real_sentence_selections) {
     // Grab selected sentence and associated metadata from corpus.
     Sentence* sentence = &corpus->sentences[sentence_index];
@@ -592,6 +601,61 @@ CausalityMetrics LSTMCausalityTagger::DoTest(
           SpanTokenFilter {compare_punct, *sentence, corpus->pos_is_punct},
           missing_instances, missing_args, options.save_differences,
           options.log_differences, overlap_threshold);
+    }
+
+    if (write_results) {
+      const BecauseSentenceMetadata& metadata =
+          static_cast<const BecauseSentenceMetadata&>(*sentence->metadata);
+      if (last_filename != &metadata.ann_file_path) {
+        ann_out_file.close();
+        ann_out_file.open(metadata.ann_file_path, ios::app);
+        if (!ann_out_file) {
+          cerr << "Error: Could not open file " << metadata.ann_file_path
+               << "; skipping output..." << endl;
+          continue;
+        }
+        last_filename = &metadata.ann_file_path;
+        current_doc_span_ids.clear();
+      }
+
+      auto GetSpanID = [&](const CausalityRelation& relation,
+                           const IndexList& indices, const string& span_type) {
+        string* span_id_ptr = &current_doc_span_ids[indices];
+        if (span_id_ptr->empty()) {
+          *span_id_ptr = "T" + to_string(span_id);
+          ++span_id;
+          ann_out_file << *span_id_ptr << '\t' << span_type << '\t'
+                       << IndicesToOffsetsStr(sentence, indices) << '\t'
+                       << relation.PrintTokens(ann_out_file, indices) << endl;
+        }
+        return *span_id_ptr;
+      };
+
+      for (const CausalityRelation& relation : predicted) {
+        const string& trigger_id = GetSpanID(relation,
+                                             relation.GetConnectiveIndices(),
+                                             "Consequence");
+        vector<string> arg_ids(relation.ARG_NAMES.size());
+        for (unsigned arg_num = 0; arg_num < relation.ARG_NAMES.size();
+             ++arg_num) {
+          auto arg_indices = relation.GetArgument(arg_num);
+          if (!arg_indices.empty()) {
+            arg_ids[arg_num] = GetSpanID(relation, arg_indices, "Argument");
+          }
+        }
+        ann_out_file << 'E' << evt_id << "\tConsequence";
+        for (unsigned arg_num = 0; arg_num < relation.ARG_NAMES.size();
+             ++arg_num) {
+          if (!arg_ids[arg_num].empty()) {
+            ann_out_file << ' ' << relation.ARG_NAMES[arg_num] << ':'
+                         << arg_ids[arg_num];
+          }
+        }
+        ann_out_file << endl;
+        //ann_out_file << 'A' << attr_id << "\tDegree " << 'E' << evt_id
+        //             << " Facilitate" << endl;
+        ++evt_id;
+      }
     }
   }
 
