@@ -369,6 +369,16 @@ private:
       const lstm_parser::Sentence& sentence,
       const std::vector<unsigned>& actions);
 
+  void WriteSentenceResults(
+      const std::vector<CausalityRelation>& predicted,
+      lstm_parser::Sentence* sentence,
+      const std::string** last_filename,
+      std::ofstream* ann_out_file,
+      std::unordered_map<BecauseRelation::IndexList, std::string,
+                         boost::hash<BecauseRelation::IndexList> >*
+                           current_doc_span_ids,
+      unsigned* evt_id, unsigned* span_id);
+
   CachedExpressionMap parser_states;  // internal cache of parser NN states
   // Sets of word IDs that can go together in connectives.
   std::unordered_set<std::set<unsigned>,
