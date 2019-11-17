@@ -593,7 +593,7 @@ void LSTMCausalityTagger::WriteSentenceResults(
     if (span_id_ptr->empty()) {
       *span_id_ptr = "T" + to_string(*next_span_id);
       ++(*next_span_id);
-      *ann_out_file << *span_id_ptr << '\t' << span_type << '\t'
+      *ann_out_file << *span_id_ptr << '\t' << span_type << ' '
                     << IndicesToBratLine(sentence, indices,
                                          *current_txt_contents) << endl;
     }
@@ -612,7 +612,7 @@ void LSTMCausalityTagger::WriteSentenceResults(
           arg_ids[arg_num] = GetSpanID(relation, arg_indices, "Argument");
         }
       }
-      *ann_out_file << 'E' << *next_evt_id << "\tConsequence";
+      *ann_out_file << 'E' << *next_evt_id << "\tConsequence:" << trigger_id;
       for (unsigned arg_num = 0; arg_num < relation.ARG_NAMES.size();
            ++arg_num) {
         if (!arg_ids[arg_num].empty()) {
@@ -767,7 +767,7 @@ CausalityMetrics LSTMCausalityTagger::DoTest(
   const string* last_filename = nullptr;
   ofstream ann_out_file;
   string current_txt_contents;
-  unsigned evt_id = 1000;  // BRAT IDs in the 1000s should be safe
+  unsigned evt_id = 1000;  // BRAT IDs in the 1000s should be safe from clashes
   unsigned span_id = 1000;
   // unsigned attr_id = 1000;
   unordered_map<IndexList, string, boost::hash<IndexList>> current_doc_span_ids(

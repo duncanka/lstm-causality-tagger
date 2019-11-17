@@ -582,7 +582,7 @@ int main(int argc, char** argv) {
 
   if (evaluate || test) {
     const char* op_noun = evaluate ? "Evaluation" : "Test";
-    const char* op_gerund = evaluate ? "Evaluating" : "Testing";
+    const char* op_verb = evaluate ? "evaluate" : "test";
 
     if (!conf.count("test-data")) {
       cerr << op_noun << " requested, but test data was not specified!" << endl;
@@ -598,17 +598,17 @@ int main(int argc, char** argv) {
     tagger->FinalizeVocab();
 
     const string& test_path = conf["test-data"].as<string>();
-    cerr << op_gerund << " model " << model_fname << " on " << test_path
-         << endl;
+    cerr << "Will " << op_verb << " model " << model_fname
+         << " on " << test_path << endl;
     BecauseOracleTransitionCorpus test_corpus(tagger->GetVocab(), test_path,
                                               false, false);
     cerr << "Tagging..." << flush;
     CausalityMetrics eval =
         (evaluate ?
             tagger->Evaluate(&test_corpus) : tagger->Test(&test_corpus, true));
-    cerr << "done." << endl;
-    {
-      cout << "Evaluation results:" << endl;
+    cerr << "done." << endl << flush;
+    if (evaluate) {
+      cout << flush << "Evaluation results:" << endl;
       IndentingOStreambuf indent(cout);
       cout << eval << endl;
     }
