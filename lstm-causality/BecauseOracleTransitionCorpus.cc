@@ -184,7 +184,7 @@ BecauseOracleTransitionCorpus::BecauseOracleTransitionCorpus(
     CorpusVocabulary* vocab, const string& file, bool is_training,
     bool sort_by_sentence)
     : TrainingCorpus(vocab) {
-  BecauseTransitionsReader(is_training).ReadSentences(file, this);
+  BecauseTransitionsReader(is_training, &filenames).ReadSentences(file, this);
   sentence_parses.resize(sentences.size());
 
   if (sort_by_sentence) {
@@ -272,7 +272,9 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
       static_cast<BecauseOracleTransitionCorpus*>(corpus);
 
   ifstream actions_file(file_name);
-  string ann_file_name = fs::path(file_name).replace_extension("ann").string();
+  filenames->emplace_front(
+      fs::path(file_name).replace_extension("ann").string());
+  const string& ann_file_name = filenames->front();
   string line;
 
   LineType next_line_type = SENTENCE_START_LINE;

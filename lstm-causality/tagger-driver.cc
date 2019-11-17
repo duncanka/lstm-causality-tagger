@@ -56,6 +56,7 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
      "Whether completing a relation is a separate action (must match data)")
 
     // Testing/evaluation options
+    ("test", "Whether to test the tagger")
     ("folds,f", po::value<unsigned>()->default_value(20),
      "How many folds to split the data into for cross-validation")
     ("eval-pairwise,P", POBooleanFlag(true),

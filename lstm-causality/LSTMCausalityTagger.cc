@@ -556,6 +556,7 @@ void LSTMCausalityTagger::WriteSentenceResults(
     unordered_map<IndexList, string, boost::hash<IndexList> >*
         current_doc_span_ids,
     unsigned* next_evt_id, unsigned* next_span_id) const {
+  // cerr << "Writing sentence: " << sentence << endl;
   const BecauseSentenceMetadata& metadata =
       static_cast<const BecauseSentenceMetadata&>(*sentence.metadata);
   if (*last_filename != &metadata.ann_file_path) {

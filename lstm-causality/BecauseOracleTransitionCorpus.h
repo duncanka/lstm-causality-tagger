@@ -5,6 +5,7 @@
 #include <boost/graph/graph_traits.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/range/adaptor/transformed.hpp>
+#include <forward_list>
 #include <map>
 #include <memory>
 #include <string>
@@ -107,7 +108,9 @@ struct BecauseSentenceMetadata
   BecauseSentenceMetadata(const std::string& ann_file_path,
                           const unsigned document_byte_offset)
       : ann_file_path(ann_file_path),
-        document_byte_offset(document_byte_offset) {}
+        document_byte_offset(document_byte_offset) {
+    // std::cerr << ann_file_path << ' ' << document_byte_offset << std::endl;
+  }
   const std::string& ann_file_path;
   const unsigned document_byte_offset;
 };
@@ -143,8 +146,9 @@ private:
     static constexpr const char* FILE_EXTENSION = ".trans";
     static constexpr const char POS_SEPARATOR = '/';
 
-    BecauseTransitionsReader(bool is_training)
-      : OracleTransitionsCorpusReader(is_training) {}
+    BecauseTransitionsReader(bool is_training,
+                             std::forward_list<std::string> *filenames)
+      : OracleTransitionsCorpusReader(is_training), filenames(filenames) {}
 
     virtual void ReadSentences(const std::string& directory,
                                Corpus* corpus) const;
@@ -152,7 +156,11 @@ private:
   protected:
     inline void ReadFile(const std::string& file_name,
                          TrainingCorpus* corpus) const;
+
+    std::forward_list<std::string> *filenames;
   };
+
+  std::forward_list<std::string> filenames;
 };
 
 #endif /* BECAUSEORACLETRANSITIONCORPUS_H_ */
