@@ -602,9 +602,11 @@ int main(int argc, char** argv) {
          << endl;
     BecauseOracleTransitionCorpus test_corpus(tagger->GetVocab(), test_path,
                                               false, false);
+    cerr << "Tagging..." << flush;
     CausalityMetrics eval =
         (evaluate ?
             tagger->Evaluate(&test_corpus) : tagger->Test(&test_corpus, true));
+    cerr << "done." << endl;
     {
       cout << "Evaluation results:" << endl;
       IndentingOStreambuf indent(cout);

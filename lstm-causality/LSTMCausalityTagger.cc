@@ -17,6 +17,7 @@
 #include <iostream>
 #include <limits>
 #include <numeric>
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -624,14 +625,15 @@ void LSTMCausalityTagger::WriteSentenceResults(
       //             << " Facilitate" << endl;
       ++(*next_evt_id);
     }
-  } catch(exception& e) {
+  } catch(runtime_error& e) {
     cerr << "Failed to match tokens for BRAT in " << metadata.ann_file_path
-         << ": " << e.what() << endl;
+         << ": " << e.what() << "; skipping remaining output for file" << endl;
     return;
   }
 }
 
 
+regex FRACTION_REGEX("^\\d*_\\d*/\\d*$");  // e.g., 2_1/2
 const string LSTMCausalityTagger::IndicesToBratLine(
     const Sentence &sentence, const IndexList &token_indices,
     const string &current_txt) const {
@@ -644,46 +646,88 @@ const string LSTMCausalityTagger::IndicesToBratLine(
   istringstream txt_stream(current_txt);
   txt_stream.seekg(metadata.document_byte_offset);
   vector<pair<unsigned, unsigned>> brat_indices;
-  vector<string> brat_strings;
-  unsigned start_index = metadata.document_byte_offset;
-  unsigned end_index = metadata.document_byte_offset;
+  unsigned subspan_start;
+  unsigned subspan_end;
+  unsigned last_token_end;
+  bool last_token_was_in_span = false;
+  auto next_span_index_iter = token_indices.begin();
 
-  const BecauseRelation::TokenList tokens =
-      BecauseRelation::GetTokensForIndices(sentence, token_indices);
-  ostringstream next_brat_string;
   // For each token, match its characters against the characters in the .txt
   // file. Error out on any mismatch. As long as things continue to match,
   // track the txt file character counts for BRAT offsets.
-  unsigned last_token_index = 0; // our token indices conveniently start at 1
-  for (unsigned i = 0; i < tokens.size(); ++i) {
-    const string& token = tokens[i];
-    unsigned token_index = token_indices[i];
-    if (token_index != last_token_index + 1) {
-      brat_strings.push_back(move(next_brat_string.str()));
-      next_brat_string = ostringstream();
-      brat_indices.push_back({start_index, end_index});
-      start_index = end_index;
+  for (auto sentence_iter = sentence.words.begin();
+       next_span_index_iter != token_indices.end()  // stop if no more span
+           && sentence_iter->first != Corpus::ROOT_TOKEN_ID; ++sentence_iter) {
+    unsigned token_idx = sentence_iter->first;
+    const string& token_text = sentence.WordForToken(sentence_iter, token_idx);
+    bool part_of_span = (token_idx == *next_span_index_iter);
+    if (part_of_span) {
+      ++next_span_index_iter;
+      if (!last_token_was_in_span) {  // start of a new subspan
+        subspan_start = txt_stream.tellg();
+      }
+    } else {  // not part of span, so finish off the previous span (if any).
+      if (last_token_was_in_span) {  // previous subspan ended on last token
+        brat_indices.push_back({subspan_start, subspan_end});
+      }
     }
-    last_token_index = token_index;
 
-    unsigned initial_txt_stream_pos = txt_stream.tellg();
-    for (char next_token_char : token) {
+    // Check all characters in the token.
+    for (char next_token_char : token_text) {
       char next_txt_char = txt_stream.get();
       if (next_token_char != next_txt_char) {
+        // Special case: quotes can be split into 2 characters in the original.
+        if (next_token_char == '"') {
+          if ((next_txt_char == '`' && txt_stream.peek() == '`')
+              || (next_txt_char == '\'' && txt_stream.peek() == '\'')) {
+            txt_stream.get();
+            continue;
+          }
+        // Special case: ellipses have spaces in between sometimes in the text.
+        } else if (next_token_char == '.') {
+          if (token_text == "..." && next_txt_char == ' ') {
+            if (txt_stream.get() == '.') {
+              continue;
+            }
+          }
+        // Special case: fractions can have weird characters.
+        } else if (next_token_char == '_') {
+          if (regex_match(token_text, FRACTION_REGEX)) {
+            continue;
+          }
+        }
+
         throw runtime_error(
-            next_brat_string.str() + " -> " + to_string(next_token_char)
-                + " vs. " + to_string(next_txt_char));
+            token_text + " -> " + string(1, next_token_char)
+                + " vs. " + string(1, next_txt_char));
       }
-      next_brat_string << next_txt_char;
     }
-    while(txt_stream.get() == ' ') {
-      next_brat_string << ' ';
+
+    last_token_end = txt_stream.tellg();
+    if (part_of_span) {
+      subspan_end = last_token_end;
     }
-    txt_stream >> ws;  // in case there are any newlines
-    end_index += initial_txt_stream_pos - txt_stream.tellg();
+
+    last_token_was_in_span = part_of_span;
+
+    // Advance stream past whitespace, recording if any newlines are found.
+    char next_char = txt_stream.peek();
+    while(isspace(next_char)) {  // false at EOF
+      txt_stream.get();
+      if (last_token_was_in_span) {
+        if (next_char == '\n' || next_char == '\r') {
+          brat_indices.push_back({subspan_start, subspan_end});
+          last_token_was_in_span = false;
+        }
+      }
+      next_char = txt_stream.peek();
+    }
+  }
+  if (last_token_was_in_span) {  // a subspan was in progress at end-of-sentence
+    brat_indices.push_back({subspan_start, subspan_end});
   }
 
-  // Reconstruct the full string of indices and check text.
+  // Reconstruct the full string of indices and the checksum text.
   ostringstream full_brat_string;
   for (auto iter = brat_indices.begin(); iter + 1 != brat_indices.end();
        ++iter) {
@@ -692,11 +736,14 @@ const string LSTMCausalityTagger::IndicesToBratLine(
   full_brat_string << brat_indices.back().first << ' '
                    << brat_indices.back().second;
   full_brat_string << '\t';
-  for (auto iter = brat_strings.begin(); iter + 1 != brat_strings.end();
+  for (auto iter = brat_indices.begin(); iter + 1 != brat_indices.end();
        ++iter) {
-    full_brat_string << *iter << ' ';
+    full_brat_string << current_txt.substr(iter->first,
+                                           iter->second - iter->first) << ' ';
   }
-  full_brat_string << brat_strings.back();
+  const auto& last_indices = brat_indices.back();
+  full_brat_string << current_txt.substr(
+      last_indices.first, last_indices.second - last_indices.first);
 
   return full_brat_string.str();
 }
