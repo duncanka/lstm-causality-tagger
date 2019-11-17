@@ -371,13 +371,19 @@ private:
 
   void WriteSentenceResults(
       const std::vector<CausalityRelation>& predicted,
-      lstm_parser::Sentence* sentence,
+      const lstm_parser::Sentence& sentence,
       const std::string** last_filename,
       std::ofstream* ann_out_file,
+      std::string* current_txt,
       std::unordered_map<BecauseRelation::IndexList, std::string,
                          boost::hash<BecauseRelation::IndexList> >*
                            current_doc_span_ids,
-      unsigned* evt_id, unsigned* span_id);
+      unsigned* evt_id, unsigned* span_id) const;
+
+  const std::string IndicesToBratLine(
+      const lstm_parser::Sentence &sentence,
+      const BecauseRelation::IndexList &indices,
+      const std::string &current_txt) const;
 
   CachedExpressionMap parser_states;  // internal cache of parser NN states
   // Sets of word IDs that can go together in connectives.

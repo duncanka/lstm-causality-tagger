@@ -26,10 +26,30 @@ except DuplicateFlagError as e:
 
 
 class CausalityOracleTransitionWriter(InstancesDocumentWriter):
+    def __init__(self, filepath=None):
+        super(CausalityOracleTransitionWriter, self).__init__(filepath)
+        self._byte_offset_in_doc = None
+
+    def write_all_instances(self, document, instances_getter=None):
+        self._byte_offset_in_doc = 0
+        self._last_sentence_end = 0
+        super(CausalityOracleTransitionWriter, self).write_all_instances(
+            document, instances_getter)
+        self._byte_offset_in_doc = None
+        del self._last_sentence_end
+
     def _write_instance(self, document, sentence):
+        if self._byte_offset_in_doc is None:
+            raise Exception("Instance must be written in the context"
+                            " of a document to track byte offsets")
+        self._byte_offset_in_doc += ( # Assume inter-sentence chars are ASCII.
+            sentence.document_char_offset - self._last_sentence_end)
+
         tokens = [token for token in sentence.tokens[1:]] # skip ROOT
 
-        # Print sentence-initial line with tokens and POS tags.
+        # Print sentence-initial line with byte index, tokens, and POS tags.
+        print(unicode(self._byte_offset_in_doc), u' ',
+              file=self._file_stream, end=u'')
         print(u', '.join(u'/'.join([self._token_text_for_lstm(t),
                                     self._pos_tag_for_lstm(t)])
                          for t in tokens),
@@ -113,6 +133,11 @@ class CausalityOracleTransitionWriter(InstancesDocumentWriter):
         self._write_sentence_footer()
         (self.lambda_1, self.lambda_2, self.lambda_3, self.lambda_4,
          self.lambdas, self.rels) = [None] * 6 # Reset; release memory
+         
+        self._byte_offset_in_doc += len(
+            sentence.original_text.encode('utf8'))
+        self._last_sentence_end = (
+            sentence.document_char_offset + len(sentence.original_text))
 
     def _do_split(self, current_token, last_modified_arg, token_to_compare,
                   instance_under_construction):

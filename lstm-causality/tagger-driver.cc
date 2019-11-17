@@ -42,7 +42,8 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
           "lstm-parser/english_pos_2_32_100_20_100_12_20.params"),
      "File from which to load saved syntactic parser model")
     ("model-dir", po::value<string>()->default_value("models"),
-     "Directory in which to store saved model")
+     "Directory in which to store trained model")
+    ("model", po::value<string>(), "Path to pretrained model")
 
     // Data options
     ("training-data,r", po::value<string>(),
@@ -490,7 +491,8 @@ int main(int argc, char** argv) {
   bool for_comparison = conf["for-comparison"].as<bool>();
   bool log_diffs = conf["log-diffs"].as<bool>();
   // bool model_specified = !conf["model"].defaulted();
-  string model_fname = conf["model"].as<string>();
+  string model_fname;
+  string parser_model_fname = conf["parser-model"].as<string>();
   bool train = conf.count("train");
   bool evaluate = conf.count("evaluate");
   bool test = conf.count("test");
@@ -511,7 +513,7 @@ int main(int argc, char** argv) {
     }
 
   tagger.reset(new LSTMCausalityTagger(
-      conf["parser-model"].as<string>(),
+      parser_model_fname,
       LSTMCausalityTagger::TaggerOptions{
           conf["word-dim"].as<unsigned>(),
           conf["lstm-layers"].as<unsigned>(),
@@ -539,7 +541,8 @@ int main(int argc, char** argv) {
       cerr << "Invalid dropout rate: " << tagger->options.dropout << endl;
       abort();
     }
-    if (tagger->options.oracle_connectives && !tagger->options.new_conn_action) {
+    if (tagger->options.oracle_connectives &&
+        !tagger->options.new_conn_action) {
       cerr << "Oracle connectives are available only with NEW-CONN actions"
            << endl;
       abort();
@@ -576,47 +579,32 @@ int main(int argc, char** argv) {
             conf["cv-end-at"].as<unsigned>(), for_comparison);
   }
 
-  // Eval on dev data if we're not running a separate test.
-  if (evaluate && !test) {
+  if (evaluate || test) {
+    const char* op_noun = evaluate ? "Evaluation" : "Test";
+    const char* op_gerund = evaluate ? "Evaluating" : "Testing";
+
     if (!conf.count("test-data")) {
-      cerr << "Evaluation requested, but test data was not specified!" << endl;
+      cerr << op_noun << " requested, but test data was not specified!" << endl;
+      abort();
+    }
+    if (!conf.count("model")) {
+      cerr << op_noun << " requested, but model was not specified!";
       abort();
     }
 
-    tagger.reset(new LSTMCausalityTagger(conf["parser-model"].as<string>(),
-                                         model_fname));
+    model_fname = conf["model"].as<string>();
+    tagger.reset(new LSTMCausalityTagger(parser_model_fname, model_fname));
     tagger->FinalizeVocab();
 
     const string& test_path = conf["test-data"].as<string>();
-    cerr << "Evaluating model " << model_fname << " on " << test_path << endl;
+    cerr << op_gerund << " model " << model_fname << " on " << test_path
+         << endl;
     BecauseOracleTransitionCorpus test_corpus(tagger->GetVocab(), test_path,
                                               false, false);
-    CausalityMetrics eval = tagger->Evaluate(&test_corpus);
+    CausalityMetrics eval =
+        (evaluate ?
+            tagger->Evaluate(&test_corpus) : tagger->Test(&test_corpus, true));
     {
-      cout << "Evaluation results:" << endl;
-      IndentingOStreambuf indent(cout);
-      cout << eval << endl;
-    }
-  }
-
-  else if (test) {
-    if (!conf.count("test-data")) {
-      cerr << "Test requested, but test data was not specified!" << endl;
-      abort();
-    }
-
-    tagger.reset(new LSTMCausalityTagger(conf["parser-model"].as<string>(),
-                                         model_fname));
-    tagger->FinalizeVocab();
-
-    const string& test_path = conf["test-data"].as<string>();
-    cerr << "Testing model " << model_fname << " on "
-         << test_path << endl;
-    BecauseOracleTransitionCorpus test_corpus(tagger->GetVocab(), test_path, false,
-                                        false);
-    CausalityMetrics eval = tagger->Test(&test_corpus, evaluate);
-    if (evaluate) {
-      cout.flush(); cerr.flush();  // Sync
       cout << "Evaluation results:" << endl;
       IndentingOStreambuf indent(cout);
       cout << eval << endl;

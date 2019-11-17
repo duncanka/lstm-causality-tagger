@@ -272,6 +272,7 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
       static_cast<BecauseOracleTransitionCorpus*>(corpus);
 
   ifstream actions_file(file_name);
+  string ann_file_name = fs::path(file_name).replace_extension("ann").string();
   string line;
 
   LineType next_line_type = SENTENCE_START_LINE;
@@ -281,6 +282,7 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
   map<unsigned, unsigned> sentence_pos;
   map<unsigned, string> sentence_unk_surface_forms;
   vector<unsigned> correct_actions;
+  unsigned document_byte_offset;
 
   unsigned root_symbol = corpus->vocab->GetOrAddWord(CorpusVocabulary::ROOT);
   unsigned root_pos_symbol = corpus->vocab->GetOrAddEntry(
@@ -321,8 +323,10 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
         sentence[Corpus::ROOT_TOKEN_ID] = root_symbol;
         sentence_pos[Corpus::ROOT_TOKEN_ID] = root_pos_symbol;
         sentence_unk_surface_forms[Corpus::ROOT_TOKEN_ID] = "";
-        RecordSentence(training_corpus, &sentence, &sentence_pos,
-                       &sentence_unk_surface_forms, &correct_actions);
+        RecordSentence(
+            training_corpus, &sentence, &sentence_pos,
+            &sentence_unk_surface_forms, &correct_actions,
+            new BecauseSentenceMetadata(ann_file_name, document_byte_offset));
       }
       next_line_type = SENTENCE_START_LINE;
       continue; // don't update next_line_type again
@@ -331,8 +335,9 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
 
     if (next_line_type == SENTENCE_START_LINE) {
       // the initial line in each sentence should look like:
-      // the/DT, cat/NN, is/VB, on/PRP, the/DT, mat/NN, .-.
+      // 0 the/DT, cat/NN, is/VB, on/PRP, the/DT, mat/NN, .-.
       istringstream iss(line);
+      iss >> document_byte_offset;
       do {
         string word;
         iss >> word;
@@ -371,7 +376,9 @@ void BecauseOracleTransitionCorpus::BecauseTransitionsReader::ReadFile(
     sentence[Corpus::ROOT_TOKEN_ID] = root_symbol;
     sentence_pos[Corpus::ROOT_TOKEN_ID] = root_pos_symbol;
     sentence_unk_surface_forms[Corpus::ROOT_TOKEN_ID] = "";
-    RecordSentence(training_corpus, &sentence, &sentence_pos,
-                   &sentence_unk_surface_forms, &correct_actions);
+    RecordSentence(
+        training_corpus, &sentence, &sentence_pos, &sentence_unk_surface_forms,
+        &correct_actions,
+        new BecauseSentenceMetadata(ann_file_name, document_byte_offset));
   }
 }

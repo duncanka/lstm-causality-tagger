@@ -104,9 +104,12 @@ protected:
 
 struct BecauseSentenceMetadata
     : public lstm_parser::Sentence::SentenceMetadata {
-  BecauseSentenceMetadata(const std::string& ann_file_path)
-      : ann_file_path(ann_file_path) {}
+  BecauseSentenceMetadata(const std::string& ann_file_path,
+                          const unsigned document_byte_offset)
+      : ann_file_path(ann_file_path),
+        document_byte_offset(document_byte_offset) {}
   const std::string& ann_file_path;
+  const unsigned document_byte_offset;
 };
 
 

@@ -11,6 +11,7 @@
 #include <csignal>
 #include <cstddef>
 #include <deque>
+#include <exception>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -243,8 +244,8 @@ void LSTMCausalityTagger::Train(BecauseOracleTransitionCorpus* corpus,
         double pct_recent_increases = num_recent_evals_improved
             / static_cast<double>(recent_evals_improved.size());
         if (pct_recent_increases < recent_improvements_cutoff) {
-          cerr << "Reached cutoff for epochs with no increase in max dev score: "
-               << epoch - last_epoch_saved << " > " << epochs_cutoff
+          cerr << "Reached cutoff for epochs with no increase in max dev score:"
+               << ' ' << epoch - last_epoch_saved << " > " << epochs_cutoff
                << "; terminating training" << endl;
           break;
         }
@@ -520,7 +521,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Decode(
       CompleteRelation();
     }
 
-    // Don't wait for a SHIFT to complete the relation if we're not using SHIFTs.
+    // Don't wait for a SHIFT to complete the relation if not using SHIFTs.
     if (!shift_is_action && lambda_4.empty() && lambda_1.empty()) {
       CompleteRelation();
     }
@@ -548,13 +549,15 @@ vector<CausalityRelation> LSTMCausalityTagger::Tag(
 
 void LSTMCausalityTagger::WriteSentenceResults(
     const vector<CausalityRelation>& predicted,
-    Sentence* sentence,
+    const Sentence& sentence,
     const string** last_filename,
     ofstream* ann_out_file,
-    unordered_map<IndexList, string, boost::hash<IndexList> >* current_doc_span_ids,
-    unsigned* evt_id, unsigned* span_id) {
+    string* current_txt_contents,
+    unordered_map<IndexList, string, boost::hash<IndexList> >*
+        current_doc_span_ids,
+    unsigned* next_evt_id, unsigned* next_span_id) const {
   const BecauseSentenceMetadata& metadata =
-      static_cast<const BecauseSentenceMetadata&>(*sentence->metadata);
+      static_cast<const BecauseSentenceMetadata&>(*sentence.metadata);
   if (*last_filename != &metadata.ann_file_path) {
     ann_out_file->close();
     ann_out_file->open(metadata.ann_file_path, ios::app);
@@ -563,47 +566,141 @@ void LSTMCausalityTagger::WriteSentenceResults(
           << "; skipping output..." << endl;
       return;
     }
-    *last_filename = &metadata.ann_file_path;
+
+    // Read text file
+    string txt_filename =
+        metadata.ann_file_path.substr(0, metadata.ann_file_path.size() - 4)
+        + ".txt";
+    ifstream txt_file(txt_filename, std::ios::in | std::ios::binary);
+    if (!txt_file) {
+      cerr << "Error: Could not open text file for offset alignment for "
+           << metadata.ann_file_path << "; skipping output..." << endl;
+      return;
+    }
+    ostringstream txt_contents;
+    txt_contents << txt_file.rdbuf();
+    txt_file.close();
+    *current_txt_contents = txt_contents.str();
+
     current_doc_span_ids->clear();
   }
 
-   auto GetSpanID = [&](const CausalityRelation& relation,
-                        const IndexList& indices, const string& span_type) {
-     string* span_id_ptr = &(*current_doc_span_ids)[indices];
-     if (span_id_ptr->empty()) {
-       *span_id_ptr = "T" + to_string(*span_id);
-       ++(*span_id);
-       *ann_out_file << *span_id_ptr << '\t' << span_type << '\t'
-                     << IndicesToOffsetsStr(sentence, indices) << '\t'
-                     << relation.PrintTokens(*ann_out_file, indices) << endl;
-     }
-     return *span_id_ptr;
-   };
+  auto GetSpanID = [&](const CausalityRelation& relation,
+                       const IndexList& indices, const string& span_type) {
+    string* span_id_ptr = &(*current_doc_span_ids)[indices];
+    if (span_id_ptr->empty()) {
+      *span_id_ptr = "T" + to_string(*next_span_id);
+      ++(*next_span_id);
+      *ann_out_file << *span_id_ptr << '\t' << span_type << '\t'
+                    << IndicesToBratLine(sentence, indices,
+                                         *current_txt_contents) << endl;
+    }
+    return *span_id_ptr;
+  };
 
-  for (const CausalityRelation& relation : predicted) {
-    const string& trigger_id = GetSpanID(relation,
-                                         relation.GetConnectiveIndices(),
-                                         "Consequence");
-    vector<string> arg_ids(relation.ARG_NAMES.size());
-    for (unsigned arg_num = 0; arg_num < relation.ARG_NAMES.size(); ++arg_num) {
-      auto arg_indices = relation.GetArgument(arg_num);
-      if (!arg_indices.empty()) {
-        arg_ids[arg_num] = GetSpanID(relation, arg_indices, "Argument");
+  try {
+    for (const CausalityRelation& relation : predicted) {
+      const string& trigger_id = GetSpanID(
+          relation, relation.GetConnectiveIndices(), "Consequence");
+      vector<string> arg_ids(relation.ARG_NAMES.size());
+      for (unsigned arg_num = 0; arg_num < relation.ARG_NAMES.size();
+           ++arg_num) {
+        auto arg_indices = relation.GetArgument(arg_num);
+        if (!arg_indices.empty()) {
+          arg_ids[arg_num] = GetSpanID(relation, arg_indices, "Argument");
+        }
       }
-    }
-    *ann_out_file << 'E' << *evt_id << "\tConsequence";
-    for (unsigned arg_num = 0; arg_num < relation.ARG_NAMES.size(); ++arg_num) {
-      if (!arg_ids[arg_num].empty()) {
-        *ann_out_file << ' ' << relation.ARG_NAMES[arg_num] << ':'
-            << arg_ids[arg_num];
+      *ann_out_file << 'E' << *next_evt_id << "\tConsequence";
+      for (unsigned arg_num = 0; arg_num < relation.ARG_NAMES.size();
+           ++arg_num) {
+        if (!arg_ids[arg_num].empty()) {
+          *ann_out_file << ' ' << relation.ARG_NAMES[arg_num] << ':'
+              << arg_ids[arg_num];
+        }
       }
+      *ann_out_file << endl;
+      //ann_out_file << 'A' << attr_id << "\tDegree " << 'E' << evt_id
+      //             << " Facilitate" << endl;
+      ++(*next_evt_id);
     }
-    *ann_out_file << endl;
-    //ann_out_file << 'A' << attr_id << "\tDegree " << 'E' << evt_id
-    //             << " Facilitate" << endl;
-    ++(*evt_id);
+  } catch(exception& e) {
+    cerr << "Failed to match tokens for BRAT in " << metadata.ann_file_path
+         << ": " << e.what() << endl;
+    return;
   }
 }
+
+
+const string LSTMCausalityTagger::IndicesToBratLine(
+    const Sentence &sentence, const IndexList &token_indices,
+    const string &current_txt) const {
+  if (token_indices.empty()) {
+    return "";
+  }
+
+  const BecauseSentenceMetadata& metadata =
+      static_cast<const BecauseSentenceMetadata&>(*sentence.metadata);
+  istringstream txt_stream(current_txt);
+  txt_stream.seekg(metadata.document_byte_offset);
+  vector<pair<unsigned, unsigned>> brat_indices;
+  vector<string> brat_strings;
+  unsigned start_index = metadata.document_byte_offset;
+  unsigned end_index = metadata.document_byte_offset;
+
+  const BecauseRelation::TokenList tokens =
+      BecauseRelation::GetTokensForIndices(sentence, token_indices);
+  ostringstream next_brat_string;
+  // For each token, match its characters against the characters in the .txt
+  // file. Error out on any mismatch. As long as things continue to match,
+  // track the txt file character counts for BRAT offsets.
+  unsigned last_token_index = 0; // our token indices conveniently start at 1
+  for (unsigned i = 0; i < tokens.size(); ++i) {
+    const string& token = tokens[i];
+    unsigned token_index = token_indices[i];
+    if (token_index != last_token_index + 1) {
+      brat_strings.push_back(move(next_brat_string.str()));
+      next_brat_string = ostringstream();
+      brat_indices.push_back({start_index, end_index});
+      start_index = end_index;
+    }
+    last_token_index = token_index;
+
+    unsigned initial_txt_stream_pos = txt_stream.tellg();
+    for (char next_token_char : token) {
+      char next_txt_char = txt_stream.get();
+      if (next_token_char != next_txt_char) {
+        throw runtime_error(
+            next_brat_string.str() + " -> " + to_string(next_token_char)
+                + " vs. " + to_string(next_txt_char));
+      }
+      next_brat_string << next_txt_char;
+    }
+    while(txt_stream.get() == ' ') {
+      next_brat_string << ' ';
+    }
+    txt_stream >> ws;  // in case there are any newlines
+    end_index += initial_txt_stream_pos - txt_stream.tellg();
+  }
+
+  // Reconstruct the full string of indices and check text.
+  ostringstream full_brat_string;
+  for (auto iter = brat_indices.begin(); iter + 1 != brat_indices.end();
+       ++iter) {
+    full_brat_string << iter->first << ' ' << iter->second << ';';
+  }
+  full_brat_string << brat_indices.back().first << ' '
+                   << brat_indices.back().second;
+  full_brat_string << '\t';
+  for (auto iter = brat_strings.begin(); iter + 1 != brat_strings.end();
+       ++iter) {
+    full_brat_string << *iter << ' ';
+  }
+  full_brat_string << brat_strings.back();
+
+  return full_brat_string.str();
+}
+
+
 
 CausalityMetrics LSTMCausalityTagger::DoTest(
     BecauseOracleTransitionCorpus* corpus, bool evaluate, bool write_results,
@@ -621,10 +718,12 @@ CausalityMetrics LSTMCausalityTagger::DoTest(
 
   const string* last_filename = nullptr;
   ofstream ann_out_file;
+  string current_txt_contents;
   unsigned evt_id = 1000;  // BRAT IDs in the 1000s should be safe
   unsigned span_id = 1000;
   // unsigned attr_id = 1000;
-  unordered_map<IndexList, string, boost::hash<IndexList>> current_doc_span_ids(10);
+  unordered_map<IndexList, string, boost::hash<IndexList>> current_doc_span_ids(
+      10);
 
   for (unsigned sentence_index : *real_sentence_selections) {
     // Grab selected sentence and associated metadata from corpus.
@@ -650,7 +749,8 @@ CausalityMetrics LSTMCausalityTagger::DoTest(
 
     if (evaluate) {
       vector<CausalityRelation> gold = Decode(
-          *sentence, gold_actions, options.new_conn_action, options.shift_action);
+          *sentence, gold_actions, options.new_conn_action,
+          options.shift_action);
       if (pairwise) {
         FilterToPairwise(&gold);
       }
@@ -662,8 +762,9 @@ CausalityMetrics LSTMCausalityTagger::DoTest(
     }
 
     if (write_results) {
-      WriteSentenceResults(predicted, sentence, &last_filename, &ann_out_file,
-                           &current_doc_span_ids, &evt_id, &span_id);
+      WriteSentenceResults(predicted, *sentence, &last_filename, &ann_out_file,
+                           &current_txt_contents, &current_doc_span_ids,
+                           &evt_id, &span_id);
     }
   }
 
@@ -1097,7 +1198,8 @@ Expression LSTMCausalityTagger::GetParsePathEmbedding(
 }
 
 
-bool LSTMCausalityTagger::ShouldUseOracleTransition(CausalityTaggerState* state) {
+bool LSTMCausalityTagger::ShouldUseOracleTransition(
+    CausalityTaggerState* state) {
   if (options.oracle_connectives) {
     auto oracle_conn_iter = state->oracle_connectives.find(
         state->current_conn_token_i);

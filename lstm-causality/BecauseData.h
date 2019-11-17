@@ -69,6 +69,20 @@ public:
   void PrintTokens(std::ostream& os,
                    const BecauseRelation::IndexList& indices) const;
 
+  static TokenList GetTokensForIndices(const lstm_parser::Sentence &sentence,
+                                       const IndexList &indices) {
+    TokenList tokens;
+    tokens.reserve(indices.size());
+    unsigned unk = sentence.vocab->GetWord(sentence.vocab->UNK);
+    for (unsigned index : indices) {
+      unsigned word_id = sentence.words.at(index);
+      tokens.push_back(word_id == unk ? sentence.unk_surface_forms.at(index)
+                                      : sentence.vocab->int_to_words[word_id]);
+    }
+    return tokens;
+  }
+
+
 protected:
   friend std::ostream& operator<<(std::ostream& os, const BecauseRelation& rel);
 
@@ -86,15 +100,7 @@ protected:
   }
 
   TokenList GetTokensForIndices(const IndexList& indices) const {
-    TokenList tokens;
-    tokens.reserve(indices.size());
-    unsigned unk = sentence->vocab->GetWord(sentence->vocab->UNK);
-    for (unsigned index : indices) {
-      unsigned word_id = sentence->words.at(index);
-      tokens.push_back(word_id == unk ? sentence->unk_surface_forms.at(index)
-                                      : sentence->vocab->int_to_words[word_id]);
-    }
-    return tokens;
+    return GetTokensForIndices(*sentence, indices);
   }
 
   const std::string& ArgNameForArgIndex(unsigned arg_index) const {
