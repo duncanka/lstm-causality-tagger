@@ -150,4 +150,15 @@ struct Counter
   size_t count = 0;
 };
 
+
+inline size_t multibyte_length(const char* str, size_t max) {
+  size_t index = 0;
+  size_t char_count = 0;
+  while (index < max) {
+    index += mblen(&str[index], max - index);
+    char_count += 1;
+  }
+  return char_count;
+}
+
 #endif /* LSTM_CAUSALITY_UTILITIES_H_ */

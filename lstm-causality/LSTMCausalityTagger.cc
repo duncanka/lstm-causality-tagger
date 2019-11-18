@@ -548,6 +548,7 @@ vector<CausalityRelation> LSTMCausalityTagger::Tag(
                 options.shift_action);
 }
 
+
 void LSTMCausalityTagger::WriteSentenceResults(
     const vector<CausalityRelation>& predicted,
     const Sentence& sentence,
@@ -643,14 +644,28 @@ const string LSTMCausalityTagger::IndicesToBratLine(
 
   const BecauseSentenceMetadata& metadata =
       static_cast<const BecauseSentenceMetadata&>(*sentence.metadata);
-  istringstream txt_stream(current_txt);
-  txt_stream.seekg(metadata.document_byte_offset);
+  size_t txt_byte_index = metadata.document_byte_offset;
+  size_t txt_char_index = multibyte_length(current_txt.c_str(), txt_byte_index);
   vector<pair<unsigned, unsigned>> brat_indices;
-  unsigned subspan_start;
-  unsigned subspan_end;
-  unsigned last_token_end;
+  vector<pair<unsigned, unsigned>> byte_indices;
+  unsigned subspan_bytes_start;
+  unsigned subspan_bytes_end;
+  unsigned subspan_chars_start;
+  unsigned subspan_chars_end;
   bool last_token_was_in_span = false;
   auto next_span_index_iter = token_indices.begin();
+  unsigned token_char_index;
+
+  auto record_next_indices = [&]() {
+    byte_indices.push_back({subspan_bytes_start, subspan_bytes_end});
+    brat_indices.push_back({subspan_chars_start, subspan_chars_end});
+  };
+  auto advance_stream = [&](unsigned bytes = 1, unsigned chars = 1,
+                            unsigned token_chars = 1) {
+    txt_byte_index += bytes;
+    txt_char_index += chars;
+    token_char_index += token_chars;
+  };
 
   // For each token, match its characters against the characters in the .txt
   // file. Error out on any mismatch. As long as things continue to match,
@@ -664,67 +679,93 @@ const string LSTMCausalityTagger::IndicesToBratLine(
     if (part_of_span) {
       ++next_span_index_iter;
       if (!last_token_was_in_span) {  // start of a new subspan
-        subspan_start = txt_stream.tellg();
+        subspan_bytes_start = txt_byte_index;
+        subspan_chars_start = txt_char_index;
       }
     } else {  // not part of span, so finish off the previous span (if any).
       if (last_token_was_in_span) {  // previous subspan ended on last token
-        brat_indices.push_back({subspan_start, subspan_end});
+        record_next_indices();
       }
     }
 
     // Check all characters in the token.
-    for (char next_token_char : token_text) {
-      char next_txt_char = txt_stream.get();
-      if (next_token_char != next_txt_char) {
-        // Special case: quotes can be split into 2 characters in the original.
-        if (next_token_char == '"') {
-          if ((next_txt_char == '`' && txt_stream.peek() == '`')
-              || (next_txt_char == '\'' && txt_stream.peek() == '\'')) {
-            txt_stream.get();
-            continue;
-          }
-        // Special case: ellipses have spaces in between sometimes in the text.
-        } else if (next_token_char == '.') {
-          if (token_text == "..." && next_txt_char == ' ') {
-            if (txt_stream.get() == '.') {
+    for (token_char_index = 0; token_char_index < token_text.size(); ) {
+      // First check for multibyte.
+      const char* byte_ptr = current_txt.c_str() + txt_byte_index;
+      int bytes_len = mblen(byte_ptr, current_txt.size() - txt_byte_index);
+      if (bytes_len < 0) {
+        throw runtime_error("Invalid multibyte token. Next bytes: "
+                            + std::string(current_txt.c_str()
+                                          + txt_byte_index, 10));
+      } else if (bytes_len > 1) {
+        string text_bytes = current_txt.substr(txt_byte_index, bytes_len);
+        string token_bytes = token_text.substr(token_char_index, bytes_len);
+        if (text_bytes != token_bytes) {
+          throw runtime_error(
+              token_text + " -> " + token_bytes + " vs. " + text_bytes);
+        }
+        advance_stream(bytes_len, 1, bytes_len);
+      } else {  // single-byte character (whew!)
+        char next_txt_char = current_txt[txt_byte_index];
+        char next_token_char = token_text[token_char_index];
+        advance_stream();
+
+        if (next_token_char != next_txt_char) {
+          // Special case: quotes can be split into 2 characters in the original
+          if (next_token_char == '"') {
+            // Advance the stream: if a quote isn't next, we're giving up anyway
+            char lookahead = current_txt[txt_byte_index];
+            if ((next_txt_char == '`' && lookahead == '`')
+                || (next_txt_char == '\'' && lookahead == '\'')) {
+              advance_stream();
+              continue;
+            }
+
+          // Special case: ellipses have spaces in between sometimes in the text
+          } else if (next_token_char == '.') {
+            if (token_text == "..." && next_txt_char == ' '
+                && current_txt[txt_byte_index] == '.') {
+              advance_stream(1, 1, 0);
+              continue;
+            }
+
+          // Special case: fractions can have weird characters.
+          } else if (next_token_char == '_') {
+            if (regex_match(token_text, FRACTION_REGEX)) {
               continue;
             }
           }
-        // Special case: fractions can have weird characters.
-        } else if (next_token_char == '_') {
-          if (regex_match(token_text, FRACTION_REGEX)) {
-            continue;
-          }
-        }
 
-        throw runtime_error(
-            token_text + " -> " + string(1, next_token_char)
-                + " vs. " + string(1, next_txt_char));
+          throw runtime_error(
+              token_text + " -> " + string(1, next_token_char)
+                  + " vs. " + string(1, next_txt_char));
+        }
       }
     }
 
-    last_token_end = txt_stream.tellg();
     if (part_of_span) {
-      subspan_end = last_token_end;
+      subspan_bytes_end = txt_byte_index;
+      subspan_chars_end = txt_char_index;
     }
 
     last_token_was_in_span = part_of_span;
 
     // Advance stream past whitespace, recording if any newlines are found.
-    char next_char = txt_stream.peek();
-    while(isspace(next_char)) {  // false at EOF
-      txt_stream.get();
+    char next_char;
+    while(txt_byte_index < current_txt.size() - 1 &&
+          isspace(next_char = current_txt[txt_byte_index])) {
       if (last_token_was_in_span) {
         if (next_char == '\n' || next_char == '\r') {
-          brat_indices.push_back({subspan_start, subspan_end});
+          record_next_indices();
           last_token_was_in_span = false;
         }
       }
-      next_char = txt_stream.peek();
+      advance_stream();
     }
   }
+
   if (last_token_was_in_span) {  // a subspan was in progress at end-of-sentence
-    brat_indices.push_back({subspan_start, subspan_end});
+    record_next_indices();
   }
 
   // Reconstruct the full string of indices and the checksum text.
@@ -736,18 +777,17 @@ const string LSTMCausalityTagger::IndicesToBratLine(
   full_brat_string << brat_indices.back().first << ' '
                    << brat_indices.back().second;
   full_brat_string << '\t';
-  for (auto iter = brat_indices.begin(); iter + 1 != brat_indices.end();
+  for (auto iter = byte_indices.begin(); iter + 1 != byte_indices.end();
        ++iter) {
     full_brat_string << current_txt.substr(iter->first,
                                            iter->second - iter->first) << ' ';
   }
-  const auto& last_indices = brat_indices.back();
+  const auto& last_indices = byte_indices.back();
   full_brat_string << current_txt.substr(
       last_indices.first, last_indices.second - last_indices.first);
 
   return full_brat_string.str();
 }
-
 
 
 CausalityMetrics LSTMCausalityTagger::DoTest(

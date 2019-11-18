@@ -4,6 +4,7 @@
 #include <boost/range/join.hpp>
 #include <boost/program_options.hpp>
 #include <cassert>
+#include <clocale>
 #include <csignal>
 #include <cstdlib>
 #include <iomanip>
@@ -488,6 +489,8 @@ int main(int argc, char** argv) {
 
   po::variables_map conf;
   InitCommandLine(argc, argv, &conf);
+
+  setlocale(LC_ALL, "en_US.utf8");  // to make sure multi-byte lengths work
 
   bool for_comparison = conf["for-comparison"].as<bool>();
   bool log_diffs = conf["log-diffs"].as<bool>();
