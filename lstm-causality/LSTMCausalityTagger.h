@@ -103,19 +103,21 @@ public:
 
   CausalityMetrics Evaluate(
       BecauseOracleTransitionCorpus* corpus,
+      bool write_results,
       const std::vector<unsigned>& selections = ALL_INDICES,
       bool compare_punct = false, bool pairwise = false,
       double overlap_threshold = 1.0) {
-    return DoTest(corpus, true, false, selections, compare_punct, pairwise,
-                  overlap_threshold);
+    return DoTest(corpus, true, write_results, selections, compare_punct,
+                  pairwise, overlap_threshold);
   }
 
   CausalityMetrics Test(BecauseOracleTransitionCorpus* corpus,
-                             bool evaluate, bool compare_punct = false,
+                             bool evaluate, bool write_results = true,
+                             bool compare_punct = false,
                              bool pairwise = false,
                              double overlap_threshold = 1.0) {
-    return DoTest(corpus, evaluate, true, ALL_INDICES, compare_punct, pairwise,
-                  overlap_threshold);
+    return DoTest(corpus, evaluate, write_results, ALL_INDICES, compare_punct,
+                  pairwise, overlap_threshold);
   }
 
   static std::vector<CausalityRelation> Decode(

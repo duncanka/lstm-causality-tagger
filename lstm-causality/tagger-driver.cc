@@ -58,6 +58,9 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
 
     // Testing/evaluation options
     ("test", "Whether to test the tagger")
+    ("write-results", POBooleanFlag(false),
+     "Whether to write the results (defaults to true for test and false for"
+     " eval-only)")
     ("folds,f", po::value<unsigned>()->default_value(20),
      "How many folds to split the data into for cross-validation")
     ("eval-pairwise,P", POBooleanFlag(true),
@@ -407,7 +410,7 @@ void DoTrain(LSTMCausalityTagger* tagger,
           partial_indent.reset(new IndentingOStreambuf(cout));
         }
 
-        CausalityMetrics evaluation = tagger->Evaluate(full_corpus,
+        CausalityMetrics evaluation = tagger->Evaluate(full_corpus, false,
                                                        fold_test_order,
                                                        compare_punct, false,
                                                        overlap_threshold);
@@ -422,7 +425,7 @@ void DoTrain(LSTMCausalityTagger* tagger,
         evaluation_results[{false, is_partial}].push_back(evaluation);
         if (eval_pairwise) {
           CausalityMetrics pairwise_evaluation = tagger->Evaluate(
-              full_corpus, fold_test_order, compare_punct, true,
+              full_corpus, false, fold_test_order, compare_punct, true,
               overlap_threshold);
           cout << "Pairwise evaluation:";
           IndentingOStreambuf indent(cout);
@@ -595,6 +598,8 @@ int main(int argc, char** argv) {
       cerr << op_noun << " requested, but model was not specified!";
       abort();
     }
+    bool write_results = conf["write-results"].as<bool>()
+        || (test && conf["write-results"].defaulted());
 
     model_fname = conf["model"].as<string>();
     tagger.reset(new LSTMCausalityTagger(parser_model_fname, model_fname));
@@ -602,13 +607,14 @@ int main(int argc, char** argv) {
 
     const string& test_path = conf["test-data"].as<string>();
     cerr << "Will " << op_verb << " model " << model_fname
-         << " on " << test_path << endl;
+         << " on " << test_path << '(' << (write_results ? "" : "not")
+         << " writing results)" << endl;
     BecauseOracleTransitionCorpus test_corpus(tagger->GetVocab(), test_path,
                                               false, false);
     cerr << "Tagging..." << flush;
     CausalityMetrics eval =
-        (evaluate ?
-            tagger->Evaluate(&test_corpus) : tagger->Test(&test_corpus, true));
+        (evaluate ? tagger->Evaluate(&test_corpus, write_results)
+                  : tagger->Test(&test_corpus, false, write_results));
     cerr << "done." << endl << flush;
     if (evaluate) {
       cout << flush << "Evaluation results:" << endl;
