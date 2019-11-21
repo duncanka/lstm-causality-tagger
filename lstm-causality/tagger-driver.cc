@@ -61,8 +61,9 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
     ("write-results", POBooleanFlag(false),
      "Whether to write the results (defaults to true for test and false for"
      " eval-only)")
-    ("folds,f", po::value<unsigned>()->default_value(20),
-     "How many folds to split the data into for cross-validation")
+    ("folds,f", po::value<unsigned>()->default_value(1),
+     "How many folds to split the data into for cross-validation (1 for no"
+     " cross-validation)")
     ("eval-pairwise,P", POBooleanFlag(true),
      "Whether to also evaluate on just instances with both cause and effect")
     ("compare-punct,c", POBooleanFlag(false),
