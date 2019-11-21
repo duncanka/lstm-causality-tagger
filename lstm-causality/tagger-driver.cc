@@ -58,6 +58,7 @@ void InitCommandLine(int argc, char** argv, po::variables_map* conf) {
 
     // Testing/evaluation options
     ("test", "Whether to test the tagger")
+    ("evaluate", "Whether to evaluate the tagger on the test data")
     ("write-results", POBooleanFlag(false),
      "Whether to write the results (defaults to true for test and false for"
      " eval-only)")
@@ -608,8 +609,8 @@ int main(int argc, char** argv) {
 
     const string& test_path = conf["test-data"].as<string>();
     cerr << "Will " << op_verb << " model " << model_fname
-         << " on " << test_path << '(' << (write_results ? "" : "not")
-         << " writing results)" << endl;
+         << " on " << test_path << " (" << (write_results ? "" : "not ")
+         << "writing results)" << endl;
     BecauseOracleTransitionCorpus test_corpus(tagger->GetVocab(), test_path,
                                               false, false);
     cerr << "Tagging..." << flush;
